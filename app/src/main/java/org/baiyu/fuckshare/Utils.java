@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,13 +71,27 @@ public class Utils {
     }
 
     public static void copy(InputStream inputStream, OutputStream outputStream) throws IOException {
-        try (inputStream; outputStream) {
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
+        copy(inputStream, outputStream, inputStream.available());
+    }
+
+    /**
+     * copy $len bytes from inputStream to outputStream if available
+     *
+     * @param inputStream
+     * @param outputStream
+     * @param len
+     * @return number of bytes copied
+     * @throws IOException
+     */
+    public static int copy(InputStream inputStream, OutputStream outputStream, int len) throws IOException {
+        int remainLen = len;
+        int pLen = 4096;
+        byte[] buffer = new byte[pLen];
+        for (int bytesRead; remainLen > 0 && (bytesRead = inputStream.read(buffer, 0, Math.min(remainLen, pLen))) != -1; remainLen -= bytesRead) {
+            outputStream.write(buffer, 0, bytesRead);
         }
+        outputStream.flush();
+        return len - remainLen;
     }
 
     public static ImageType getImageType(InputStream inputStream) {
@@ -101,9 +116,18 @@ public class Utils {
     }
 
     public static String getMagickNumber(InputStream inputStream) {
+        InputStream in;
+        if (inputStream.markSupported()) {
+            in = inputStream;
+        } else {
+            in = new BufferedInputStream(inputStream);
+        }
+
         byte[] bytes = new byte[16];
         try {
-            inputStream.read(bytes, 0, 16);
+            in.mark(32);
+            in.read(bytes, 0, 16);
+            in.reset();
         } catch (IOException e) {
             Log.e("fuckshare", e.toString());
         }

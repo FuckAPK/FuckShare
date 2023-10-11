@@ -2,7 +2,7 @@ package org.baiyu.fuckshare;
 
 import android.content.SharedPreferences;
 
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,12 +44,12 @@ public class Settings {
         return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, true);
     }
 
-    public List<String> getExifTagsToKeep() {
+    public Set<String> getExifTagsToKeep() {
         String rawPref = prefs.getString(PREF_EXIF_TAGS_TO_KEEP, "Orientation,XResolution,YResolution");
         return Stream.of(rawPref.split("[, ]+"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     public boolean enableImageRename() {
