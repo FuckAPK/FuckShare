@@ -13,6 +13,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -83,11 +86,11 @@ public class Utils {
      * @return number of bytes copied
      * @throws IOException
      */
-    public static int copy(InputStream inputStream, OutputStream outputStream, int len) throws IOException {
-        int remainLen = len;
+    public static long copy(InputStream inputStream, OutputStream outputStream, long len) throws IOException {
+        long remainLen = len;
         int pLen = 4096;
         byte[] buffer = new byte[pLen];
-        for (int bytesRead; remainLen > 0 && (bytesRead = inputStream.read(buffer, 0, Math.min(remainLen, pLen))) != -1; remainLen -= bytesRead) {
+        for (int bytesRead; remainLen > 0 && (bytesRead = inputStream.read(buffer, 0, (int) Math.min(remainLen, pLen))) != -1; remainLen -= bytesRead) {
             outputStream.write(buffer, 0, bytesRead);
         }
         outputStream.flush();
@@ -138,5 +141,55 @@ public class Utils {
         String magickNumber = sb.toString().toUpperCase();
         Log.d("fuckshare", magickNumber);
         return magickNumber;
+    }
+
+    public static long bigEndianBytesToLong(byte[] bytes) {
+        byte[] newBytes = new byte[8];
+        System.arraycopy(bytes, 0, newBytes, 8 - bytes.length, bytes.length);
+        ByteBuffer bb = ByteBuffer.wrap(newBytes);
+        bb.order(ByteOrder.BIG_ENDIAN);
+        return bb.getLong();
+    }
+
+    public static long littleEndianBytesToLong(byte[] bytes) {
+        byte[] newBytes = Arrays.copyOf(bytes, 8);
+        ByteBuffer bb = ByteBuffer.wrap(newBytes);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        return bb.getLong();
+    }
+
+    public static byte[] longToBigEndianBytes(long num) {
+        ByteBuffer bb = ByteBuffer.allocate(8);
+        bb.order(ByteOrder.BIG_ENDIAN);
+        bb.putLong(num);
+        return bb.array();
+    }
+
+    public static byte[] longToLittleEndianBytes(long num) {
+        ByteBuffer bb = ByteBuffer.allocate(8);
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        bb.putLong(num);
+        return bb.array();
+    }
+
+
+    public static int inputStreamRead(InputStream inputStream, byte[] bytes) throws IOException {
+        return inputStreamRead(inputStream, bytes, 0, bytes.length);
+    }
+
+    public static int inputStreamRead(InputStream inputStream, byte[] bytes, int offset, int n) throws IOException {
+        int remaining = n;
+        while (inputStream.available() > 0 && remaining > 0) {
+            remaining -= inputStream.read(bytes, offset, remaining);
+        }
+        return n - remaining;
+    }
+
+    public static long inputStreamSkip(InputStream inputStream, long n) throws IOException {
+        long remaining = n;
+        while (inputStream.available() > 0 && remaining > 0) {
+            remaining -= inputStream.skip(remaining);
+        }
+        return n - remaining;
     }
 }

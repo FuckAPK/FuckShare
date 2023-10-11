@@ -200,17 +200,18 @@ public class ExifHelper {
             }
 
             byte[] byteArray = new byte[8];
-            bis.read(byteArray);
+            Utils.inputStreamRead(bis, byteArray);
             bos.write(byteArray);
 
             byte[] chunkLengthBytes = new byte[4];
             byte[] chunkNameBytes = new byte[4];
+            long chunkLength;
 
             while (bis.available() > 0) {
-                bis.read(chunkLengthBytes);
-                int chunkLength = bytesToUInt(chunkLengthBytes);
+                Utils.inputStreamRead(bis, chunkLengthBytes);
+                chunkLength = Utils.bigEndianBytesToLong(chunkLengthBytes);
 
-                bis.read(chunkNameBytes);
+                Utils.inputStreamRead(bis, chunkNameBytes);
                 String chunkName = new String(chunkNameBytes);
 
                 if (pngCriticalChunks.contains(chunkName)) {
@@ -219,10 +220,9 @@ public class ExifHelper {
                     Utils.copy(bis, bos, chunkLength + 4);
                 } else {
                     // skip chunkData and chunkCrc
-                    inputStreamSkip(bis, chunkLength + 4);
-                    Log.d("fuckshare", "Discord chunk " + chunkName);
+                    Utils.inputStreamSkip(bis, chunkLength + 4);
+                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + chunkLength + 8);
                 }
-
                 if (chunkName.equals("IEND")) {
                     break;
                 }
@@ -252,18 +252,18 @@ public class ExifHelper {
 
             byte[] maker = new byte[2];
             byte[] lenBytes = new byte[2];
-            int len;
+            long len;
 
             loop:
             while (bis.available() > 0) {
                 if (maker[1] == (byte) 0xDA) {
                     while (true) {
-                        bis.read(maker, 0, 1);
+                        Utils.inputStreamRead(bis, maker, 0, 1);
                         while (maker[0] != (byte) 0xFF) {
                             bos.write(maker, 0, 1);
-                            bis.read(maker, 0, 1);
+                            Utils.inputStreamRead(bis, maker, 0, 1);
                         }
-                        bis.read(maker, 1, 1);
+                        Utils.inputStreamRead(bis, maker, 1, 1);
                         if (maker[1] == (byte) 0x00) {
                             bos.write(maker);
                             continue;
@@ -271,7 +271,7 @@ public class ExifHelper {
                         break;
                     }
                 } else {
-                    bis.read(maker);
+                    Utils.inputStreamRead(bis, maker);
                 }
                 assert maker[0] == (byte) 0xFF;
                 switch (maker[1]) {
@@ -308,28 +308,29 @@ public class ExifHelper {
                     case (byte) 0xED:   // photoshoP savE As
                     case (byte) 0xEE:   // "adobe" (length = 12)
                     case (byte) 0xEF:   // GraphicConverter
-                        bis.read(lenBytes);
-                        len = bytesToUInt(lenBytes) - 2;
-                        inputStreamSkip(bis, len);
+                        Utils.inputStreamRead(bis, lenBytes);
+                        len = Utils.bigEndianBytesToLong(lenBytes) - 2;
+                        Utils.inputStreamSkip(bis, len);
+                        Log.d("fuckshare",  String.format("Discord chunk: %02X size: " + (len + 4), maker[1]));
                         break;
                     case (byte) 0xC0:   // SOF0
                     case (byte) 0xC2:   // SOF2
                     case (byte) 0xC4:   // DHT
                     case (byte) 0xDB:   // DQT
                     case (byte) 0xDA:   // SOS
-                        bis.read(lenBytes);
-                        len = bytesToUInt(lenBytes) - 2;
+                        Utils.inputStreamRead(bis, lenBytes);
+                        len = Utils.bigEndianBytesToLong(lenBytes) - 2;
                         bos.write(maker);
                         bos.write(lenBytes);
                         Utils.copy(bis, bos, len);
                         break;
                     default:
-                        bis.read(lenBytes);
-                        len = bytesToUInt(lenBytes) - 2;
+                        Utils.inputStreamRead(bis, lenBytes);
+                        len = Utils.bigEndianBytesToLong(lenBytes) - 2;
                         bos.write(maker);
                         bos.write(lenBytes);
                         Utils.copy(bis, bos, len);
-                        Log.d("fuckshare", String.format("unknown Copied: %02X , len: " + len, maker[1]));
+                        Log.d("fuckshare", String.format("Unknown chunk copied: %02X size: " + (len + 4), maker[1]));
                         break;
                 }
             }
@@ -339,8 +340,82 @@ public class ExifHelper {
         }
     }
 
-    public static void webpToNewWithoutMetadata(InputStream is, OutputStream os) {
-        // TODO
+    public static void webpToNewWithoutMetadata(InputStream inputStream, OutputStream outputStream) {
+        try {
+            BufferedInputStream bis;
+            BufferedOutputStream bos;
+
+            if (inputStream instanceof BufferedInputStream) {
+                bis = (BufferedInputStream) inputStream;
+            } else {
+                bis = new BufferedInputStream(inputStream);
+            }
+
+            if (outputStream instanceof BufferedOutputStream) {
+                bos = (BufferedOutputStream) outputStream;
+            } else {
+                bos = new BufferedOutputStream(outputStream);
+            }
+
+            Set<String> chunkToRemove = Set.of("EXIF", "XMP ");
+
+            byte[] webpHeader = new byte[12];
+            byte[] chunkNameBytes = new byte[4];
+            byte[] chunkDataLenBytes = new byte[4];
+            long chunkDataLen;
+            long realChunkDataLan;
+
+            // calculate size
+            // file size doesn't contain first 8 bytes
+            long newSize = bis.available() - 8;
+            bis.mark(bis.available() + 1);
+
+            Utils.inputStreamSkip(bis, 12);
+            while (bis.available() > 0) {
+                Utils.inputStreamRead(bis, chunkNameBytes);
+                String chunkName = new String(chunkNameBytes);
+                Utils.inputStreamRead(bis, chunkDataLenBytes);
+
+                chunkDataLen = Utils.littleEndianBytesToLong(chunkDataLenBytes);
+                realChunkDataLan = chunkDataLen + (chunkDataLen % 2);
+
+                Utils.inputStreamSkip(bis, realChunkDataLan);
+
+                if (chunkToRemove.contains(chunkName)) {
+                    newSize -= realChunkDataLan + 8;
+                }
+            }
+
+            bis.reset();
+
+            // rewrite with new size
+            Utils.inputStreamRead(bis, webpHeader);
+            bos.write(webpHeader, 0, 4);
+            bos.write(Utils.longToLittleEndianBytes(newSize), 0, 4);
+            bos.write(webpHeader, 8, 4);
+
+            while (bis.available() > 0) {
+                Utils.inputStreamRead(bis, chunkNameBytes);
+                String chunkName = new String(chunkNameBytes);
+                Utils.inputStreamRead(bis, chunkDataLenBytes);
+
+                chunkDataLen = Utils.littleEndianBytesToLong(chunkDataLenBytes);
+                // standard of tiff: fill in end with 0x00 if chunk size if odd
+                realChunkDataLan = chunkDataLen + (chunkDataLen % 2);
+
+                if (chunkToRemove.contains(chunkName)) {
+                    Utils.inputStreamSkip(bis, realChunkDataLan);
+                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + realChunkDataLan);
+                } else {
+                    bos.write(chunkNameBytes);
+                    bos.write(chunkDataLenBytes);
+                    Utils.copy(bis, bos, realChunkDataLan);
+                }
+            }
+            bos.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -360,21 +435,4 @@ public class ExifHelper {
         // TODO seems not working
         exifTo.saveAttributes();
     }
-
-    private static int bytesToUInt(byte[] bytes) {
-        int value = 0;
-        for (byte b : bytes) {
-            value = (value << 8) | (0xFF & b);
-        }
-        return value;
-    }
-
-    private static long inputStreamSkip(InputStream inputStream, long n) throws IOException {
-        long remaining = n;
-        while (inputStream.available() > 0 && remaining > 0) {
-            remaining -= inputStream.skip(remaining);
-        }
-        return n - remaining;
-    }
-
 }

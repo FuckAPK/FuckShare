@@ -82,7 +82,7 @@ public class HandleShareActivity extends Activity {
                 switch (imageType) {
                     case JPEG -> ExifHelper.jpegToNewWithoutMetadata(uin, fout);
                     case PNG -> ExifHelper.pngToNewWithoutMetadata(uin, fout);
-                    case WEBP -> Utils.copy(uin, fout);
+                    case WEBP -> ExifHelper.webpToNewWithoutMetadata(uin, fout);
                     default -> Log.e("fuckshare", "unsupported image type: " + imageType);
                 }
 //                ExifHelper.writeBackMetadata(new ExifInterface(uin), new ExifInterface(f), settings.getExifTagsToKeep());
