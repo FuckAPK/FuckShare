@@ -163,6 +163,26 @@ public class ExifHelper {
             "vpAg"  //   VirtualPage
     );
 
+    private static final Set<Byte> jpegSkippableChunks = Set.of(
+            (byte) 0xE0,   //
+            (byte) 0xE1,   // exif, xmp, xap
+            (byte) 0xE2,   // icc
+            (byte) 0xE3,   // Kodak
+            (byte) 0xE4,   // FlashPix
+            (byte) 0xE5,   // Ricoh
+            (byte) 0xE6,   // GoPro
+            (byte) 0xE7,   // Pentax/Qualcomm
+            (byte) 0xE8,   // Spiff
+            (byte) 0xE9,   // MediaJukebox
+            (byte) 0xEA,   // PhotoStudio
+            (byte) 0xEB,   // HDR
+            (byte) 0xEC,   // photoshoP ducky / savE foR web
+            (byte) 0xED,   // photoshoP savE As
+            (byte) 0xEE,   // "adobe" (length = 12)
+            (byte) 0xEF,   // GraphicConverter
+            (byte) 0xFE    // Comments
+    );
+
     private ExifHelper() {
     }
 
@@ -254,84 +274,34 @@ public class ExifHelper {
             byte[] lenBytes = new byte[2];
             long len;
 
-            loop:
             while (bis.available() > 0) {
-                if (maker[1] == (byte) 0xDA) {
-                    while (true) {
-                        Utils.inputStreamRead(bis, maker, 0, 1);
-                        while (maker[0] != (byte) 0xFF) {
-                            bos.write(maker, 0, 1);
-                            Utils.inputStreamRead(bis, maker, 0, 1);
-                        }
-                        Utils.inputStreamRead(bis, maker, 1, 1);
-                        if (maker[1] == (byte) 0x00) {
-                            bos.write(maker);
-                            continue;
-                        }
-                        break;
-                    }
-                } else {
-                    Utils.inputStreamRead(bis, maker);
-                }
+                Utils.inputStreamRead(bis, maker);
                 assert maker[0] == (byte) 0xFF;
-                switch (maker[1]) {
-                    case (byte) 0xD0:   // RST0..7
-                    case (byte) 0xD1:
-                    case (byte) 0xD2:
-                    case (byte) 0xD3:
-                    case (byte) 0xD4:
-                    case (byte) 0xD5:
-                    case (byte) 0xD6:
-                    case (byte) 0xD7:
-                    case (byte) 0xD8:   // SOI
-                        bos.write(maker);
-                        break;
-                    case (byte) 0xD9:   // EOI
-                        bos.write(maker);
-                        break loop;
-                    case (byte) 0xDD:   // DRI
-                        bos.write(maker);
-                        Utils.copy(bis, bos, 4);
-                        break;
-                    case (byte) 0xE1:   // exif, xmp, xap
-                    case (byte) 0xE2:   // icc
-                    case (byte) 0xE3:   // Kodak
-                    case (byte) 0xE4:   // FlashPix
-                    case (byte) 0xE5:   // Ricoh
-                    case (byte) 0xE6:   // GoPro
-                    case (byte) 0xE7:   // Pentax/Qualcomm
-                    case (byte) 0xE8:   // Spiff
-                    case (byte) 0xE9:   // MediaJukebox
-                    case (byte) 0xEA:   // PhotoStudio
-                    case (byte) 0xEB:   // HDR
-                    case (byte) 0xEC:   // photoshoP ducky / savE foR web
-                    case (byte) 0xED:   // photoshoP savE As
-                    case (byte) 0xEE:   // "adobe" (length = 12)
-                    case (byte) 0xEF:   // GraphicConverter
-                        Utils.inputStreamRead(bis, lenBytes);
-                        len = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                        Utils.inputStreamSkip(bis, len);
-                        Log.d("fuckshare", String.format("Discord chunk: %02X size: " + (len + 4), maker[1]));
-                        break;
-                    case (byte) 0xC0:   // SOF0
-                    case (byte) 0xC2:   // SOF2
-                    case (byte) 0xC4:   // DHT
-                    case (byte) 0xDB:   // DQT
-                    case (byte) 0xDA:   // SOS
-                        Utils.inputStreamRead(bis, lenBytes);
-                        len = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                        bos.write(maker);
-                        bos.write(lenBytes);
-                        Utils.copy(bis, bos, len);
-                        break;
-                    default:
-                        Utils.inputStreamRead(bis, lenBytes);
-                        len = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                        bos.write(maker);
-                        bos.write(lenBytes);
-                        Utils.copy(bis, bos, len);
-                        Log.d("fuckshare", String.format("Unknown chunk copied: %02X size: " + (len + 4), maker[1]));
-                        break;
+
+                if (maker[1] == (byte) 0xD8) {
+                    bos.write(maker);
+                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + 2, maker[1]));
+                } else if (maker[1] == (byte) 0xD9) {   // EOI
+                    bos.write(maker);
+                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + 2, maker[1]));
+                    break;
+                } else if (jpegSkippableChunks.contains(maker[1])) {
+                    Utils.inputStreamRead(bis, lenBytes);
+                    len = Utils.bigEndianBytesToLong(lenBytes) - 2;
+                    Utils.inputStreamSkip(bis, len);
+                    Log.d("fuckshare", String.format("Discord chunk: %02X size: " + (len + 4), maker[1]));
+                } else if (maker[1] == (byte) 0xDA) {   // SOS
+                    bos.write(maker);
+                    // write all data
+                    len = Utils.copy(bis, bos);
+                    Log.d("fuckshare", "DA and following Chunks copied size: " + (len + 2));
+                } else {
+                    Utils.inputStreamRead(bis, lenBytes);
+                    len = Utils.bigEndianBytesToLong(lenBytes) - 2;
+                    bos.write(maker);
+                    bos.write(lenBytes);
+                    Utils.copy(bis, bos, len);
+                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + (len + 4), maker[1]));
                 }
             }
             bos.flush();
