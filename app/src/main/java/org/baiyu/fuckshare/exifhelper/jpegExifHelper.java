@@ -1,5 +1,6 @@
 package org.baiyu.fuckshare.exifhelper;
 
+import android.os.FileUtils;
 import android.util.Log;
 
 import org.baiyu.fuckshare.Utils;
@@ -74,7 +75,7 @@ public class jpegExifHelper implements ExifHelper {
                 } else if (maker[1] == (byte) 0xDA) {   // SOS
                     bos.write(maker);
                     // write all data
-                    len = Utils.copy(bis, bos);
+                    len = FileUtils.copy(bis, bos);
                     Log.d("fuckshare", "DA and following Chunks copied size: " + (len + 2));
                 } else {
                     Utils.inputStreamRead(bis, lenBytes);

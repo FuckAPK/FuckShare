@@ -85,10 +85,6 @@ public class Utils {
         return UUID.randomUUID().toString();
     }
 
-    public static long copy(InputStream inputStream, OutputStream outputStream) throws IOException {
-        return copy(inputStream, outputStream, inputStream.available());
-    }
-
     /**
      * copy $len bytes from inputStream to outputStream if available
      *
