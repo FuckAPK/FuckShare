@@ -45,7 +45,7 @@ public class Settings {
     }
 
     public Set<String> getExifTagsToKeep() {
-        String rawPref = prefs.getString(PREF_EXIF_TAGS_TO_KEEP, "Orientation,XResolution,YResolution");
+        String rawPref = prefs.getString(PREF_EXIF_TAGS_TO_KEEP, "Orientation, Gamma, ColorSpace, XResolution, YResolution, ResolutionUnit");
         return Stream.of(rawPref.split("[, ]+"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())

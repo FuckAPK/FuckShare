@@ -26,7 +26,7 @@
         app:key="exif_tags_to_keep"
         app:iconSpaceReserved="false"
         app:title="@string/desc_exif_tags_to_keep"
-        app:defaultValue="Orientation,XResolution,YResolution"
+        app:defaultValue="Orientation, Gamma, ColorSpace, XResolution, YResolution, ResolutionUnit"
         app:useSimpleSummaryProvider="true" />
 
 </PreferenceScreen>
