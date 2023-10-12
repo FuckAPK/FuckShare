@@ -7,4 +7,5 @@
     <string name="desc_enable_image_rename">Auto rename images</string>
     <string name="desc_enable_file_rename">Auto rename non-image files</string>
     <string name="desc_exif_tags_to_keep">Exif tags to keep, separate by comma or space</string>
+    <string name="desc_enable_file_type_sniff">Sniff file extension</string>
 </resources>

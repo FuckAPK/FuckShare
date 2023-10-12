@@ -7,6 +7,14 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import org.baiyu.fuckshare.filetype.FileType;
+import org.baiyu.fuckshare.filetype.ImageType;
+import org.baiyu.fuckshare.filetype.OtherType;
+import org.baiyu.fuckshare.filetype.VideoType;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,18 +37,7 @@ public class Utils {
         }
     }
 
-    public static File renameToRandom(Context context, File f) {
-        String newFilename = Utils.getRandomName();
-        String ext = Utils.getFileExt(f.getName());
-        if (ext != null) {
-            newFilename += "." + ext;
-        }
-        File renamed = new File(context.getCacheDir(), newFilename);
-        // do rename but return false?
-        f.renameTo(renamed);
-        return renamed;
-    }
-
+    @Nullable
     public static String getRealFileName(Context context, Uri uri) {
 
         if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
@@ -58,6 +55,16 @@ public class Utils {
         }
     }
 
+    public static String getFileName(String fullFilename) {
+        int lastIndex = fullFilename.lastIndexOf(".");
+        if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
+            return fullFilename.substring(0, lastIndex);
+        } else {
+            return fullFilename;
+        }
+    }
+
+    @Nullable
     public static String getFileExt(String fullFilename) {
         int lastIndex = fullFilename.lastIndexOf(".");
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
@@ -67,7 +74,14 @@ public class Utils {
         }
     }
 
-    public static String getRandomName() {
+    public static String mergeFilename(@NonNull String filename, String extension) {
+        if (extension != null) {
+            filename += "." + extension;
+        }
+        return filename;
+    }
+
+    public static String getRandomString() {
         return UUID.randomUUID().toString();
     }
 
@@ -90,7 +104,7 @@ public class Utils {
         return len - remainLen;
     }
 
-    public static ImageType getImageType(byte[] bytes) {
+    public static FileType getFileType(byte[] bytes) {
         String magick = bytesToHex(bytes);
         if (magick.startsWith("89504E470D0A1A0A")) {
             return ImageType.PNG;
@@ -104,11 +118,17 @@ public class Utils {
                 || (magick.startsWith("FFD8FFE1") && magick.substring(12).startsWith("457869660000"))) {
             return ImageType.JPEG;
         }
-        return ImageType.UNKNOWN;
-    }
-
-    public static boolean isKnownImageType(ImageType imageType) {
-        return !ImageType.UNKNOWN.equals(imageType);
+        if (magick.startsWith("474946383761")
+                || magick.startsWith("474946383961")) {
+            return ImageType.GIF;
+        }
+        if (magick.startsWith("6674797069736F6D")) {
+            return VideoType.MP4;
+        }
+        if (magick.startsWith("52494646") && magick.substring(8).startsWith("41564920")) {
+            return VideoType.AVI;
+        }
+        return OtherType.UNKNOWN;
     }
 
     public static String bytesToHex(byte... bytes) {

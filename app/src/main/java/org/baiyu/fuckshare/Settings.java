@@ -15,6 +15,7 @@ public class Settings {
     private static final String PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep";
     private static final String PREF_ENABLE_IMAGE_RENAME = "enable_image_rename";
     private static final String PREF_ENABLE_FILE_RENAME = "enable_file_rename";
+    private static final String PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff";
     private volatile static Settings INSTANCE;
     private final SharedPreferences prefs;
 
@@ -58,5 +59,9 @@ public class Settings {
 
     public boolean enableFileRename() {
         return prefs.getBoolean(PREF_ENABLE_FILE_RENAME, false);
+    }
+
+    public boolean enableFileTypeSniff() {
+        return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, false);
     }
 }

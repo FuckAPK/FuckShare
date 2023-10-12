@@ -19,13 +19,19 @@ import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import org.baiyu.fuckshare.exifhelper.ExifHelper;
+import org.baiyu.fuckshare.exifhelper.jpegExifHelper;
+import org.baiyu.fuckshare.exifhelper.pngExifHelper;
+import org.baiyu.fuckshare.exifhelper.webpExifHelper;
+import org.baiyu.fuckshare.filetype.FileType;
+import org.baiyu.fuckshare.filetype.ImageType;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -84,47 +90,76 @@ public class HandleShareActivity extends Activity {
 
     private void handleUris(List<Uri> uris) {
         ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this).setType(getIntent().getType());
-        uris.stream().map(this::refreshUri).forEach(ib::addStream);
+        uris.stream().map(this::refreshUri).filter(Objects::nonNull).forEach(ib::addStream);
         Intent chooserIntent = ib.createChooserIntent();
         chooserIntent.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
         startActivity(chooserIntent);
     }
 
+    @Nullable
     private Uri refreshUri(Uri uri) {
-        String realFilename = Utils.getRealFileName(this, uri);
-        assert realFilename != null;
-        File f = new File(getCacheDir(), realFilename);
-        try (OutputStream fout = new BufferedOutputStream(new FileOutputStream(f));
-             InputStream uin = new BufferedInputStream(this.getContentResolver().openInputStream(uri))) {
-
+        try {
             byte[] magickBytes = new byte[16];
-            uin.mark(16);
-            Utils.inputStreamRead(uin, magickBytes);
-            uin.reset();
+            Utils.inputStreamRead(this.getContentResolver().openInputStream(uri), magickBytes);
 
-            ImageType imageType = Utils.getImageType(magickBytes);
+            FileType fileType = Utils.getFileType(magickBytes);
 
-            if (Utils.isKnownImageType(imageType) && settings.enableRemoveExif()) {
-                switch (imageType) {
-                    case JPEG -> ExifHelper.jpegToNewWithoutMetadata(uin, fout);
-                    case PNG -> ExifHelper.pngToNewWithoutMetadata(uin, fout);
-                    case WEBP -> ExifHelper.webpToNewWithoutMetadata(uin, fout);
-                    default -> Log.e("fuckshare", "unsupported image type: " + imageType);
-                }
-                ExifHelper.writeBackMetadata(new ExifInterface(Objects.requireNonNull(this.getContentResolver().openInputStream(uri))), new ExifInterface(f), settings.getExifTagsToKeep());
+            String originName = Utils.getRealFileName(this, uri);
+            String newFilename = getNewName(fileType, originName);
+
+            File file = new File(getCacheDir(), newFilename);
+
+            if (fileType instanceof ImageType imageType && settings.enableRemoveExif()) {
+                processImgMetadata(file, imageType, uri);
             } else {
-                // is file or disabled exif remove
-                Utils.copy(uin, fout);
+                Utils.copy(
+                        new BufferedInputStream(getContentResolver().openInputStream(uri)),
+                        new BufferedOutputStream(new FileOutputStream(file))
+                );
             }
-            // do file/image rename
-            if ((Utils.isKnownImageType(imageType) && settings.enableImageRename()) ||
-                    !Utils.isKnownImageType(imageType) && settings.enableFileRename()) {
-                f = Utils.renameToRandom(this, f);
-            }
+            return FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", file);
         } catch (IOException e) {
-            Log.e("fuckshare", e.toString());
+            Log.d("fuckshare", e.toString());
+            return null;
+        }
+    }
+
+    private void processImgMetadata(File file, ImageType imageType, Uri uri) throws IOException {
+        ExifHelper eh = null;
+        switch (imageType) {
+            case JPEG -> eh = new jpegExifHelper();
+            case PNG -> eh = new pngExifHelper();
+            case WEBP -> eh = new webpExifHelper();
+        }
+        if (eh == null) {
+            Log.e("fuckshare", "unsupported image type: " + imageType);
+        } else {
+            eh.removeMetadata(getContentResolver().openInputStream(uri), new FileOutputStream(file));
+        }
+        if (imageType.isSupportMetadata()) {
+            ExifHelper.writeBackMetadata(
+                    new ExifInterface(Objects.requireNonNull(this.getContentResolver().openInputStream(uri))),
+                    new ExifInterface(file),
+                    settings.getExifTagsToKeep());
+        }
+    }
+
+    private String getNewName(FileType fileType, String originName) {
+        String newFilename;
+        String newExt;
+
+        if ((fileType instanceof ImageType && settings.enableImageRename()) ||
+                (!(fileType instanceof ImageType) && settings.enableFileRename())) {
+            newFilename = Utils.getRandomString();
+        } else {
+            newFilename = Utils.getFileName(originName);
         }
 
-        return FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", f);
+        if (settings.enableFileTypeSniff()) {
+            newExt = fileType.getExtension();
+        } else {
+            newExt = Utils.getFileExt(originName);
+        }
+        return Utils.mergeFilename(newFilename, newExt);
     }
 }
