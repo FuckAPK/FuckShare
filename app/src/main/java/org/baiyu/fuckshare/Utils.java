@@ -25,7 +25,6 @@ public class Utils {
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
             Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
             assert uri != null;
-            Log.d("fuckshare", uri.toString());
             return List.of(uri);
         } else {
             return intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
@@ -39,7 +38,8 @@ public class Utils {
             newFilename += "." + ext;
         }
         File renamed = new File(context.getCacheDir(), newFilename);
-        assert f.renameTo(renamed);
+        // do rename but return false?
+        f.renameTo(renamed);
         return renamed;
     }
 
@@ -73,8 +73,8 @@ public class Utils {
         return UUID.randomUUID().toString();
     }
 
-    public static void copy(InputStream inputStream, OutputStream outputStream) throws IOException {
-        copy(inputStream, outputStream, inputStream.available());
+    public static long copy(InputStream inputStream, OutputStream outputStream) throws IOException {
+        return copy(inputStream, outputStream, inputStream.available());
     }
 
     /**
@@ -89,7 +89,6 @@ public class Utils {
         for (int bytesRead; remainLen > 0 && (bytesRead = inputStream.read(buffer, 0, (int) Math.min(remainLen, pLen))) != -1; remainLen -= bytesRead) {
             outputStream.write(buffer, 0, bytesRead);
         }
-        outputStream.flush();
         return len - remainLen;
     }
 
@@ -135,7 +134,6 @@ public class Utils {
             sb.append(String.format("%02X", b));
         }
         String magickNumber = sb.toString().toUpperCase();
-        Log.d("fuckshare", magickNumber);
         return magickNumber;
     }
 
