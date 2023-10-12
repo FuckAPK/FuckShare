@@ -193,9 +193,13 @@ public class Utils {
         return n - remaining;
     }
 
-    public static boolean clearCache(Context context) {
+    public static boolean clearCache(Context context, long timeDurationMillis) {
+        // delete file modified at least 30 mins ago
+        long timeBefore = System.currentTimeMillis() - timeDurationMillis;
         return Arrays.stream(Objects.requireNonNull(context.getCacheDir().listFiles()))
                 .filter(Objects::nonNull)
+                .filter(File::isFile)
+                .filter(f -> f.lastModified() < timeBefore)
                 .map(File::delete)
                 .filter(b -> !b)
                 .findFirst()

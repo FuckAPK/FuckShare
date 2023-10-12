@@ -311,7 +311,7 @@ public class ExifHelper {
                         Utils.inputStreamRead(bis, lenBytes);
                         len = Utils.bigEndianBytesToLong(lenBytes) - 2;
                         Utils.inputStreamSkip(bis, len);
-                        Log.d("fuckshare",  String.format("Discord chunk: %02X size: " + (len + 4), maker[1]));
+                        Log.d("fuckshare", String.format("Discord chunk: %02X size: " + (len + 4), maker[1]));
                         break;
                     case (byte) 0xC0:   // SOF0
                     case (byte) 0xC2:   // SOF2

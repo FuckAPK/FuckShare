@@ -6,9 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-public class ClearCacheWorker extends Worker{
-    private final Context context;
+public class ClearCacheWorker extends Worker {
     public static final String id = "clearCache";
+    private final Context context;
 
     public ClearCacheWorker(
             @NonNull Context context,
@@ -20,6 +20,7 @@ public class ClearCacheWorker extends Worker{
     @NonNull
     @Override
     public Result doWork() {
-        return Utils.clearCache(context) ? Result.success() : Result.failure();
+        final long timeDurationMillis = 1000 * 60 * 30; // 30 mins
+        return Utils.clearCache(context, timeDurationMillis) ? Result.success() : Result.failure();
     }
 }

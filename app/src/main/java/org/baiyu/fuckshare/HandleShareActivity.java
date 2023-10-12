@@ -61,7 +61,9 @@ public class HandleShareActivity extends Activity {
                 ClearCacheWorker.class,
                 1, TimeUnit.DAYS
         ).setConstraints(new Constraints.Builder().setRequiresDeviceIdle(true).build())
+                .setInitialDelay(10, TimeUnit.MINUTES)
                 .build();
+
         WorkManager.getInstance(this)
                 .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWR);
     }
