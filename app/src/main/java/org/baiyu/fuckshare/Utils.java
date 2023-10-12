@@ -56,7 +56,7 @@ public class Utils {
     }
 
     public static String getFileName(String fullFilename) {
-        int lastIndex = fullFilename.lastIndexOf(".");
+        int lastIndex = fullFilename.lastIndexOf('.');
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
             return fullFilename.substring(0, lastIndex);
         } else {
@@ -66,7 +66,7 @@ public class Utils {
 
     @Nullable
     public static String getFileExt(String fullFilename) {
-        int lastIndex = fullFilename.lastIndexOf(".");
+        int lastIndex = fullFilename.lastIndexOf('.');
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
             return fullFilename.substring(lastIndex + 1);
         } else {
