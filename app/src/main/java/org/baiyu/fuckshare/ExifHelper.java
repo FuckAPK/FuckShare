@@ -6,138 +6,15 @@ import androidx.exifinterface.media.ExifInterface;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ExifHelper {
-    private static final Set<String> privacyTags = Set.of(
-            "DateTime",
-            "ImageDescription",
-            "Make",
-            "Model",
-            "Software",
-            "Artist",
-            "Copyright",
-            "ExifVersion",
-            "FlashpixVersion",
-            "ColorSpace",
-            "MakerNote",
-            "UserComment",
-            "RelatedSoundFile",
-            "DateTimeOriginal",
-            "DateTimeDigitized",
-            "OffsetTime",
-            "OffsetTimeOriginal",
-            "OffsetTimeDigitized",
-            "SubSecTime",
-            "SubSecTimeOriginal",
-            "SubSecTimeDigitized",
-            "ExposureTime",
-            "FNumber",
-            "ExposureProgram",
-            "SpectralSensitivity",
-            "ISOSpeedRatings",
-            "PhotographicSensitivity",
-            "OECF",
-            "SensitivityType",
-            "StandardOutputSensitivity",
-            "RecommendedExposureIndex",
-            "ISOSpeed",
-            "ISOSpeedLatitudeyyy",
-            "ISOSpeedLatitudezzz",
-            "ShutterSpeedValue",
-            "ApertureValue",
-            "BrightnessValue",
-            "ExposureBiasValue",
-            "MaxApertureValue",
-            "SubjectDistance",
-            "MeteringMode",
-            "LightSource",
-            "Flash",
-            "SubjectArea",
-            "FocalLength",
-            "FlashEnergy",
-            "SpatialFrequencyResponse",
-            "SubjectLocation",
-            "ExposureIndex",
-            "SensingMethod",
-            "FileSource",
-            "SceneType",
-            "CFAPattern",
-            "CustomRendered",
-            "ExposureMode",
-            "WhiteBalance",
-            "DigitalZoomRatio",
-            "FocalLengthIn35mmFilm",
-            "SceneCaptureType",
-            "GainControl",
-            "Contrast",
-            "Saturation",
-            "Sharpness",
-            "DeviceSettingDescription",
-            "SubjectDistanceRange",
-            "ImageUniqueID",
-            "CameraOwnerName",
-            "BodySerialNumber",
-            "LensSpecification",
-            "LensMake",
-            "LensModel",
-            "LensSerialNumber",
-            "GPSVersionID",
-            "GPSLatitudeRef",
-            "GPSLatitude",
-            "GPSLongitudeRef",
-            "GPSLongitude",
-            "GPSAltitudeRef",
-            "GPSAltitude",
-            "GPSTimeStamp",
-            "GPSSatellites",
-            "GPSStatus",
-            "GPSMeasureMode",
-            "GPSDOP",
-            "GPSSpeedRef",
-            "GPSSpeed",
-            "GPSTrackRef",
-            "GPSTrack",
-            "GPSImgDirectionRef",
-            "GPSImgDirection",
-            "GPSMapDatum",
-            "GPSDestLatitudeRef",
-            "GPSDestLatitude",
-            "GPSDestLongitudeRef",
-            "GPSDestLongitude",
-            "GPSDestBearingRef",
-            "GPSDestBearing",
-            "GPSDestDistanceRef",
-            "GPSDestDistance",
-            "GPSProcessingMethod",
-            "GPSAreaInformation",
-            "GPSDateStamp",
-            "GPSDifferential",
-            "GPSHPositioningError",
-            "InteroperabilityIndex",
-            "DNGVersion",
-            "DefaultCropSize",
-            "ThumbnailImage",
-            "PreviewImageStart",
-            "PreviewImageLength",
-            "AspectFrame",
-            "SensorBottomBorder",
-            "SensorLeftBorder",
-            "SensorRightBorder",
-            "SensorTopBorder",
-            "ISO",
-            "JpgFromRaw",
-            "Xmp",
-            "NewSubfileType",
-            "SubfileType"
-    );
-
     private static final Set<String> pngCriticalChunks = Set.of(
             "acTL", //   animation control
             "bKGD", //   background color
@@ -184,21 +61,6 @@ public class ExifHelper {
     );
 
     private ExifHelper() {
-    }
-
-    private static void removeMetadata(ExifInterface exifInterface, Set<String> tagsToRemove) throws IOException {
-        Set<String> tagsHasToRemove = tagsToRemove.stream()
-                .filter(exifInterface::hasAttribute).collect(Collectors.toSet());
-        tagsHasToRemove.forEach(tag -> exifInterface.setAttribute(tag, null));
-        Log.d("fuckshare", "tags to remove: " + tagsHasToRemove);
-        exifInterface.saveAttributes();
-    }
-
-    public static void removeMetadataExclude(ExifInterface exifInterface, Set<String> excludeTags) throws IOException {
-        Set<String> newTagSet = new HashSet<>(privacyTags);
-        Log.d("fuckshare", "all tags " + newTagSet);
-        excludeTags.forEach(newTagSet::remove);
-        removeMetadata(exifInterface, newTagSet);
     }
 
     public static void pngToNewWithoutMetadata(InputStream inputStream, OutputStream outputStream) {
@@ -338,7 +200,7 @@ public class ExifHelper {
             // calculate size
             // file size doesn't contain first 8 bytes
             long newSize = bis.available() - 8;
-            bis.mark(bis.available() + 1);
+            bis.mark(bis.available());
 
             Utils.inputStreamSkip(bis, 12);
             while (bis.available() > 0) {
@@ -389,20 +251,12 @@ public class ExifHelper {
 
     }
 
-    public static void writeBackMetadata(File from, File to, Set<String> tags) throws IOException {
-        ExifInterface exifFrom = new ExifInterface(from);
-        ExifInterface exifTo = new ExifInterface(to);
-        writeBackMetadata(exifFrom, exifTo, tags);
-    }
-
     public static void writeBackMetadata(ExifInterface exifFrom, ExifInterface exifTo, Set<String> tags) throws IOException {
-        tags.stream()
+        Map<String, String> tagsValue = tags.stream()
                 .filter(exifFrom::hasAttribute)
-                .forEach(tag -> {
-                    exifTo.setAttribute(tag, exifFrom.getAttribute(tag));
-                    Log.d("fuckshare", "writing back tag: " + tag);
-                });
-        // TODO seems not working
+                .collect(Collectors.toMap(tag -> tag, tag -> Optional.ofNullable(exifFrom.getAttribute(tag)).orElse("")));
+        tagsValue.forEach(exifTo::setAttribute);
+        Log.d("fuckshare", "tags rewrite: " + tagsValue);
         exifTo.saveAttributes();
     }
 }

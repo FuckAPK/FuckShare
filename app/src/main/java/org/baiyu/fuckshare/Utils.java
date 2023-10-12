@@ -6,9 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
-import android.util.Log;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -92,8 +90,8 @@ public class Utils {
         return len - remainLen;
     }
 
-    public static ImageType getImageType(InputStream inputStream) {
-        String magick = getMagickNumber(inputStream);
+    public static ImageType getImageType(byte[] bytes) {
+        String magick = bytesToHex(bytes);
         if (magick.startsWith("89504E470D0A1A0A")) {
             return ImageType.PNG;
         }
@@ -113,28 +111,12 @@ public class Utils {
         return !ImageType.UNKNOWN.equals(imageType);
     }
 
-    public static String getMagickNumber(InputStream inputStream) {
-        InputStream in;
-        if (inputStream.markSupported()) {
-            in = inputStream;
-        } else {
-            in = new BufferedInputStream(inputStream);
-        }
-
-        byte[] bytes = new byte[16];
-        try {
-            in.mark(32);
-            inputStreamRead(in, bytes, 0, 16);
-            in.reset();
-        } catch (IOException e) {
-            Log.e("fuckshare", e.toString());
-        }
+    public static String bytesToHex(byte... bytes) {
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) {
             sb.append(String.format("%02X", b));
         }
-        String magickNumber = sb.toString().toUpperCase();
-        return magickNumber;
+        return sb.toString();
     }
 
     public static long bigEndianBytesToLong(byte[] bytes) {

@@ -13,6 +13,7 @@ import android.util.Log;
 
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
+import androidx.exifinterface.media.ExifInterface;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
@@ -26,12 +27,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public class HandleShareActivity extends Activity {
     private static Settings settings;
 
-    /** @noinspection deprecation*/
+    /**
+     * @noinspection deprecation
+     */
     @SuppressLint("WorldReadableFiles")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,11 +97,13 @@ public class HandleShareActivity extends Activity {
         try (OutputStream fout = new BufferedOutputStream(new FileOutputStream(f));
              InputStream uin = new BufferedInputStream(this.getContentResolver().openInputStream(uri))) {
 
-//            uin.mark(32);
-            ImageType imageType = Utils.getImageType(uin);
-//            uin.reset();
+            byte[] magickBytes = new byte[16];
+            uin.mark(16);
+            Utils.inputStreamRead(uin, magickBytes);
+            uin.reset();
 
-            Log.d("fuckshare", imageType.toString());
+            ImageType imageType = Utils.getImageType(magickBytes);
+
             if (Utils.isKnownImageType(imageType) && settings.enableRemoveExif()) {
                 switch (imageType) {
                     case JPEG -> ExifHelper.jpegToNewWithoutMetadata(uin, fout);
@@ -105,7 +111,7 @@ public class HandleShareActivity extends Activity {
                     case WEBP -> ExifHelper.webpToNewWithoutMetadata(uin, fout);
                     default -> Log.e("fuckshare", "unsupported image type: " + imageType);
                 }
-//                ExifHelper.writeBackMetadata(new ExifInterface(uin), new ExifInterface(f), settings.getExifTagsToKeep());
+                ExifHelper.writeBackMetadata(new ExifInterface(Objects.requireNonNull(this.getContentResolver().openInputStream(uri))), new ExifInterface(f), settings.getExifTagsToKeep());
             } else {
                 // is file or disabled exif remove
                 Utils.copy(uin, fout);
