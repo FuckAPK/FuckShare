@@ -34,9 +34,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class HandleShareActivity extends Activity {
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
     private static Settings settings;
 
     /**
@@ -90,7 +94,15 @@ public class HandleShareActivity extends Activity {
 
     private void handleUris(List<Uri> uris) {
         ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this).setType(getIntent().getType());
-        uris.stream().map(this::refreshUri).filter(Objects::nonNull).forEach(ib::addStream);
+        uris.stream().map(uri -> executorService.submit(() -> refreshUri(uri))).map(uriFuture -> {
+                    try {
+                        return uriFuture.get();
+                    } catch (ExecutionException | InterruptedException e) {
+                        Log.d("fuckshare", e.toString());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull).forEach(ib::addStream);
         Intent chooserIntent = ib.createChooserIntent();
         chooserIntent.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
         startActivity(chooserIntent);
