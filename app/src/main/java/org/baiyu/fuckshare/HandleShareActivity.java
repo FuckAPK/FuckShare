@@ -13,6 +13,10 @@ import android.util.Log;
 
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -22,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class HandleShareActivity extends Activity {
     private static Settings settings;
@@ -47,6 +52,18 @@ public class HandleShareActivity extends Activity {
             handleUris(uris);
         }
         finish();
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        PeriodicWorkRequest clearCacheWR = new PeriodicWorkRequest.Builder(
+                ClearCacheWorker.class,
+                1, TimeUnit.DAYS
+        ).setConstraints(new Constraints.Builder().setRequiresDeviceIdle(true).build())
+                .build();
+        WorkManager.getInstance(this)
+                .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWR);
     }
 
     void handleSendText(Intent intent) {

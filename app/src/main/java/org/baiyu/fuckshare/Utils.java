@@ -192,4 +192,13 @@ public class Utils {
         }
         return n - remaining;
     }
+
+    public static boolean clearCache(Context context) {
+        return Arrays.stream(Objects.requireNonNull(context.getCacheDir().listFiles()))
+                .filter(Objects::nonNull)
+                .map(File::delete)
+                .filter(b -> !b)
+                .findFirst()
+                .orElse(true);
+    }
 }
