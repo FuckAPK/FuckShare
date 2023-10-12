@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.FileUtils;
 import android.os.Parcelable;
 import android.util.Log;
 
@@ -27,8 +28,6 @@ import org.baiyu.fuckshare.filetype.FileType;
 import org.baiyu.fuckshare.filetype.ImageType;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -112,10 +111,7 @@ public class HandleShareActivity extends Activity {
             if (fileType instanceof ImageType imageType && settings.enableRemoveExif()) {
                 processImgMetadata(file, imageType, uri);
             } else {
-                Utils.copy(
-                        new BufferedInputStream(getContentResolver().openInputStream(uri)),
-                        new BufferedOutputStream(new FileOutputStream(file))
-                );
+                FileUtils.copy(Objects.requireNonNull(getContentResolver().openInputStream(uri)), new FileOutputStream(file));
             }
             return FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", file);
         } catch (IOException e) {
