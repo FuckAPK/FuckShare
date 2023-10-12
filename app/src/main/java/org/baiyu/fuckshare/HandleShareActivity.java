@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class HandleShareActivity extends Activity {
     private static Settings settings;
 
+    /** @noinspection deprecation*/
     @SuppressLint("WorldReadableFiles")
     @Override
     protected void onCreate(Bundle savedInstanceState) {

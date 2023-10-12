@@ -38,9 +38,9 @@ public class Utils {
         if (ext != null) {
             newFilename += "." + ext;
         }
-        File rename = new File(context.getCacheDir(), newFilename);
-        f.renameTo(rename);
-        return rename;
+        File renamed = new File(context.getCacheDir(), newFilename);
+        assert f.renameTo(renamed);
+        return renamed;
     }
 
     public static String getRealFileName(Context context, Uri uri) {
@@ -80,11 +80,7 @@ public class Utils {
     /**
      * copy $len bytes from inputStream to outputStream if available
      *
-     * @param inputStream
-     * @param outputStream
-     * @param len
      * @return number of bytes copied
-     * @throws IOException
      */
     public static long copy(InputStream inputStream, OutputStream outputStream, long len) throws IOException {
         long remainLen = len;
@@ -129,7 +125,7 @@ public class Utils {
         byte[] bytes = new byte[16];
         try {
             in.mark(32);
-            in.read(bytes, 0, 16);
+            inputStreamRead(in, bytes, 0, 16);
             in.reset();
         } catch (IOException e) {
             Log.e("fuckshare", e.toString());
