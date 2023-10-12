@@ -5,32 +5,33 @@
         app:defaultValue="false"
         app:iconSpaceReserved="false"
         app:key="enable_force_forward_hook"
-        app:title="@string/desc_enable_force_forward_hook" />
+        app:title="@string/title_enable_force_forward_hook" />
     <SwitchPreferenceCompat
         app:defaultValue="true"
         app:iconSpaceReserved="false"
         app:key="enable_remove_exif"
-        app:title="@string/desc_enable_remove_exif" />
+        app:summary="@string/desc_enable_remove_exif"
+        app:title="@string/title_enable_remove_exif" />
     <SwitchPreferenceCompat
         app:defaultValue="true"
         app:iconSpaceReserved="false"
         app:key="enable_image_rename"
-        app:title="@string/desc_enable_image_rename" />
+        app:title="@string/title_enable_image_rename" />
     <SwitchPreferenceCompat
         app:defaultValue="false"
         app:iconSpaceReserved="false"
         app:key="enable_file_rename"
-        app:title="@string/desc_enable_file_rename" />
+        app:title="@string/title_enable_file_rename" />
     <SwitchPreferenceCompat
         app:defaultValue="false"
         app:iconSpaceReserved="false"
         app:key="enable_file_type_sniff"
-        app:title="@string/desc_enable_file_type_sniff" />
+        app:title="@string/title_enable_file_type_sniff" />
     <EditTextPreference
         app:defaultValue="Orientation, Gamma, ColorSpace, XResolution, YResolution, ResolutionUnit"
         app:iconSpaceReserved="false"
         app:key="exif_tags_to_keep"
-        app:title="@string/desc_exif_tags_to_keep"
+        app:title="@string/title_exif_tags_to_keep"
         app:useSimpleSummaryProvider="true" />
 
 </PreferenceScreen>
