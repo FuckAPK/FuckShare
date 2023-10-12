@@ -26,6 +26,7 @@ import org.baiyu.fuckshare.exifhelper.pngExifHelper;
 import org.baiyu.fuckshare.exifhelper.webpExifHelper;
 import org.baiyu.fuckshare.filetype.FileType;
 import org.baiyu.fuckshare.filetype.ImageType;
+import org.baiyu.fuckshare.filetype.OtherType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -142,7 +143,7 @@ public class HandleShareActivity extends Activity {
 
     private String getNewName(FileType fileType, String originName) {
         String newFilename;
-        String newExt;
+        String newExt = null;
 
         if ((fileType instanceof ImageType && settings.enableImageRename()) ||
                 (!(fileType instanceof ImageType) && settings.enableFileRename())) {
@@ -153,7 +154,8 @@ public class HandleShareActivity extends Activity {
 
         if (settings.enableFileTypeSniff()) {
             newExt = fileType.getExtension();
-        } else {
+        }
+        if (Objects.equals(newExt, OtherType.UNKNOWN.getExtension())) {
             newExt = Utils.getFileExt(originName);
         }
         return Utils.mergeFilename(newFilename, newExt);
