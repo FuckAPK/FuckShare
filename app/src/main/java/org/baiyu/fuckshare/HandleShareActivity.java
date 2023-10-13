@@ -32,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -112,7 +114,10 @@ public class HandleShareActivity extends Activity {
     private Uri refreshUri(Uri uri) {
         try {
             byte[] magickBytes = new byte[16];
-            Utils.inputStreamRead(this.getContentResolver().openInputStream(uri), magickBytes);
+            try (InputStream uin = this.getContentResolver().openInputStream(uri)) {
+                assert uin != null;
+                Utils.inputStreamRead(uin, magickBytes);
+            }
 
             FileType fileType = Utils.getFileType(magickBytes);
 
@@ -124,7 +129,11 @@ public class HandleShareActivity extends Activity {
             if (fileType instanceof ImageType imageType && settings.enableRemoveExif()) {
                 processImgMetadata(file, imageType, uri);
             } else {
-                FileUtils.copy(Objects.requireNonNull(getContentResolver().openInputStream(uri)), new FileOutputStream(file));
+                try (InputStream uin = getContentResolver().openInputStream(uri);
+                     OutputStream fout = new FileOutputStream(file)) {
+                    assert uin != null;
+                    FileUtils.copy(uin, fout);
+                }
             }
             return FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", file);
         } catch (IOException e) {
@@ -143,13 +152,19 @@ public class HandleShareActivity extends Activity {
         if (eh == null) {
             Log.e("fuckshare", "unsupported image type: " + imageType);
         } else {
-            eh.removeMetadata(getContentResolver().openInputStream(uri), new FileOutputStream(file));
+            try (InputStream uin = getContentResolver().openInputStream(uri);
+                 OutputStream fout = new FileOutputStream(file)) {
+                eh.removeMetadata(uin, fout);
+            }
         }
         if (imageType.isSupportMetadata()) {
-            ExifHelper.writeBackMetadata(
-                    new ExifInterface(Objects.requireNonNull(this.getContentResolver().openInputStream(uri))),
-                    new ExifInterface(file),
-                    settings.getExifTagsToKeep());
+            try (InputStream uin = getContentResolver().openInputStream(uri)) {
+                assert uin != null;
+                ExifHelper.writeBackMetadata(
+                        new ExifInterface(uin),
+                        new ExifInterface(file),
+                        settings.getExifTagsToKeep());
+            }
         }
     }
 
