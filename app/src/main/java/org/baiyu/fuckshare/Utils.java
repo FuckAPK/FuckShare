@@ -10,6 +10,8 @@ import android.provider.OpenableColumns;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.baiyu.fuckshare.filetype.ArchiveType;
+import org.baiyu.fuckshare.filetype.AudioType;
 import org.baiyu.fuckshare.filetype.FileType;
 import org.baiyu.fuckshare.filetype.ImageType;
 import org.baiyu.fuckshare.filetype.OtherType;
@@ -22,8 +24,10 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 public class Utils {
@@ -101,38 +105,18 @@ public class Utils {
     }
 
     public static FileType getFileType(byte[] bytes) {
-        String magick = bytesToHex(bytes);
-        if (magick.startsWith("89504E470D0A1A0A")) {
-            return ImageType.PNG;
-        }
-        if (magick.startsWith("52494646") && magick.substring(16).startsWith("57454250")) {
-            return ImageType.WEBP;
-        }
-        if (magick.startsWith("FFD8FFDB")
-                || magick.startsWith("FFD8FFE0")
-                || magick.startsWith("FFD8FFEE")
-                || (magick.startsWith("FFD8FFE1") && magick.substring(12).startsWith("457869660000"))) {
-            return ImageType.JPEG;
-        }
-        if (magick.startsWith("474946383761")
-                || magick.startsWith("474946383961")) {
-            return ImageType.GIF;
-        }
-        if (magick.startsWith("6674797069736F6D")) {
-            return VideoType.MP4;
-        }
-        if (magick.startsWith("52494646") && magick.substring(8).startsWith("41564920")) {
-            return VideoType.AVI;
-        }
-        return OtherType.UNKNOWN;
-    }
+        Set<Set<FileType>> fileTypes = Set.of(
+                Set.of(ImageType.values()),
+                Set.of(VideoType.values()),
+                Set.of(AudioType.values()),
+                Set.of(ArchiveType.values()),
+                Set.of(OtherType.values())
+        );
 
-    public static String bytesToHex(byte... bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X", b));
-        }
-        return sb.toString();
+        return fileTypes.stream()
+                .flatMap(Collection::stream)
+                .filter(fileType -> fileType.signatureMatch(bytes))
+                .findFirst().orElse(OtherType.UNKNOWN);
     }
 
     public static long bigEndianBytesToLong(byte[] bytes) {
