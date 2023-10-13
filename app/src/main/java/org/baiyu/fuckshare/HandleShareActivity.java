@@ -115,7 +115,7 @@ public class HandleShareActivity extends Activity {
 
             File file = new File(getCacheDir(), newFilename);
 
-            if (fileType instanceof ImageType imageType && settings.enableRemoveExif()) {
+            if (fileType instanceof ImageType imageType && imageType.isSupportMetadata() && settings.enableRemoveExif()) {
                 processImgMetadata(file, imageType, uri);
             } else {
                 try (InputStream uin = getContentResolver().openInputStream(uri);
