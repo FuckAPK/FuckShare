@@ -73,7 +73,6 @@ public class HandleShareActivity extends Activity {
 
     @Override
     public void finish() {
-        super.finish();
         PeriodicWorkRequest clearCacheWR = new PeriodicWorkRequest.Builder(
                 ClearCacheWorker.class,
                 1, TimeUnit.DAYS
@@ -83,6 +82,8 @@ public class HandleShareActivity extends Activity {
 
         WorkManager.getInstance(this)
                 .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWR);
+
+        super.finish();
     }
 
     void handleSendText(Intent intent) {
