@@ -21,6 +21,16 @@ public enum ImageType implements FileType {
     GIF(false, "gif", Set.of(
             Map.of(0, new byte[]{(byte) 0x47, (byte) 0x49, (byte) 0x46, (byte) 0x38, (byte) 0x37, (byte) 0x61}),
             Map.of(0, new byte[]{(byte) 0x47, (byte) 0x49, (byte) 0x46, (byte) 0x38, (byte) 0x39, (byte) 0x61})
+    )),
+    TIFF(false, "tiff", Set.of(
+            Map.of(0, new byte[]{(byte) 0x49, (byte) 0x49, (byte) 0x2A, (byte) 0x00}),
+            Map.of(0, new byte[]{(byte) 0x4D, (byte) 0x4D, (byte) 0x00, (byte) 0x2A})
+    )),
+    PSD(false, "psd", Set.of(
+            Map.of(0, new byte[]{(byte) 0x38, (byte) 0x42, (byte) 0x50, (byte) 0x53})
+    )),
+    SVG(false, "svg", Set.of(
+            Map.of(0, new byte[]{(byte) 0x3c, (byte) 0x73, (byte) 0x76, (byte) 0x67, (byte) 0x20})
     ));
 
     private final boolean supportMetadata;

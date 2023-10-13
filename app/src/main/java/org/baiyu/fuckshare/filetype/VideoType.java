@@ -5,7 +5,7 @@ import java.util.Set;
 
 public enum VideoType implements FileType {
     MP4("mp4", Set.of(
-            Map.of(0, new byte[]{(byte) 0x66, (byte) 0x74, (byte) 0x79, (byte) 0x70, (byte) 0x69, (byte) 0x73, (byte) 0x6F, (byte) 0x6D})
+            Map.of(0, new byte[]{(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x20, (byte) 0x66, (byte) 0x74, (byte) 0x79, (byte) 0x70, (byte) 0x69, (byte) 0x73, (byte) 0x6F, (byte) 0x6D})
     )),
     AVI("avi", Set.of(
             Map.of(0, new byte[]{(byte) 0x52, (byte) 0x49, (byte) 0x46, (byte) 0x46},
@@ -13,7 +13,11 @@ public enum VideoType implements FileType {
             )
     )),
     MPEG("mpeg", Set.of(
-            Map.of(0, new byte[]{(byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xB3})
+            Map.of(0, new byte[]{(byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xB3}),
+            Map.of(0, new byte[]{(byte) 0x00, (byte) 0x00, (byte) 0x01, (byte) 0xBA})
+    )),
+    MKV("mkv", Set.of(
+            Map.of(0, new byte[]{(byte) 0x1A, (byte) 0x45, (byte) 0xDF, (byte) 0xA3})
     ));
 
     private final String extension;

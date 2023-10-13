@@ -15,8 +15,14 @@ public enum AudioType implements FileType {
     )),
     WAVE("wav", Set.of(
             Map.of(0, new byte[]{(byte) 0x52, (byte) 0x49, (byte) 0x46, (byte) 0x46},
-                    8, new byte[]{(byte) 0x57, (byte) 0x41, (byte) 0x56, (byte) 0x45}
-            )
+                    8, new byte[]{(byte) 0x57, (byte) 0x41, (byte) 0x56, (byte) 0x45})
+    )),
+    OGG("ogg", Set.of(
+            Map.of(0, new byte[]{(byte) 0x4F, (byte) 0x67, (byte) 0x67, (byte) 0x53})
+    )),
+    AIFF("aiff", Set.of(
+            Map.of(0, new byte[]{(byte) 0x46, (byte) 0x4F, (byte) 0x52, (byte) 0x4D},
+                    8, new byte[]{(byte) 0x41, (byte) 0x49, (byte) 0x46, (byte) 0x46})
     ));
 
     private final String extension;
