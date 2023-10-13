@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -55,6 +56,7 @@ public class Utils {
                 return cursor.getString(nameIndex);
             }
         } else {
+            Log.d("fuckshare", "Unknown scheme: " + uri.getScheme());
             return null;
         }
     }
@@ -113,10 +115,10 @@ public class Utils {
                 Set.of(OtherType.values())
         );
 
-        return fileTypes.stream()
+        return fileTypes.parallelStream()
                 .flatMap(Collection::stream)
                 .filter(fileType -> fileType.signatureMatch(bytes))
-                .findFirst().orElse(OtherType.UNKNOWN);
+                .findAny().orElse(OtherType.UNKNOWN);
     }
 
     public static long bigEndianBytesToLong(byte[] bytes) {
@@ -173,6 +175,7 @@ public class Utils {
         // delete file modified at least 30 mins ago
         long timeBefore = System.currentTimeMillis() - timeDurationMillis;
         return Arrays.stream(Objects.requireNonNull(context.getCacheDir().listFiles()))
+                .parallel()
                 .filter(Objects::nonNull)
                 .filter(File::isFile)
                 .filter(f -> f.lastModified() < timeBefore)

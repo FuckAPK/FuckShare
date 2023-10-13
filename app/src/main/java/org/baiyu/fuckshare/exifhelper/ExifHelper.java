@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 public interface ExifHelper {
 
     static void writeBackMetadata(ExifInterface exifFrom, ExifInterface exifTo, Set<String> tags) throws IOException {
-        Map<String, String> tagsValue = tags.stream()
+        Map<String, String> tagsValue = tags.parallelStream()
                 .filter(exifFrom::hasAttribute)
                 .collect(Collectors.toMap(tag -> tag, tag -> Optional.ofNullable(exifFrom.getAttribute(tag)).orElse("")));
-        tagsValue.forEach(exifTo::setAttribute);
+        tagsValue.entrySet().parallelStream().forEach(entry -> exifTo.setAttribute(entry.getKey(), entry.getValue()));
         Log.d("fuckshare", "tags rewrite: " + tagsValue);
         exifTo.saveAttributes();
     }

@@ -18,15 +18,16 @@ public interface FileType {
             return false;
         }
 
-        int signatureRequireLength = signature.stream().flatMap(m -> m.entrySet().stream()).map(
+        int signatureRequireLength = signature.parallelStream().flatMap(m -> m.entrySet().stream()).map(
                 integerEntry -> integerEntry.getKey() + integerEntry.getValue().length
-        ).max(Comparator.comparingInt(x -> x)).orElse(0);
+        ).max(Comparator.comparingInt(x -> x)).orElse(Integer.MAX_VALUE);
+
         if (signatureRequireLength <= 0 || bytes.length < signatureRequireLength) {
             return false;
         }
 
-        return signature.stream().map(
-                integerMap -> integerMap.entrySet().stream().map(
+        return signature.parallelStream().anyMatch(
+                integerMap -> integerMap.entrySet().parallelStream().allMatch(
                         integerEntry -> {
                             int fixed = integerEntry.getKey();
                             byte[] signBytes = integerEntry.getValue();
@@ -37,7 +38,7 @@ public interface FileType {
                             }
                             return true;
                         }
-                ).filter(b -> !b).findFirst().orElse(true)
-        ).filter(s -> s).findFirst().orElse(false);
+                )
+        );
     }
 }
