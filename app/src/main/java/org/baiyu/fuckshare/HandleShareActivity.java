@@ -94,7 +94,7 @@ public class HandleShareActivity extends Activity {
 
     private void handleUris(@NonNull List<Uri> uris) {
         ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this).setType(getIntent().getType());
-        uris.parallelStream().map(this::refreshUri).filter(Objects::nonNull).forEach(ib::addStream);
+        uris.parallelStream().map(this::refreshUri).filter(Objects::nonNull).forEachOrdered(ib::addStream);
         Intent chooserIntent = ib.createChooserIntent();
         chooserIntent.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
         startActivity(chooserIntent);
