@@ -62,7 +62,7 @@ public class Utils {
     }
 
     @NonNull
-    public static String getFileName(@NonNull String fullFilename) {
+    public static String getFileNameNoExt(@NonNull String fullFilename) {
         int lastIndex = fullFilename.lastIndexOf('.');
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
             return fullFilename.substring(0, lastIndex);
@@ -72,7 +72,7 @@ public class Utils {
     }
 
     @Nullable
-    public static String getFileExt(@NonNull String fullFilename) {
+    public static String getFileRealExt(@NonNull String fullFilename) {
         int lastIndex = fullFilename.lastIndexOf('.');
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
             return fullFilename.substring(lastIndex + 1);
@@ -154,7 +154,6 @@ public class Utils {
         return bb.array();
     }
 
-
     public static int inputStreamRead(InputStream inputStream, byte[] bytes) throws IOException {
         return inputStreamRead(inputStream, bytes, 0, bytes.length);
     }
@@ -175,13 +174,27 @@ public class Utils {
         return n - remaining;
     }
 
+    public static boolean deleteRecursive(@NonNull File file) {
+        if (file.isFile()) {
+            return file.delete();
+        }
+        return Arrays.stream(Objects.requireNonNull(file.listFiles()))
+                .parallel()
+                .allMatch(f -> {
+                    if (f.isFile()) {
+                        return f.delete();
+                    } else {
+                        return deleteRecursive(f) && file.delete();
+                    }
+                });
+    }
+
     public static boolean clearCache(@NonNull Context context, long timeDurationMillis) {
         long timeBefore = System.currentTimeMillis() - timeDurationMillis;
         return Arrays.stream(Objects.requireNonNull(context.getCacheDir().listFiles()))
                 .parallel()
                 .filter(Objects::nonNull)
-                .filter(File::isFile)
                 .filter(f -> f.lastModified() < timeBefore)
-                .allMatch(File::delete);
+                .allMatch(Utils::deleteRecursive);
     }
 }

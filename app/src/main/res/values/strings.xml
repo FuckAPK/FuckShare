@@ -7,7 +7,15 @@
     <string name="title_enable_image_rename">Auto rename images</string>
     <string name="title_enable_file_rename">Auto rename non-image files</string>
     <string name="title_exif_tags_to_keep">Exif tags to keep, separate by comma or space</string>
-    <string name="title_enable_file_type_sniff">Sniff file extension</string>
+    <string name="title_enable_file_type_sniff">Sniff extension</string>
     <string name="desc_enable_remove_exif">current support jpeg, png and webp</string>
     <string name="title_keep_launcher_icon">Keep launcher icon</string>
+    <string name="desc_enable_force_forward_hook">Need Xposed to work</string>
+    <string name="title_images">Images</string>
+    <string name="title_files">Files</string>
+    <string name="title_rename">Rename</string>
+    <string name="title_metadata">Metadata</string>
+    <string name="title_enable_fallback_to_file">Fallback to file</string>
+    <string name="desc_enable_fallback_to_file">Fallback to faile when failed</string>
+    <string name="desc_enable_file_type_sniff">Error may occur</string>
 </resources>

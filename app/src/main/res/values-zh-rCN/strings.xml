@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Fuck Share</string>
-    <string name="app_desc">移除分享图片元数据</string>
+    <string name="app_desc">Fuck Share!</string>
     <string name="title_enable_force_forward_hook">Hook 系统转发</string>
-    <string name="title_enable_remove_exif">移除图片元数据</string>
+    <string name="title_enable_remove_exif">移除元数据</string>
     <string name="title_enable_image_rename">图片重命名</string>
     <string name="title_enable_file_rename">文件重命名</string>
-    <string name="title_exif_tags_to_keep">保留的元数据，半角逗号或空格分隔</string>
-    <string name="title_enable_file_type_sniff">嗅探文件类型</string>
+    <string name="title_exif_tags_to_keep">保留的元数据，用逗号或空格分隔</string>
+    <string name="title_enable_file_type_sniff">嗅探扩展名</string>
     <string name="desc_enable_remove_exif">当前支持 jpeg、png 和 webp</string>
     <string name="title_keep_launcher_icon">保留桌面图标</string>
+    <string name="desc_enable_force_forward_hook">需要 Xposed</string>
+    <string name="title_images">图片</string>
+    <string name="title_files">文件</string>
+    <string name="title_rename">重命名</string>
+    <string name="title_metadata">元数据</string>
+    <string name="title_enable_fallback_to_file">失败时回退</string>
+    <string name="desc_enable_fallback_to_file">失败时回退为文件复制</string>
+    <string name="desc_enable_file_type_sniff">可能出现错误</string>
 </resources>

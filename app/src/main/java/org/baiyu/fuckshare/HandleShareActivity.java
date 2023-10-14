@@ -64,6 +64,7 @@ public class HandleShareActivity extends Activity {
         } else {
             List<Uri> uris = Utils.getUrisFromIntent(intent);
             assert uris != null;
+            assert !uris.isEmpty();
             handleUris(uris);
         }
         finish();
@@ -112,24 +113,52 @@ public class HandleShareActivity extends Activity {
 
             FileType fileType = Utils.getFileType(magickBytes);
 
-            String originName = Utils.getRealFileName(this, uri);
-            String newFilename = getNewName(fileType, originName);
-
-            File file = new File(getCacheDir(), newFilename);
+            File tempfile = new File(getCacheDir(), Utils.getRandomString());
 
             if (fileType instanceof ImageType imageType && imageType.isSupportMetadata() && settings.enableRemoveExif()) {
-                processImgMetadata(file, imageType, uri);
-            } else {
-                try (InputStream uin = getContentResolver().openInputStream(uri);
-                     OutputStream fout = new FileOutputStream(file)) {
-                    assert uin != null;
-                    FileUtils.copy(uin, fout);
+                try {
+                    processImgMetadata(tempfile, imageType, uri);
+                } catch (ImageFormatException e) {
+                    //noinspection ResultOfMethodCallIgnored
+                    tempfile.delete();
+                    if (settings.enableFallbackToFile()) {
+                        copyFileFromUri(uri, tempfile);
+                        fileType = OtherType.UNKNOWN;
+                    } else {
+                        return null;
+                    }
                 }
+            } else {
+                copyFileFromUri(uri, tempfile);
             }
-            return FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", file);
-        } catch (IOException | ImageFormatException e) {
+            // rename
+            String originName = Utils.getRealFileName(this, uri);
+            String newNameNoExt = getNewNameNoExt(fileType, originName);
+            String ext = getExt(fileType, originName);
+            String newFullName = Utils.mergeFilename(newNameNoExt, ext);
+
+            File renamed = new File(getCacheDir(), newFullName);
+            if (renamed.exists()) {
+                File oneTimeCacheDir = new File(getCacheDir(), Utils.getRandomString());
+                //noinspection ResultOfMethodCallIgnored
+                oneTimeCacheDir.mkdirs();
+                renamed = new File(oneTimeCacheDir, newFullName);
+            }
+            if (tempfile.renameTo(renamed)) {
+                tempfile = renamed;
+            }
+            return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempfile);
+        } catch (IOException e) {
             Log.d("fuckshare", e.toString());
             return null;
+        }
+    }
+
+    private void copyFileFromUri(Uri uri, File file) throws IOException {
+        try (InputStream uin = getContentResolver().openInputStream(uri);
+             OutputStream fout = new FileOutputStream(file)) {
+            assert uin != null;
+            FileUtils.copy(uin, fout);
         }
     }
 
@@ -159,23 +188,26 @@ public class HandleShareActivity extends Activity {
         }
     }
 
-    private String getNewName(FileType fileType, String originName) {
-        String newFilename;
-        String newExt = null;
-
+    private String getNewNameNoExt(FileType fileType, String originName) {
+        String newNameNoExt;
         if ((fileType instanceof ImageType && settings.enableImageRename()) ||
                 (!(fileType instanceof ImageType) && settings.enableFileRename())) {
-            newFilename = Utils.getRandomString();
+            newNameNoExt = Utils.getRandomString();
         } else {
-            newFilename = Utils.getFileName(originName);
+            newNameNoExt = Utils.getFileNameNoExt(originName);
         }
+        return newNameNoExt;
+    }
 
+    @Nullable
+    private String getExt(FileType fileType, String originName) {
+        String extension = null;
         if (settings.enableFileTypeSniff()) {
-            newExt = fileType.getExtension();
+            extension = fileType.getExtension();
         }
-        if (Objects.equals(newExt, OtherType.UNKNOWN.getExtension())) {
-            newExt = Utils.getFileExt(originName);
+        if (extension == null) {
+            extension = Utils.getFileRealExt(originName);
         }
-        return Utils.mergeFilename(newFilename, newExt);
+        return extension;
     }
 }

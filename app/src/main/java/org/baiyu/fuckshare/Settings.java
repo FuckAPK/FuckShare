@@ -16,6 +16,7 @@ public class Settings {
     private static final String PREF_ENABLE_IMAGE_RENAME = "enable_image_rename";
     private static final String PREF_ENABLE_FILE_RENAME = "enable_file_rename";
     private static final String PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff";
+    private static final String PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file";
     private volatile static Settings INSTANCE;
     private final SharedPreferences prefs;
 
@@ -63,5 +64,9 @@ public class Settings {
 
     public boolean enableFileTypeSniff() {
         return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, false);
+    }
+
+    public boolean enableFallbackToFile() {
+        return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, true);
     }
 }
