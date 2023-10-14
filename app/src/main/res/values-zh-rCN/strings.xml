@@ -9,4 +9,5 @@
     <string name="title_exif_tags_to_keep">保留的元数据，半角逗号或空格分隔</string>
     <string name="title_enable_file_type_sniff">嗅探文件类型</string>
     <string name="desc_enable_remove_exif">当前支持 jpeg、png 和 webp</string>
+    <string name="title_keep_launcher_icon">保留桌面图标</string>
 </resources>

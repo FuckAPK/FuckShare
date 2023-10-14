@@ -9,4 +9,5 @@
     <string name="title_exif_tags_to_keep">Exif tags to keep, separate by comma or space</string>
     <string name="title_enable_file_type_sniff">Sniff file extension</string>
     <string name="desc_enable_remove_exif">current support jpeg, png and webp</string>
+    <string name="title_keep_launcher_icon">Keep launcher icon</string>
 </resources>
