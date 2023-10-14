@@ -24,5 +24,5 @@ public interface ExifHelper {
         exifTo.saveAttributes();
     }
 
-    void removeMetadata(InputStream inputStream, OutputStream outputStream);
+    void removeMetadata(InputStream inputStream, OutputStream outputStream) throws IOException, ImageFormatException;
 }

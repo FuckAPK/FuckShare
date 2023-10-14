@@ -22,6 +22,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import org.baiyu.fuckshare.exifhelper.ExifHelper;
+import org.baiyu.fuckshare.exifhelper.ImageFormatException;
 import org.baiyu.fuckshare.exifhelper.jpegExifHelper;
 import org.baiyu.fuckshare.exifhelper.pngExifHelper;
 import org.baiyu.fuckshare.exifhelper.webpExifHelper;
@@ -145,8 +146,6 @@ public class HandleShareActivity extends Activity {
             try (InputStream uin = getContentResolver().openInputStream(uri);
                  OutputStream fout = new FileOutputStream(file)) {
                 eh.removeMetadata(uin, fout);
-            } catch (AssertionError error) {
-                throw new ImageFormatException("Error parse format: ");
             }
         }
         if (imageType.isSupportMetadata()) {

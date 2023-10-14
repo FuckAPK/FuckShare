@@ -13,7 +13,7 @@ import java.util.Set;
 
 public class webpExifHelper implements ExifHelper {
     @Override
-    public void removeMetadata(InputStream inputStream, OutputStream outputStream) {
+    public void removeMetadata(InputStream inputStream, OutputStream outputStream) throws IOException, ImageFormatException {
         try {
             BufferedInputStream bis;
             BufferedOutputStream bos;
@@ -86,8 +86,8 @@ public class webpExifHelper implements ExifHelper {
                 assert realChunkDataLength == 0;
             }
             bos.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (AssertionError error) {
+            throw new ImageFormatException();
         }
     }
 }

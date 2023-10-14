@@ -39,7 +39,7 @@ public class pngExifHelper implements ExifHelper {
     );
 
     @Override
-    public void removeMetadata(InputStream inputStream, OutputStream outputStream) {
+    public void removeMetadata(InputStream inputStream, OutputStream outputStream) throws ImageFormatException, IOException {
         try {
 
             BufferedInputStream bis;
@@ -88,8 +88,8 @@ public class pngExifHelper implements ExifHelper {
                 }
             }
             bos.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (AssertionError error) {
+            throw new ImageFormatException();
         }
     }
 }

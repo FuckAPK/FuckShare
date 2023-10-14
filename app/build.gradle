@@ -10,8 +10,8 @@ android {
         applicationId "org.baiyu.fuckshare"
         minSdk 30
         targetSdk 34
-        versionCode 15
-        versionName "2.9"
+        versionCode 16
+        versionName "2.10"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
