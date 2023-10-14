@@ -54,12 +54,11 @@ public class jpegExifHelper implements ExifHelper {
 
             byte[] maker = new byte[2];
             byte[] lenBytes = new byte[2];
-            long len;
+            long chunkDataLength = 0;
 
             while (bis.available() > 0) {
                 Utils.inputStreamRead(bis, maker);
                 assert maker[0] == (byte) 0xFF;
-
                 if (maker[1] == (byte) 0xD8) {
                     bos.write(maker);
                     Log.d("fuckshare", String.format("Chunk copied: %02X size: " + 2, maker[1]));
@@ -69,22 +68,24 @@ public class jpegExifHelper implements ExifHelper {
                     break;
                 } else if (jpegSkippableChunks.contains(maker[1])) {
                     Utils.inputStreamRead(bis, lenBytes);
-                    len = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                    Utils.inputStreamSkip(bis, len);
-                    Log.d("fuckshare", String.format("Discord chunk: %02X size: " + (len + 4), maker[1]));
+                    chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2;
+                    Log.d("fuckshare", String.format("Discord chunk: %02X size: " + (chunkDataLength + 4), maker[1]));
+                    chunkDataLength -= Utils.inputStreamSkip(bis, chunkDataLength);
                 } else if (maker[1] == (byte) 0xDA) {   // SOS
                     bos.write(maker);
                     // write all data
-                    len = FileUtils.copy(bis, bos);
-                    Log.d("fuckshare", "DA and following Chunks copied size: " + (len + 2));
+                    chunkDataLength = inputStream.available();
+                    Log.d("fuckshare", "DA and following Chunks copied size: " + (chunkDataLength + 2));
+                    chunkDataLength -= FileUtils.copy(bis, bos);
                 } else {
                     Utils.inputStreamRead(bis, lenBytes);
-                    len = Utils.bigEndianBytesToLong(lenBytes) - 2;
+                    chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2;
                     bos.write(maker);
                     bos.write(lenBytes);
-                    Utils.copy(bis, bos, len);
-                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + (len + 4), maker[1]));
+                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + (chunkDataLength + 4), maker[1]));
+                    chunkDataLength -= Utils.copy(bis, bos, chunkDataLength);
                 }
+                assert chunkDataLength == 0;
             }
             bos.flush();
         } catch (IOException e) {

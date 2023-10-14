@@ -35,8 +35,7 @@ public class webpExifHelper implements ExifHelper {
             byte[] webpHeader = new byte[12];
             byte[] chunkNameBytes = new byte[4];
             byte[] chunkDataLenBytes = new byte[4];
-            long chunkDataLen;
-            long realChunkDataLan;
+            long realChunkDataLength;
 
             // calculate size
             // file size doesn't contain first 8 bytes
@@ -49,14 +48,14 @@ public class webpExifHelper implements ExifHelper {
                 String chunkName = new String(chunkNameBytes);
                 Utils.inputStreamRead(bis, chunkDataLenBytes);
 
-                chunkDataLen = Utils.littleEndianBytesToLong(chunkDataLenBytes);
-                realChunkDataLan = chunkDataLen + (chunkDataLen % 2);
-
-                Utils.inputStreamSkip(bis, realChunkDataLan);
+                realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes);
+                realChunkDataLength += realChunkDataLength % 2;
 
                 if (chunkToRemove.contains(chunkName)) {
-                    newSize -= realChunkDataLan + 8;
+                    newSize -= realChunkDataLength + 8;
                 }
+                realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
+                assert realChunkDataLength == 0;
             }
 
             bis.reset();
@@ -72,18 +71,19 @@ public class webpExifHelper implements ExifHelper {
                 String chunkName = new String(chunkNameBytes);
                 Utils.inputStreamRead(bis, chunkDataLenBytes);
 
-                chunkDataLen = Utils.littleEndianBytesToLong(chunkDataLenBytes);
+                realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes);
                 // standard of tiff: fill in end with 0x00 if chunk size if odd
-                realChunkDataLan = chunkDataLen + (chunkDataLen % 2);
+                realChunkDataLength += realChunkDataLength % 2;
 
                 if (chunkToRemove.contains(chunkName)) {
-                    Utils.inputStreamSkip(bis, realChunkDataLan);
-                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + realChunkDataLan);
+                    realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
+                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + realChunkDataLength);
                 } else {
                     bos.write(chunkNameBytes);
                     bos.write(chunkDataLenBytes);
-                    Utils.copy(bis, bos, realChunkDataLan);
+                    realChunkDataLength -= Utils.copy(bis, bos, realChunkDataLength);
                 }
+                assert realChunkDataLength == 0;
             }
             bos.flush();
         } catch (IOException e) {

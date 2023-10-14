@@ -2,6 +2,7 @@ package org.baiyu.fuckshare.exifhelper;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
 
 public interface ExifHelper {
 
-    static void writeBackMetadata(ExifInterface exifFrom, ExifInterface exifTo, Set<String> tags) throws IOException {
+    static void writeBackMetadata(@NonNull ExifInterface exifFrom, @NonNull ExifInterface exifTo, @NonNull Set<String> tags) throws IOException {
         Map<String, String> tagsValue = tags.parallelStream()
                 .filter(exifFrom::hasAttribute)
                 .collect(Collectors.toMap(tag -> tag, tag -> Optional.ofNullable(exifFrom.getAttribute(tag)).orElse("")));

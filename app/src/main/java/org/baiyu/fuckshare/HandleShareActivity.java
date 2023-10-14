@@ -12,6 +12,7 @@ import android.os.FileUtils;
 import android.os.Parcelable;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ShareCompat;
 import androidx.core.content.FileProvider;
 import androidx.exifinterface.media.ExifInterface;
@@ -82,7 +83,7 @@ public class HandleShareActivity extends Activity {
         super.finish();
     }
 
-    void handleSendText(Intent intent) {
+    void handleSendText(@NonNull Intent intent) {
         ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this);
         ib.setType(intent.getType());
         ib.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT));
@@ -91,7 +92,7 @@ public class HandleShareActivity extends Activity {
         startActivity(chooserIntent);
     }
 
-    private void handleUris(List<Uri> uris) {
+    private void handleUris(@NonNull List<Uri> uris) {
         ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this).setType(getIntent().getType());
         uris.parallelStream().map(this::refreshUri).filter(Objects::nonNull).forEach(ib::addStream);
         Intent chooserIntent = ib.createChooserIntent();
@@ -125,13 +126,13 @@ public class HandleShareActivity extends Activity {
                 }
             }
             return FileProvider.getUriForFile(this, this.getPackageName() + ".fileprovider", file);
-        } catch (IOException e) {
+        } catch (IOException | ImageFormatException e) {
             Log.d("fuckshare", e.toString());
             return null;
         }
     }
 
-    private void processImgMetadata(File file, ImageType imageType, Uri uri) throws IOException {
+    private void processImgMetadata(File file, @NonNull ImageType imageType, Uri uri) throws IOException, ImageFormatException {
         ExifHelper eh = null;
         switch (imageType) {
             case JPEG -> eh = new jpegExifHelper();
@@ -144,6 +145,8 @@ public class HandleShareActivity extends Activity {
             try (InputStream uin = getContentResolver().openInputStream(uri);
                  OutputStream fout = new FileOutputStream(file)) {
                 eh.removeMetadata(uin, fout);
+            } catch (AssertionError error) {
+                throw new ImageFormatException("Error parse format: ");
             }
         }
         if (imageType.isSupportMetadata()) {

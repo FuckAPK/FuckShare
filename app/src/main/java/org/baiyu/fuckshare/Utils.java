@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class Utils {
-    public static List<Uri> getUrisFromIntent(Intent intent) {
+    public static List<Uri> getUrisFromIntent(@NonNull Intent intent) {
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
             Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
             assert uri != null;
@@ -43,7 +43,7 @@ public class Utils {
     }
 
     @Nullable
-    public static String getRealFileName(Context context, Uri uri) {
+    public static String getRealFileName(Context context, @NonNull Uri uri) {
 
         if (ContentResolver.SCHEME_FILE.equals(uri.getScheme())) {
             File file = new File(Objects.requireNonNull(uri.getPath()));
@@ -61,7 +61,8 @@ public class Utils {
         }
     }
 
-    public static String getFileName(String fullFilename) {
+    @NonNull
+    public static String getFileName(@NonNull String fullFilename) {
         int lastIndex = fullFilename.lastIndexOf('.');
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
             return fullFilename.substring(0, lastIndex);
@@ -71,7 +72,7 @@ public class Utils {
     }
 
     @Nullable
-    public static String getFileExt(String fullFilename) {
+    public static String getFileExt(@NonNull String fullFilename) {
         int lastIndex = fullFilename.lastIndexOf('.');
         if (lastIndex > 0 && lastIndex < fullFilename.length() - 1) {
             return fullFilename.substring(lastIndex + 1);
@@ -87,6 +88,7 @@ public class Utils {
         return filename;
     }
 
+    @NonNull
     public static String getRandomString() {
         return UUID.randomUUID().toString();
     }
@@ -136,6 +138,7 @@ public class Utils {
         return bb.getLong();
     }
 
+    @NonNull
     public static byte[] longToBigEndianBytes(long num) {
         ByteBuffer bb = ByteBuffer.allocate(8);
         bb.order(ByteOrder.BIG_ENDIAN);
@@ -143,6 +146,7 @@ public class Utils {
         return bb.array();
     }
 
+    @NonNull
     public static byte[] longToLittleEndianBytes(long num) {
         ByteBuffer bb = ByteBuffer.allocate(8);
         bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -155,7 +159,7 @@ public class Utils {
         return inputStreamRead(inputStream, bytes, 0, bytes.length);
     }
 
-    public static int inputStreamRead(InputStream inputStream, byte[] bytes, int offset, int n) throws IOException {
+    public static int inputStreamRead(@NonNull InputStream inputStream, byte[] bytes, int offset, int n) throws IOException {
         int remaining = n;
         while (inputStream.available() > 0 && remaining > 0) {
             remaining -= inputStream.read(bytes, offset, remaining);
@@ -163,7 +167,7 @@ public class Utils {
         return n - remaining;
     }
 
-    public static long inputStreamSkip(InputStream inputStream, long n) throws IOException {
+    public static long inputStreamSkip(@NonNull InputStream inputStream, long n) throws IOException {
         long remaining = n;
         while (inputStream.available() > 0 && remaining > 0) {
             remaining -= inputStream.skip(remaining);
@@ -171,7 +175,7 @@ public class Utils {
         return n - remaining;
     }
 
-    public static boolean clearCache(Context context, long timeDurationMillis) {
+    public static boolean clearCache(@NonNull Context context, long timeDurationMillis) {
         // delete file modified at least 30 mins ago
         long timeBefore = System.currentTimeMillis() - timeDurationMillis;
         return Arrays.stream(Objects.requireNonNull(context.getCacheDir().listFiles()))

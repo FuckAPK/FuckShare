@@ -2,6 +2,8 @@ package org.baiyu.fuckshare;
 
 import android.content.Intent;
 
+import androidx.annotation.NonNull;
+
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
@@ -13,7 +15,7 @@ public class MainHook implements IXposedHookLoadPackage {
     private final static Settings settings = Settings.getInstance(new XSharedPreferences(BuildConfig.APPLICATION_ID));
 
     @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) {
+    public void handleLoadPackage(@NonNull XC_LoadPackage.LoadPackageParam lpparam) {
         if (!lpparam.packageName.equals("android")) {
             return;
         }

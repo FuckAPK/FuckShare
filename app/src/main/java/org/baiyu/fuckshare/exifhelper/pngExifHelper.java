@@ -63,11 +63,12 @@ public class pngExifHelper implements ExifHelper {
 
             byte[] chunkLengthBytes = new byte[4];
             byte[] chunkNameBytes = new byte[4];
-            long chunkLength;
+            long chunkDataCRCLength;
 
             while (bis.available() > 0) {
                 Utils.inputStreamRead(bis, chunkLengthBytes);
-                chunkLength = Utils.bigEndianBytesToLong(chunkLengthBytes);
+                // 4 bytes of crc
+                chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4;
 
                 Utils.inputStreamRead(bis, chunkNameBytes);
                 String chunkName = new String(chunkNameBytes);
@@ -75,12 +76,13 @@ public class pngExifHelper implements ExifHelper {
                 if (pngCriticalChunks.contains(chunkName)) {
                     bos.write(chunkLengthBytes);
                     bos.write(chunkNameBytes);
-                    Utils.copy(bis, bos, chunkLength + 4);
+                    chunkDataCRCLength -= Utils.copy(bis, bos, chunkDataCRCLength);
                 } else {
                     // skip chunkData and chunkCrc
-                    Utils.inputStreamSkip(bis, chunkLength + 4);
-                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + chunkLength + 8);
+                    chunkDataCRCLength -= Utils.inputStreamSkip(bis, chunkDataCRCLength);
+                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + chunkDataCRCLength + 4);
                 }
+                assert chunkDataCRCLength == 0;
                 if (chunkName.equals("IEND")) {
                     break;
                 }
