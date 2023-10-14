@@ -12,6 +12,11 @@ import java.io.OutputStream;
 import java.util.Set;
 
 public class webpExifHelper implements ExifHelper {
+    private static final Set<String> webpSkippableChunks = Set.of(
+            "EXIF",
+            "XMP "
+    );
+
     @Override
     public void removeMetadata(InputStream inputStream, OutputStream outputStream) throws IOException, ImageFormatException {
         try {
@@ -29,8 +34,6 @@ public class webpExifHelper implements ExifHelper {
             } else {
                 bos = new BufferedOutputStream(outputStream);
             }
-
-            Set<String> chunkToRemove = Set.of("EXIF", "XMP ");
 
             byte[] webpHeader = new byte[12];
             byte[] chunkNameBytes = new byte[4];
@@ -51,7 +54,7 @@ public class webpExifHelper implements ExifHelper {
                 realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes);
                 realChunkDataLength += realChunkDataLength % 2;
 
-                if (chunkToRemove.contains(chunkName)) {
+                if (webpSkippableChunks.contains(chunkName)) {
                     newSize -= realChunkDataLength + 8;
                 }
                 realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
@@ -75,7 +78,7 @@ public class webpExifHelper implements ExifHelper {
                 // standard of tiff: fill in end with 0x00 if chunk size if odd
                 realChunkDataLength += realChunkDataLength % 2;
 
-                if (chunkToRemove.contains(chunkName)) {
+                if (webpSkippableChunks.contains(chunkName)) {
                     realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
                     Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + realChunkDataLength);
                 } else {

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.FileUtils;
 import android.os.Parcelable;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ShareCompat;
@@ -72,7 +73,7 @@ public class HandleShareActivity extends Activity {
 
     @Override
     public void finish() {
-        PeriodicWorkRequest clearCacheWR = new PeriodicWorkRequest.Builder(
+        PeriodicWorkRequest clearCacheWorkRequest = new PeriodicWorkRequest.Builder(
                 ClearCacheWorker.class,
                 1, TimeUnit.DAYS
         ).setConstraints(new Constraints.Builder().setRequiresDeviceIdle(true).build())
@@ -80,7 +81,7 @@ public class HandleShareActivity extends Activity {
                 .build();
 
         WorkManager.getInstance(this)
-                .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWR);
+                .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWorkRequest);
 
         super.finish();
     }
@@ -90,37 +91,48 @@ public class HandleShareActivity extends Activity {
         ib.setType(intent.getType());
         ib.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT));
         Intent chooserIntent = ib.createChooserIntent();
-        chooserIntent.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
+        chooserIntent.putExtra(
+                Intent.EXTRA_EXCLUDE_COMPONENTS,
+                List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
         startActivity(chooserIntent);
     }
 
     private void handleUris(@NonNull List<Uri> uris) {
-        ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this).setType(getIntent().getType());
-        uris.parallelStream().map(this::refreshUri).filter(Objects::nonNull).forEachOrdered(ib::addStream);
+        ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this)
+                .setType(getIntent().getType());
+        uris.parallelStream()
+                .map(this::refreshUri)
+                .filter(Objects::nonNull)
+                .forEachOrdered(ib::addStream);
         Intent chooserIntent = ib.createChooserIntent();
-        chooserIntent.putExtra(Intent.EXTRA_EXCLUDE_COMPONENTS, List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
+        chooserIntent.putExtra(
+                Intent.EXTRA_EXCLUDE_COMPONENTS,
+                List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
         startActivity(chooserIntent);
     }
 
     @Nullable
     private Uri refreshUri(Uri uri) {
+        String originName = Utils.getRealFileName(this, uri);
+        File tempfile = new File(getCacheDir(), Utils.getRandomString());
         try {
             byte[] magickBytes = new byte[16];
             try (InputStream uin = this.getContentResolver().openInputStream(uri)) {
                 assert uin != null;
                 Utils.inputStreamRead(uin, magickBytes);
             }
-
             FileType fileType = Utils.getFileType(magickBytes);
 
-            File tempfile = new File(getCacheDir(), Utils.getRandomString());
-
-            if (fileType instanceof ImageType imageType && imageType.isSupportMetadata() && settings.enableRemoveExif()) {
+            if (fileType instanceof ImageType imageType
+                    && imageType.isSupportMetadata()
+                    && settings.enableRemoveExif()) {
                 try {
                     processImgMetadata(tempfile, imageType, uri);
                 } catch (ImageFormatException e) {
                     //noinspection ResultOfMethodCallIgnored
                     tempfile.delete();
+                    Log.e("fuckshare", "Format error: " + originName + " Type: " + imageType);
+                    Toast.makeText(this, "Format error: " + originName + " Type: " + imageType, Toast.LENGTH_SHORT).show();
                     if (settings.enableFallbackToFile()) {
                         copyFileFromUri(uri, tempfile);
                         fileType = OtherType.UNKNOWN;
@@ -132,7 +144,6 @@ public class HandleShareActivity extends Activity {
                 copyFileFromUri(uri, tempfile);
             }
             // rename
-            String originName = Utils.getRealFileName(this, uri);
             String newNameNoExt = getNewNameNoExt(fileType, originName);
             String ext = getExt(fileType, originName);
             String newFullName = Utils.mergeFilename(newNameNoExt, ext);
@@ -149,7 +160,8 @@ public class HandleShareActivity extends Activity {
             }
             return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempfile);
         } catch (IOException e) {
-            Log.d("fuckshare", e.toString());
+            Log.e("fuckshare", e.toString());
+            Toast.makeText(this, "Failed to process: " + originName, Toast.LENGTH_SHORT).show();
             return null;
         }
     }

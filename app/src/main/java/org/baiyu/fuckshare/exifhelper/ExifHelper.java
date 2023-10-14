@@ -18,8 +18,10 @@ public interface ExifHelper {
     static void writeBackMetadata(@NonNull ExifInterface exifFrom, @NonNull ExifInterface exifTo, @NonNull Set<String> tags) throws IOException {
         Map<String, String> tagsValue = tags.parallelStream()
                 .filter(exifFrom::hasAttribute)
-                .collect(Collectors.toMap(tag -> tag, tag -> Optional.ofNullable(exifFrom.getAttribute(tag)).orElse("")));
-        tagsValue.entrySet().parallelStream().forEach(entry -> exifTo.setAttribute(entry.getKey(), entry.getValue()));
+                .collect(Collectors.toMap(
+                        tag -> tag,
+                        tag -> Optional.ofNullable(exifFrom.getAttribute(tag)).orElse("")));
+        tagsValue.forEach(exifTo::setAttribute);
         Log.d("fuckshare", "tags rewrite: " + tagsValue);
         exifTo.saveAttributes();
     }

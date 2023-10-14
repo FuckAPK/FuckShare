@@ -56,7 +56,7 @@ public class Utils {
                 return cursor.getString(nameIndex);
             }
         } else {
-            Log.d("fuckshare", "Unknown scheme: " + uri.getScheme());
+            Log.e("fuckshare", "Unknown scheme: " + uri.getScheme());
             return null;
         }
     }

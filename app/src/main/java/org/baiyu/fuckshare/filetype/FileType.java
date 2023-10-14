@@ -1,5 +1,6 @@
 package org.baiyu.fuckshare.filetype;
 
+import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -19,9 +20,11 @@ public interface FileType {
             return false;
         }
 
-        int signatureRequireLength = signature.parallelStream().flatMap(m -> m.entrySet().stream()).map(
-                integerEntry -> integerEntry.getKey() + integerEntry.getValue().length
-        ).max(Comparator.comparingInt(x -> x)).orElse(Integer.MAX_VALUE);
+        int signatureRequireLength = signature.parallelStream()
+                .flatMap(m -> m.entrySet().stream())
+                .map(integerEntry -> integerEntry.getKey() + integerEntry.getValue().length)
+                .max(Comparator.comparingInt(x -> x))
+                .orElse(Integer.MAX_VALUE);
 
         if (signatureRequireLength <= 0 || bytes.length < signatureRequireLength) {
             return false;
@@ -29,16 +32,8 @@ public interface FileType {
 
         return signature.parallelStream().anyMatch(
                 integerMap -> integerMap.entrySet().parallelStream().allMatch(
-                        integerEntry -> {
-                            int fixed = integerEntry.getKey();
-                            byte[] signBytes = integerEntry.getValue();
-                            for (int i = 0; i < signBytes.length; i++) {
-                                if (bytes[i + fixed] != signBytes[i]) {
-                                    return false;
-                                }
-                            }
-                            return true;
-                        }
+                        integerEntry -> ByteBuffer.wrap(integerEntry.getValue())
+                                .equals(ByteBuffer.wrap(bytes, integerEntry.getKey(), integerEntry.getValue().length))
                 )
         );
     }
