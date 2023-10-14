@@ -14,6 +14,7 @@ import androidx.preference.SwitchPreferenceCompat;
 
 public class SettingsActivity extends AppCompatActivity {
     private static SharedPreferences prefs;
+
     /**
      * @noinspection deprecation
      */
@@ -36,6 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
     public static class MySettingsFragment extends PreferenceFragmentCompat {
         private static final String PREF_KEEP_LAUNCHER_ICON = "keep_launcher_icon";
         private static final String LAUNCHER_ACTIVITY_NAME = BuildConfig.APPLICATION_ID + ".LauncherActivity";
+
         @Override
         public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
             setPreferencesFromResource(R.xml.preferences, rootKey);

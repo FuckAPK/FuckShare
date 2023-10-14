@@ -6,6 +6,7 @@ import java.util.Set;
 
 public interface FileType {
     String getExtension();
+
     Set<Map<Integer, byte[]>> getSignatures();
 
     default boolean isSupportMetadata() {
