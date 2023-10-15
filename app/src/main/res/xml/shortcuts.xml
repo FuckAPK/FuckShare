@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_shortcut_clear"
+        android:shortcutId="clear_cache"
+        android:shortcutShortLabel="@string/compose_shortcut_short_clear">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="org.baiyu.fuckshare.ClearCacheActivity"
+            android:targetPackage="org.baiyu.fuckshare" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

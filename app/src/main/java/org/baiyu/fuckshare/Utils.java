@@ -175,18 +175,10 @@ public class Utils {
     }
 
     public static boolean deleteRecursive(@NonNull File file) {
-        if (file.isFile()) {
-            return file.delete();
-        }
-        return Arrays.stream(Objects.requireNonNull(file.listFiles()))
+        return file.isFile() ? file.delete() : Arrays.stream(Objects.requireNonNull(file.listFiles()))
                 .parallel()
-                .allMatch(f -> {
-                    if (f.isFile()) {
-                        return f.delete();
-                    } else {
-                        return deleteRecursive(f) && file.delete();
-                    }
-                });
+                .allMatch(f -> f.isFile() ? f.delete() : deleteRecursive(f))
+                && file.delete();
     }
 
     public static boolean clearCache(@NonNull Context context, long timeDurationMillis) {

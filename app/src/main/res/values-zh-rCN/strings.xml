@@ -18,4 +18,7 @@
     <string name="title_enable_fallback_to_file">失败时回退</string>
     <string name="desc_enable_fallback_to_file">失败时回退为文件复制</string>
     <string name="desc_enable_file_type_sniff">可能出现错误</string>
+    <string name="clear_cache_success">缓存已清理！</string>
+    <string name="clear_cache_failed">缓存清理失败！</string>
+    <string name="compose_shortcut_short_clear">清除缓存</string>
 </resources>
