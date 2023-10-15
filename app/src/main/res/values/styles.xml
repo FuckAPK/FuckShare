@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Material3.Preference" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="preferenceTheme">@style/MaterialPreferenceThemeOverlay</item>
+    </style>
+
+    <style name="MaterialPreferenceThemeOverlay" parent="PreferenceThemeOverlay">
+        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat</item>
+    </style>
+
+    <style name="Preference.SwitchPreferenceCompat" parent="Preference.SwitchPreferenceCompat.Material">
+        <item name="android:widgetLayout">@layout/preference_material_switch</item>
+    </style>
+
+</resources>

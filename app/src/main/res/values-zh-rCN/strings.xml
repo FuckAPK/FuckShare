@@ -22,4 +22,5 @@
     <string name="clear_cache_failed">缓存清理失败！</string>
     <string name="compose_shortcut_short_clear">清除缓存</string>
     <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
+    <string name="title_others">其它</string>
 </resources>

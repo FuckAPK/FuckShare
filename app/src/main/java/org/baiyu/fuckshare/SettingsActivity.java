@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.gyf.immersionbar.ImmersionBar;
+
 public class SettingsActivity extends AppCompatActivity {
     private static SharedPreferences prefs;
 
@@ -23,6 +25,11 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_layout);
+        ImmersionBar.with(this)
+                .statusBarView(findViewById(R.id.status_bar_view))
+                .transparentStatusBar()
+                .transparentNavigationBar()
+                .init();
         try {
             prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_WORLD_READABLE);
         } catch (Exception e) {

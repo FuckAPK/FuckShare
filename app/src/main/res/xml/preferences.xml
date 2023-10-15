@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <SwitchPreferenceCompat
-        app:defaultValue="false"
-        app:iconSpaceReserved="false"
-        app:key="enable_force_forward_hook"
-        app:summary="@string/desc_enable_force_forward_hook"
-        app:title="@string/title_enable_force_forward_hook" />
-    <SwitchPreferenceCompat
-        app:defaultValue="true"
-        app:iconSpaceReserved="false"
-        app:key="keep_launcher_icon"
-        app:title="@string/title_keep_launcher_icon" />
-
     <PreferenceCategory
         app:iconSpaceReserved="false"
         app:title="@string/title_metadata">
@@ -56,5 +44,19 @@
             app:key="enable_file_rename"
             app:title="@string/title_enable_file_rename" />
     </PreferenceCategory>
-
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/title_others">
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="enable_force_forward_hook"
+            app:summary="@string/desc_enable_force_forward_hook"
+            app:title="@string/title_enable_force_forward_hook" />
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:iconSpaceReserved="false"
+            app:key="keep_launcher_icon"
+            app:title="@string/title_keep_launcher_icon" />
+    </PreferenceCategory>
 </PreferenceScreen>

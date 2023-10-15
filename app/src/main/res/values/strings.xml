@@ -22,4 +22,5 @@
     <string name="clear_cache_failed">Failed to clear cache!</string>
     <string name="compose_shortcut_short_clear">Clear cache</string>
     <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
+    <string name="title_others">Others</string>
 </resources>
