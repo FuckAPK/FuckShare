@@ -5,8 +5,10 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceFragmentCompat;
@@ -30,6 +32,7 @@ public class SettingsActivity extends AppCompatActivity {
                 .transparentStatusBar()
                 .transparentNavigationBar()
                 .init();
+        setStatusBarFontColor(getResources().getConfiguration());
         try {
             prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_WORLD_READABLE);
         } catch (Exception e) {
@@ -39,6 +42,19 @@ public class SettingsActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(R.id.settings_container, new MySettingsFragment())
                 .commit();
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setStatusBarFontColor(newConfig);
+    }
+
+    private void setStatusBarFontColor(Configuration conf) {
+        boolean darkMode = (conf.uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        ImmersionBar.with(this)
+                .statusBarDarkFont(!darkMode, 0.2f)
+                .init();
     }
 
     public static class MySettingsFragment extends PreferenceFragmentCompat {
