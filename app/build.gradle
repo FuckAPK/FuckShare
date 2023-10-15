@@ -10,9 +10,10 @@ android {
         applicationId "org.baiyu.fuckshare"
         minSdk 30
         targetSdk 34
-        versionCode 25
-        versionName "4.2"
+        versionCode 26
+        versionName "4.3"
 
+        resConfigs "en", "zh-rCN"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
