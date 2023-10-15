@@ -50,12 +50,13 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity-alias>
+
         <activity
             android:name=".HandleShareActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleInstance"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -71,8 +72,8 @@
             android:name=".ClearCacheActivity"
             android:excludeFromRecents="true"
             android:exported="true"
+            android:icon="@mipmap/ic_shortcut_clear"
             android:launchMode="singleInstance"
-            android:logo="@mipmap/ic_shortcut_clear"
             android:theme="@android:style/Theme.NoDisplay" />
 
         <provider

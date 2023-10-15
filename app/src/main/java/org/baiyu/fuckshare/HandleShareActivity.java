@@ -82,7 +82,6 @@ public class HandleShareActivity extends Activity {
 
         WorkManager.getInstance(this)
                 .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWorkRequest);
-
         super.finish();
     }
 
