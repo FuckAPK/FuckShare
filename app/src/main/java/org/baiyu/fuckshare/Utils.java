@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Parcelable;
 import android.provider.OpenableColumns;
 
 import androidx.annotation.NonNull;
@@ -23,6 +25,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -35,11 +38,29 @@ import timber.log.Timber;
 public class Utils {
     public static List<Uri> getUrisFromIntent(@NonNull Intent intent) {
         if (Intent.ACTION_SEND.equals(intent.getAction())) {
-            Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+            Uri uri = getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri.class);
             assert uri != null;
             return List.of(uri);
         } else {
-            return intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+            return getParcelableArrayListExtra(intent, Intent.EXTRA_STREAM, Uri.class);
+        }
+    }
+
+    public static <T extends Parcelable> T getParcelableExtra(Intent intent, String name, Class<T> clazz) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return intent.getParcelableExtra(name, clazz);
+        } else {
+            //noinspection deprecation
+            return intent.getParcelableExtra(name);
+        }
+    }
+
+    public static <T extends Parcelable> ArrayList<T> getParcelableArrayListExtra(Intent intent, String name, Class<T> clazz) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return intent.getParcelableArrayListExtra(name, clazz);
+        } else {
+            //noinspection deprecation
+            return intent.getParcelableArrayListExtra(name);
         }
     }
 
@@ -139,6 +160,7 @@ public class Utils {
         return bb.getLong();
     }
 
+    /** @noinspection unused*/
     @NonNull
     public static byte[] longToBigEndianBytes(long num) {
         ByteBuffer bb = ByteBuffer.allocate(8);
@@ -155,6 +177,7 @@ public class Utils {
         return bb.array();
     }
 
+    /** @noinspection UnusedReturnValue*/
     public static int inputStreamRead(InputStream inputStream, byte[] bytes) throws IOException {
         return inputStreamRead(inputStream, bytes, 0, bytes.length);
     }

@@ -6,8 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import de.robv.android.xposed.XSharedPreferences;
-
 public class Settings {
 
     private static final String PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook";
@@ -36,9 +34,6 @@ public class Settings {
     }
 
     public boolean enableForceForwardHook() {
-        if (prefs instanceof XSharedPreferences xprefs) {
-            xprefs.reload();
-        }
         return prefs.getBoolean(PREF_ENABLE_FORCE_FORWARD_HOOK, false);
     }
 

@@ -12,7 +12,8 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
-    private final static Settings settings = Settings.getInstance(new XSharedPreferences(BuildConfig.APPLICATION_ID));
+    private final static XSharedPreferences prefs = new XSharedPreferences(BuildConfig.APPLICATION_ID);
+    private final static Settings settings = Settings.getInstance(prefs);
 
     @Override
     public void handleLoadPackage(@NonNull XC_LoadPackage.LoadPackageParam lpparam) {
@@ -26,23 +27,18 @@ public class MainHook implements IXposedHookLoadPackage {
                 new XC_MethodHook() {
                     @Override
                     protected void beforeHookedMethod(MethodHookParam param) {
-                        String callingPackage = (String) param.args[1];
-                        Intent chooserIntent = (Intent) param.args[3];
-                        if (callingPackage.equals(BuildConfig.APPLICATION_ID)) {
+                        if (!(param.args[1] instanceof String callingPackage) || BuildConfig.APPLICATION_ID.equals(callingPackage)) {
                             return;
                         }
-                        if (chooserIntent == null || !Intent.ACTION_CHOOSER.equals(chooserIntent.getAction())) {
+                        if (!(param.args[3] instanceof Intent chooserIntent) || !Intent.ACTION_CHOOSER.equals(chooserIntent.getAction())) {
                             return;
                         }
+                        prefs.reload();
                         if (!settings.enableForceForwardHook()) {
                             return;
                         }
-                        Intent intent;
-                        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                            intent = chooserIntent.getParcelableExtra(Intent.EXTRA_INTENT, Intent.class);
-                        } else {
-                            intent = chooserIntent.getParcelableExtra(Intent.EXTRA_INTENT);
-                        }
+
+                        Intent intent = Utils.getParcelableExtra(chooserIntent, Intent.EXTRA_INTENT, Intent.class);
                         assert intent != null;
                         if (Intent.ACTION_SEND.equals(intent.getAction()) || Intent.ACTION_SEND_MULTIPLE.equals(intent.getAction())) {
                             param.args[3] = intent.setClassName(

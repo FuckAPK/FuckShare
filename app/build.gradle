@@ -10,8 +10,8 @@ android {
         applicationId "org.baiyu.fuckshare"
         minSdk 30
         targetSdk 34
-        versionCode 27
-        versionName "4.4"
+        versionCode 28
+        versionName "4.5"
 
         resConfigs "en", "zh-rCN"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

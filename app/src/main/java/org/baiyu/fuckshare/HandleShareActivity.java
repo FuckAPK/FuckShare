@@ -45,9 +45,6 @@ import timber.log.Timber;
 public class HandleShareActivity extends Activity {
     private static Settings settings;
 
-    /**
-     * @noinspection deprecation
-     */
     @SuppressLint("WorldReadableFiles")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +54,7 @@ public class HandleShareActivity extends Activity {
         }
         SharedPreferences prefs;
         try {
+            //noinspection deprecation
             prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", Context.MODE_WORLD_READABLE);
         } catch (SecurityException ignore) {
             prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", Context.MODE_PRIVATE);
