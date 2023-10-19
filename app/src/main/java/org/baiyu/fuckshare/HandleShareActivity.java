@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.FileUtils;
 import android.os.Parcelable;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -41,6 +40,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import timber.log.Timber;
+
 public class HandleShareActivity extends Activity {
     private static Settings settings;
 
@@ -51,6 +52,9 @@ public class HandleShareActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
         SharedPreferences prefs;
         try {
             prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", Context.MODE_WORLD_READABLE);
@@ -130,7 +134,7 @@ public class HandleShareActivity extends Activity {
                 } catch (ImageFormatException e) {
                     //noinspection ResultOfMethodCallIgnored
                     tempfile.delete();
-                    Log.e("fuckshare", "Format error: " + originName + " Type: " + imageType);
+                    Timber.e("Format error: %s Type: %s", originName, imageType);
                     Toast.makeText(this, "Format error: " + originName + " Type: " + imageType, Toast.LENGTH_SHORT).show();
                     if (settings.enableFallbackToFile()) {
                         copyFileFromUri(uri, tempfile);
@@ -159,7 +163,7 @@ public class HandleShareActivity extends Activity {
             }
             return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempfile);
         } catch (IOException e) {
-            Log.e("fuckshare", e.toString());
+            Timber.e(e);
             Toast.makeText(this, "Failed to process: " + originName, Toast.LENGTH_SHORT).show();
             return null;
         }
@@ -181,7 +185,7 @@ public class HandleShareActivity extends Activity {
             case WEBP -> eh = new webpExifHelper();
         }
         if (eh == null) {
-            Log.e("fuckshare", "unsupported image type: " + imageType);
+            Timber.e("unsupported image type: %s", imageType);
         } else {
             try (InputStream uin = getContentResolver().openInputStream(uri);
                  OutputStream fout = new FileOutputStream(file)) {

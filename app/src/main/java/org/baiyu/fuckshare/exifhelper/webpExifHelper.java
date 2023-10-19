@@ -1,7 +1,5 @@
 package org.baiyu.fuckshare.exifhelper;
 
-import android.util.Log;
-
 import org.baiyu.fuckshare.Utils;
 
 import java.io.BufferedInputStream;
@@ -10,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+
+import timber.log.Timber;
 
 public class webpExifHelper implements ExifHelper {
     private static final Set<String> webpSkippableChunks = Set.of(
@@ -80,10 +80,11 @@ public class webpExifHelper implements ExifHelper {
 
                 if (webpSkippableChunks.contains(chunkName)) {
                     realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
-                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + realChunkDataLength);
+                    Timber.d("Discord chunk: %s size: %d", chunkName, realChunkDataLength);
                 } else {
                     bos.write(chunkNameBytes);
                     bos.write(chunkDataLenBytes);
+                    Timber.d("Copy chunk: %s size: %d", chunkName, realChunkDataLength);
                     realChunkDataLength -= Utils.copy(bis, bos, realChunkDataLength);
                 }
                 assert realChunkDataLength == 0;

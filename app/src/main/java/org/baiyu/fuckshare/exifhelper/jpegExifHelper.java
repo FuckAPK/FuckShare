@@ -1,7 +1,6 @@
 package org.baiyu.fuckshare.exifhelper;
 
 import android.os.FileUtils;
-import android.util.Log;
 
 import org.baiyu.fuckshare.Utils;
 
@@ -11,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+
+import timber.log.Timber;
 
 public class jpegExifHelper implements ExifHelper {
 
@@ -61,28 +62,28 @@ public class jpegExifHelper implements ExifHelper {
                 assert maker[0] == (byte) 0xFF;
                 if (maker[1] == (byte) 0xD8) {
                     bos.write(maker);
-                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + 2, maker[1]));
+                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2);
                 } else if (maker[1] == (byte) 0xD9) {   // EOI
                     bos.write(maker);
-                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + 2, maker[1]));
+                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2);
                     break;
                 } else if (jpegSkippableChunks.contains(maker[1])) {
                     Utils.inputStreamRead(bis, lenBytes);
                     chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                    Log.d("fuckshare", String.format("Discord chunk: %02X size: " + (chunkDataLength + 4), maker[1]));
+                    Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4);
                     chunkDataLength -= Utils.inputStreamSkip(bis, chunkDataLength);
                 } else if (maker[1] == (byte) 0xDA) {   // SOS
                     bos.write(maker);
                     // write all data
                     chunkDataLength = inputStream.available();
-                    Log.d("fuckshare", "DA and following Chunks copied size: " + (chunkDataLength + 2));
+                    Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2);
                     chunkDataLength -= FileUtils.copy(bis, bos);
                 } else {
                     Utils.inputStreamRead(bis, lenBytes);
                     chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2;
                     bos.write(maker);
                     bos.write(lenBytes);
-                    Log.d("fuckshare", String.format("Chunk copied: %02X size: " + (chunkDataLength + 4), maker[1]));
+                    Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4);
                     chunkDataLength -= Utils.copy(bis, bos, chunkDataLength);
                 }
                 assert chunkDataLength == 0;

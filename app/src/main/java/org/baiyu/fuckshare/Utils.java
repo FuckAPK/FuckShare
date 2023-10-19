@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.OpenableColumns;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +29,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+
+import timber.log.Timber;
 
 public class Utils {
     public static List<Uri> getUrisFromIntent(@NonNull Intent intent) {
@@ -56,7 +57,7 @@ public class Utils {
                 return cursor.getString(nameIndex);
             }
         } else {
-            Log.e("fuckshare", "Unknown scheme: " + uri.getScheme());
+            Timber.e("Unknown scheme: %s", uri.getScheme());
             return null;
         }
     }

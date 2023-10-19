@@ -1,7 +1,5 @@
 package org.baiyu.fuckshare.exifhelper;
 
-import android.util.Log;
-
 import org.baiyu.fuckshare.Utils;
 
 import java.io.BufferedInputStream;
@@ -10,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
+
+import timber.log.Timber;
 
 public class pngExifHelper implements ExifHelper {
 
@@ -77,10 +77,11 @@ public class pngExifHelper implements ExifHelper {
                     bos.write(chunkLengthBytes);
                     bos.write(chunkNameBytes);
                     chunkDataCRCLength -= Utils.copy(bis, bos, chunkDataCRCLength);
+                    Timber.d("Copy chunk: %s size: %d", chunkName, chunkDataCRCLength + 4);
                 } else {
                     // skip chunkData and chunkCrc
                     chunkDataCRCLength -= Utils.inputStreamSkip(bis, chunkDataCRCLength);
-                    Log.d("fuckshare", "Discord chunk: " + chunkName + " size: " + chunkDataCRCLength + 4);
+                    Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4);
                 }
                 assert chunkDataCRCLength == 0;
                 if (chunkName.equals("IEND")) {
