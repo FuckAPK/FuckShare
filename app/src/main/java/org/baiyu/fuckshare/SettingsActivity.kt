@@ -59,15 +59,14 @@ class SettingsActivity : AppCompatActivity() {
             )!!
             updateLauncherActivityStatus()
             keepLauncherIconPreference.onPreferenceChangeListener =
-                Preference.OnPreferenceChangeListener { preference: Preference?, newValue: Any ->
+                Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
                     enableDisableLauncherIcon(newValue as Boolean)
                     true
                 }
         }
 
         private fun updateLauncherActivityStatus() {
-            val context = requireContext()
-            val pm = context.applicationContext.packageManager
+            val pm = requireContext().applicationContext.packageManager
             val cn = ComponentName(BuildConfig.APPLICATION_ID, LAUNCHER_ACTIVITY_NAME)
             val status =
                 pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
@@ -77,8 +76,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         private fun enableDisableLauncherIcon(enable: Boolean) {
-            val context = requireContext()
-            val pm = context.applicationContext.packageManager
+            val pm = requireContext().applicationContext.packageManager
             val cn = ComponentName(BuildConfig.APPLICATION_ID, LAUNCHER_ACTIVITY_NAME)
             val status =
                 if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED

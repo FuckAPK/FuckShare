@@ -13,15 +13,13 @@ interface FileType {
         if (bytes == null || signature == null) {
             return false
         }
-        val signatureRequireLength = signature.parallelStream()
-            .flatMap { it.entries.stream() }
-            .map { it.key + it.value.size }
-            .max { i, i2 -> i - i2 }
-            .orElse(Int.MAX_VALUE)
+//        val signatureRequireLength = signature
+//            .flatMap { it.entries }.maxOfOrNull { it.key + it.value.size } ?: return false
+//        if (signatureRequireLength <= 0 || bytes.size < signatureRequireLength) {
+//            return false
+//        }
 
-        return if (signatureRequireLength <= 0 || bytes.size < signatureRequireLength) {
-            false
-        } else signature.parallelStream().anyMatch { integerMap ->
+        return signature.parallelStream().anyMatch { integerMap ->
             integerMap.entries.parallelStream()
                 .allMatch {
                     ByteBuffer.wrap(it.value).equals(ByteBuffer.wrap(bytes, it.key, it.value.size))
