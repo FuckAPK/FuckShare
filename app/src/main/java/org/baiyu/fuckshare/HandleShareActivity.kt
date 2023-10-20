@@ -8,7 +8,6 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.os.FileUtils
-import android.os.Parcelable
 import android.widget.Toast
 import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.core.content.FileProvider
@@ -81,7 +80,7 @@ class HandleShareActivity : Activity() {
         val chooserIntent = ib.createChooserIntent()
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
-            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray<Parcelable>()
+            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray()
         )
         startActivity(chooserIntent)
     }
@@ -94,10 +93,10 @@ class HandleShareActivity : Activity() {
             .forEachOrdered { it?.let { it1 -> ib.addStream(it1) } }
 
         val chooserIntent = ib.createChooserIntent()
-//        chooserIntent.putExtra(
-//            Intent.EXTRA_EXCLUDE_COMPONENTS,
-//            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray<Parcelable>()
-//        )
+        chooserIntent.putExtra(
+            Intent.EXTRA_EXCLUDE_COMPONENTS,
+            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray()
+        )
         Timber.d("intent: %s", chooserIntent.toString())
         startActivity(chooserIntent)
     }
