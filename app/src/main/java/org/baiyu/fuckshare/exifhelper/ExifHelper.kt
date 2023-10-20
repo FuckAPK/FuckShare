@@ -16,6 +16,11 @@ interface ExifHelper {
             val tagsValue = tags.asSequence().filterNotNull()
                 .filter { exifFrom.hasAttribute(it) }
                 .map { it to exifFrom.getAttribute(it) }
+                .filterNot { it.first == ExifInterface.TAG_ORIENTATION && it.second == ExifInterface.ORIENTATION_UNDEFINED.toString() }
+
+            if (tagsValue.count() == 0) {
+                return
+            }
 
             tagsValue.forEach { exifTo.setAttribute(it.first, it.second) }
             Timber.d("tags rewrite: %s", tagsValue.toMap().toString())
