@@ -1,62 +1,105 @@
-package org.baiyu.fuckshare.filetype;
+package org.baiyu.fuckshare.filetype
 
-import java.util.Map;
-import java.util.Set;
-
-public enum ImageType implements FileType {
-    JPEG(true, "jpg", Set.of(
-//            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xDB}),
-//            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0}),
-//            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE1},
-//                    6, new byte[]{(byte) 0x45, (byte) 0x78, (byte) 0x69, (byte) 0x66, (byte) 0x00, (byte) 0x00}),
-//            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xEE})
-            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF})
-
-    )),
-    PNG(true, "png", Set.of(
-            Map.of(0, new byte[]{(byte) 0x89, (byte) 0x50, (byte) 0x4E, (byte) 0x47, (byte) 0x0D, (byte) 0x0A, (byte) 0x1A, (byte) 0x0A})
-    )),
-    WEBP(true, "webp", Set.of(
-            Map.of(0, new byte[]{(byte) 0x52, (byte) 0x49, (byte) 0x46, (byte) 0x46},
-                    8, new byte[]{(byte) 0x57, (byte) 0x45, (byte) 0x42, (byte) 0x50})
-    )),
-    GIF(false, "gif", Set.of(
-            Map.of(0, new byte[]{(byte) 0x47, (byte) 0x49, (byte) 0x46, (byte) 0x38, (byte) 0x37, (byte) 0x61}),
-            Map.of(0, new byte[]{(byte) 0x47, (byte) 0x49, (byte) 0x46, (byte) 0x38, (byte) 0x39, (byte) 0x61})
-    )),
-    TIFF(false, "tiff", Set.of(
-            Map.of(0, new byte[]{(byte) 0x49, (byte) 0x49, (byte) 0x2A, (byte) 0x00}),
-            Map.of(0, new byte[]{(byte) 0x4D, (byte) 0x4D, (byte) 0x00, (byte) 0x2A})
-    )),
-    PSD(false, "psd", Set.of(
-            Map.of(0, new byte[]{(byte) 0x38, (byte) 0x42, (byte) 0x50, (byte) 0x53})
-    )),
-    SVG(false, "svg", Set.of(
-            Map.of(0, new byte[]{(byte) 0x3c, (byte) 0x73, (byte) 0x76, (byte) 0x67, (byte) 0x20})
-    ));
-
-    private final boolean supportMetadata;
-    private final String extension;
-    private final Set<Map<Integer, byte[]>> signatures;
-
-    ImageType(boolean supportMetadata, String extension, Set<Map<Integer, byte[]>> signatures) {
-        this.supportMetadata = supportMetadata;
-        this.extension = extension;
-        this.signatures = signatures;
-    }
-
-    @Override
-    public String getExtension() {
-        return extension;
-    }
-
-    @Override
-    public Set<Map<Integer, byte[]>> getSignatures() {
-        return signatures;
-    }
-
-    @Override
-    public boolean isSupportMetadata() {
-        return supportMetadata;
-    }
+enum class ImageType(
+    override val isSupportMetadata: Boolean,
+    override val extension: String,
+    override val signatures: Set<Map<Int, ByteArray>>
+) : FileType {
+    JPEG(
+        true,
+        "jpg",
+        setOf(
+            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xDB}),
+            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0}),
+            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE1},
+            //                    6, new byte[]{(byte) 0x45, (byte) 0x78, (byte) 0x69, (byte) 0x66, (byte) 0x00, (byte) 0x00}),
+            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xEE})
+            mapOf(0 to byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()))
+        )
+    ),
+    PNG(
+        true, "png", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(
+                            0x89.toByte(),
+                            0x50.toByte(),
+                            0x4E.toByte(),
+                            0x47.toByte(),
+                            0x0D.toByte(),
+                            0x0A.toByte(),
+                            0x1A.toByte(),
+                            0x0A.toByte()
+                        )
+            )
+        )
+    ),
+    WEBP(
+        true, "webp", setOf(
+            mapOf(
+                0 to byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte()),
+                8 to byteArrayOf(0x57.toByte(), 0x45.toByte(), 0x42.toByte(), 0x50.toByte())
+            )
+        )
+    ),
+    GIF(
+        false, "gif", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(
+                            0x47.toByte(),
+                            0x49.toByte(),
+                            0x46.toByte(),
+                            0x38.toByte(),
+                            0x37.toByte(),
+                            0x61.toByte()
+                        )
+            ),
+            mapOf(
+                0 to
+                        byteArrayOf(
+                            0x47.toByte(),
+                            0x49.toByte(),
+                            0x46.toByte(),
+                            0x38.toByte(),
+                            0x39.toByte(),
+                            0x61.toByte()
+                        )
+            )
+        )
+    ),
+    TIFF(
+        false, "tiff", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(0x49.toByte(), 0x49.toByte(), 0x2A.toByte(), 0x00.toByte())
+            ),
+            mapOf(
+                0 to
+                        byteArrayOf(0x4D.toByte(), 0x4D.toByte(), 0x00.toByte(), 0x2A.toByte())
+            )
+        )
+    ),
+    PSD(
+        false, "psd", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(0x38.toByte(), 0x42.toByte(), 0x50.toByte(), 0x53.toByte())
+            )
+        )
+    ),
+    SVG(
+        false, "svg", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(
+                            0x3c.toByte(),
+                            0x73.toByte(),
+                            0x76.toByte(),
+                            0x67.toByte(),
+                            0x20.toByte()
+                        )
+            )
+        )
+    );
 }

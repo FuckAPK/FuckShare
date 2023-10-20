@@ -1,97 +1,78 @@
-package org.baiyu.fuckshare.exifhelper;
+package org.baiyu.fuckshare.exifhelper
 
-import org.baiyu.fuckshare.Utils;
+import org.baiyu.fuckshare.Utils
+import timber.log.Timber
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.nio.ByteOrder
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Set;
-
-import timber.log.Timber;
-
-public class webpExifHelper implements ExifHelper {
-    private static final Set<String> webpSkippableChunks = Set.of(
-            "EXIF",
-            "XMP "
-    );
-
-    @Override
-    public void removeMetadata(InputStream inputStream, OutputStream outputStream) throws IOException, ImageFormatException {
+class WebpExifHelper : ExifHelper {
+    @Throws(IOException::class, ImageFormatException::class)
+    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?) {
         try {
-            BufferedInputStream bis;
-            BufferedOutputStream bos;
+            val bis = inputStream as? BufferedInputStream ?: BufferedInputStream(inputStream)
+            val bos = outputStream as? BufferedOutputStream ?: BufferedOutputStream(outputStream)
 
-            if (inputStream instanceof BufferedInputStream) {
-                bis = (BufferedInputStream) inputStream;
-            } else {
-                bis = new BufferedInputStream(inputStream);
-            }
-
-            if (outputStream instanceof BufferedOutputStream) {
-                bos = (BufferedOutputStream) outputStream;
-            } else {
-                bos = new BufferedOutputStream(outputStream);
-            }
-
-            byte[] webpHeader = new byte[12];
-            byte[] chunkNameBytes = new byte[4];
-            byte[] chunkDataLenBytes = new byte[4];
-            long realChunkDataLength;
+            val webpHeader = ByteArray(12)
+            val chunkNameBytes = ByteArray(4)
+            val chunkDataLenBytes = ByteArray(4)
+            var realChunkDataLength: Long
 
             // calculate size
             // file size doesn't contain first 8 bytes
-            long newSize = bis.available() - 8;
-            bis.mark(bis.available());
-
-            Utils.inputStreamSkip(bis, 12);
+            var newSize = (bis.available() - 8).toLong()
+            bis.mark(bis.available())
+            Utils.inputStreamSkip(bis, 12)
             while (bis.available() > 0) {
-                Utils.inputStreamRead(bis, chunkNameBytes);
-                String chunkName = new String(chunkNameBytes);
-                Utils.inputStreamRead(bis, chunkDataLenBytes);
-
-                realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes);
-                realChunkDataLength += realChunkDataLength % 2;
-
+                Utils.inputStreamRead(bis, chunkNameBytes)
+                val chunkName = chunkNameBytes.toString()
+                Utils.inputStreamRead(bis, chunkDataLenBytes)
+                realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes)
+                realChunkDataLength += realChunkDataLength % 2
                 if (webpSkippableChunks.contains(chunkName)) {
-                    newSize -= realChunkDataLength + 8;
+                    newSize -= realChunkDataLength + 8
                 }
-                realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
-                assert realChunkDataLength == 0;
+                realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength)
+                assert(realChunkDataLength == 0L)
             }
-
-            bis.reset();
+            bis.reset()
 
             // rewrite with new size
-            Utils.inputStreamRead(bis, webpHeader);
-            bos.write(webpHeader, 0, 4);
-            bos.write(Utils.longToLittleEndianBytes(newSize), 0, 4);
-            bos.write(webpHeader, 8, 4);
-
+            Utils.inputStreamRead(bis, webpHeader)
+            bos.write(webpHeader, 0, 4)
+            bos.write(Utils.longToBytes(newSize, ByteOrder.LITTLE_ENDIAN), 0, 4)
+            bos.write(webpHeader, 8, 4)
             while (bis.available() > 0) {
-                Utils.inputStreamRead(bis, chunkNameBytes);
-                String chunkName = new String(chunkNameBytes);
-                Utils.inputStreamRead(bis, chunkDataLenBytes);
-
-                realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes);
+                Utils.inputStreamRead(bis, chunkNameBytes)
+                val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
+                Utils.inputStreamRead(bis, chunkDataLenBytes)
+                realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes)
                 // standard of tiff: fill in end with 0x00 if chunk size if odd
-                realChunkDataLength += realChunkDataLength % 2;
-
+                realChunkDataLength += realChunkDataLength % 2
                 if (webpSkippableChunks.contains(chunkName)) {
-                    realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength);
-                    Timber.d("Discord chunk: %s size: %d", chunkName, realChunkDataLength);
+                    realChunkDataLength -= Utils.inputStreamSkip(bis, realChunkDataLength)
+                    Timber.d("Discord chunk: %s size: %d", chunkName, realChunkDataLength)
                 } else {
-                    bos.write(chunkNameBytes);
-                    bos.write(chunkDataLenBytes);
-                    Timber.d("Copy chunk: %s size: %d", chunkName, realChunkDataLength);
-                    realChunkDataLength -= Utils.copy(bis, bos, realChunkDataLength);
+                    bos.write(chunkNameBytes)
+                    bos.write(chunkDataLenBytes)
+                    Timber.d("Copy chunk: %s size: %d", chunkName, realChunkDataLength)
+                    realChunkDataLength -= Utils.copy(bis, bos, realChunkDataLength)
                 }
-                assert realChunkDataLength == 0;
+                assert(realChunkDataLength == 0L)
             }
-            bos.flush();
-        } catch (AssertionError error) {
-            throw new ImageFormatException();
+            bos.flush()
+        } catch (error: AssertionError) {
+            throw ImageFormatException()
         }
+    }
+
+    companion object {
+        private val webpSkippableChunks = setOf(
+            "EXIF",
+            "XMP "
+        )
     }
 }

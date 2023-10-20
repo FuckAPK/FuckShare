@@ -1,32 +1,25 @@
-package org.baiyu.fuckshare.exifhelper;
+package org.baiyu.fuckshare.exifhelper
 
-import androidx.annotation.NonNull;
-import androidx.exifinterface.media.ExifInterface;
+import androidx.exifinterface.media.ExifInterface
+import timber.log.Timber
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+interface ExifHelper {
+    @Throws(IOException::class, ImageFormatException::class)
+    fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?)
 
-import timber.log.Timber;
+    companion object {
+        @Throws(IOException::class)
+        fun writeBackMetadata(exifFrom: ExifInterface, exifTo: ExifInterface, tags: Set<String?>) {
+            val tagsValue = tags.asSequence().filterNotNull()
+                .filter { exifFrom.hasAttribute(it) }
+                .map { it to exifFrom.getAttribute(it) }
 
-public interface ExifHelper {
-
-    static void writeBackMetadata(@NonNull ExifInterface exifFrom, @NonNull ExifInterface exifTo, @NonNull Set<String> tags) throws IOException {
-        Map<String, String> tagsValue = tags.parallelStream()
-                .filter(Objects::nonNull)
-                .filter(exifFrom::hasAttribute)
-                .collect(Collectors.toMap(
-                        tag -> tag,
-                        tag -> Optional.ofNullable(exifFrom.getAttribute(tag)).orElse("")));
-        tagsValue.forEach(exifTo::setAttribute);
-        Timber.d("tags rewrite: %s", tagsValue);
-        exifTo.saveAttributes();
+            tagsValue.forEach { exifTo.setAttribute(it.first, it.second) }
+            Timber.d("tags rewrite: %s", tagsValue.toMap().toString())
+            exifTo.saveAttributes()
+        }
     }
-
-    void removeMetadata(InputStream inputStream, OutputStream outputStream) throws IOException, ImageFormatException;
 }

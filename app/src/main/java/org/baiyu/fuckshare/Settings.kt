@@ -1,67 +1,59 @@
-package org.baiyu.fuckshare;
+package org.baiyu.fuckshare
 
-import android.content.SharedPreferences;
+import android.content.SharedPreferences
 
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public class Settings {
-
-    private static final String PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook";
-    private static final String PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif";
-    private static final String PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep";
-    private static final String PREF_ENABLE_IMAGE_RENAME = "enable_image_rename";
-    private static final String PREF_ENABLE_FILE_RENAME = "enable_file_rename";
-    private static final String PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff";
-    private static final String PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file";
-    private volatile static Settings INSTANCE;
-    private final SharedPreferences prefs;
-
-    private Settings(SharedPreferences prefs) {
-        this.prefs = prefs;
+class Settings private constructor(private val prefs: SharedPreferences) {
+    fun enableForceForwardHook(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FORCE_FORWARD_HOOK, false)
     }
 
-    public static Settings getInstance(SharedPreferences prefs) {
-        if (INSTANCE == null) {
-            synchronized (Settings.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new Settings(prefs);
-                }
+    fun enableRemoveExif(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, true)
+    }
+
+    val exifTagsToKeep: Set<String>
+        get() {
+            val rawPref = prefs.getString(
+                PREF_EXIF_TAGS_TO_KEEP,
+                "Orientation, Gamma, ColorSpace, XResolution, YResolution, ResolutionUnit"
+            )
+            return rawPref?.split("[, ]+".toRegex())?.asSequence()
+                ?.map { it.trim() }
+                ?.filter { it.isNotBlank() }
+                ?.toSet() ?: setOf()
+        }
+
+    fun enableImageRename(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_IMAGE_RENAME, true)
+    }
+
+    fun enableFileRename(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FILE_RENAME, false)
+    }
+
+    fun enableFileTypeSniff(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, false)
+    }
+
+    fun enableFallbackToFile(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, true)
+    }
+
+    companion object {
+        private const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
+        private const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
+        private const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"
+        private const val PREF_ENABLE_IMAGE_RENAME = "enable_image_rename"
+        private const val PREF_ENABLE_FILE_RENAME = "enable_file_rename"
+        private const val PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff"
+        private const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
+
+        @Volatile
+        private var INSTANCE: Settings? = null
+        fun getInstance(prefs: SharedPreferences): Settings {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Settings(prefs).also { INSTANCE = it }
             }
         }
-        return INSTANCE;
-    }
-
-    public boolean enableForceForwardHook() {
-        return prefs.getBoolean(PREF_ENABLE_FORCE_FORWARD_HOOK, false);
-    }
-
-    public boolean enableRemoveExif() {
-        return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, true);
-    }
-
-    public Set<String> getExifTagsToKeep() {
-        String rawPref = prefs.getString(PREF_EXIF_TAGS_TO_KEEP, "Orientation, Gamma, ColorSpace, XResolution, YResolution, ResolutionUnit");
-        return Stream.of(rawPref.split("[, ]+"))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toSet());
-    }
-
-    public boolean enableImageRename() {
-        return prefs.getBoolean(PREF_ENABLE_IMAGE_RENAME, true);
-    }
-
-    public boolean enableFileRename() {
-        return prefs.getBoolean(PREF_ENABLE_FILE_RENAME, false);
-    }
-
-    public boolean enableFileTypeSniff() {
-        return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, false);
-    }
-
-    public boolean enableFallbackToFile() {
-        return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, true);
     }
 }

@@ -1,96 +1,90 @@
-package org.baiyu.fuckshare.exifhelper;
+package org.baiyu.fuckshare.exifhelper
 
-import android.os.FileUtils;
+import android.os.FileUtils
+import org.baiyu.fuckshare.Utils
+import timber.log.Timber
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
-import org.baiyu.fuckshare.Utils;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Set;
-
-import timber.log.Timber;
-
-public class jpegExifHelper implements ExifHelper {
-
-    private static final Set<Byte> jpegSkippableChunks = Set.of(
-            (byte) 0xE0,   //
-            (byte) 0xE1,   // exif, xmp, xap
-            (byte) 0xE2,   // icc
-            (byte) 0xE3,   // Kodak
-            (byte) 0xE4,   // FlashPix
-            (byte) 0xE5,   // Ricoh
-            (byte) 0xE6,   // GoPro
-            (byte) 0xE7,   // Pentax/Qualcomm
-            (byte) 0xE8,   // Spiff
-            (byte) 0xE9,   // MediaJukebox
-            (byte) 0xEA,   // PhotoStudio
-            (byte) 0xEB,   // HDR
-            (byte) 0xEC,   // photoshoP ducky / savE foR web
-            (byte) 0xED,   // photoshoP savE As
-            (byte) 0xEE,   // "adobe" (length = 12)
-            (byte) 0xEF,   // GraphicConverter
-            (byte) 0xFE    // Comments
-    );
-
-    @Override
-    public void removeMetadata(InputStream inputStream, OutputStream outputStream) throws IOException, ImageFormatException {
+class JpegExifHelper : ExifHelper {
+    @Throws(IOException::class, ImageFormatException::class)
+    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?) {
         try {
-            BufferedInputStream bis;
-            BufferedOutputStream bos;
+            val bis = inputStream as? BufferedInputStream ?: BufferedInputStream(inputStream)
+            val bos = outputStream as? BufferedOutputStream ?: BufferedOutputStream(outputStream)
 
-            if (inputStream instanceof BufferedInputStream) {
-                bis = (BufferedInputStream) inputStream;
-            } else {
-                bis = new BufferedInputStream(inputStream);
-            }
-
-            if (outputStream instanceof BufferedOutputStream) {
-                bos = (BufferedOutputStream) outputStream;
-            } else {
-                bos = new BufferedOutputStream(outputStream);
-            }
-
-            byte[] maker = new byte[2];
-            byte[] lenBytes = new byte[2];
-            long chunkDataLength = 0;
-
+            val maker = ByteArray(2)
+            val lenBytes = ByteArray(2)
+            var chunkDataLength: Long = 0
             while (bis.available() > 0) {
-                Utils.inputStreamRead(bis, maker);
-                assert maker[0] == (byte) 0xFF;
-                if (maker[1] == (byte) 0xD8) {
-                    bos.write(maker);
-                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2);
-                } else if (maker[1] == (byte) 0xD9) {   // EOI
-                    bos.write(maker);
-                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2);
-                    break;
-                } else if (jpegSkippableChunks.contains(maker[1])) {
-                    Utils.inputStreamRead(bis, lenBytes);
-                    chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                    Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4);
-                    chunkDataLength -= Utils.inputStreamSkip(bis, chunkDataLength);
-                } else if (maker[1] == (byte) 0xDA) {   // SOS
-                    bos.write(maker);
-                    // write all data
-                    chunkDataLength = inputStream.available();
-                    Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2);
-                    chunkDataLength -= FileUtils.copy(bis, bos);
-                } else {
-                    Utils.inputStreamRead(bis, lenBytes);
-                    chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2;
-                    bos.write(maker);
-                    bos.write(lenBytes);
-                    Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4);
-                    chunkDataLength -= Utils.copy(bis, bos, chunkDataLength);
+                Utils.inputStreamRead(bis, maker)
+                assert(maker[0] == 0xFF.toByte())
+                when (maker[1]) {
+                    0xD8.toByte() -> {
+                        bos.write(maker)
+                        Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
+                    }
+
+                    0xD9.toByte() -> {   // EOI
+                        bos.write(maker)
+                        Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
+                        break
+                    }
+
+                    in jpegSkippableChunks -> {
+                        Utils.inputStreamRead(bis, lenBytes)
+                        chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
+                        Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4)
+                        chunkDataLength -= Utils.inputStreamSkip(bis, chunkDataLength)
+                    }
+
+                    0xDA.toByte() -> {   // SOS
+                        bos.write(maker)
+                        // write all data
+                        chunkDataLength = bis.available().toLong()
+                        Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2)
+                        chunkDataLength -= FileUtils.copy(bis, bos)
+                    }
+
+                    else -> {
+                        Utils.inputStreamRead(bis, lenBytes)
+                        chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
+                        bos.write(maker)
+                        bos.write(lenBytes)
+                        Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4)
+                        chunkDataLength -= Utils.copy(bis, bos, chunkDataLength)
+                    }
                 }
-                assert chunkDataLength == 0;
+                assert(chunkDataLength == 0L)
             }
-            bos.flush();
-        } catch (AssertionError error) {
-            throw new ImageFormatException();
+            bos.flush()
+        } catch (error: AssertionError) {
+            throw ImageFormatException()
         }
+    }
+
+    companion object {
+        private val jpegSkippableChunks = setOf(
+            0xE0.toByte(),
+            0xE1.toByte(),
+            0xE2.toByte(),
+            0xE3.toByte(),
+            0xE4.toByte(),
+            0xE5.toByte(),
+            0xE6.toByte(),
+            0xE7.toByte(),
+            0xE8.toByte(),
+            0xE9.toByte(),
+            0xEA.toByte(),
+            0xEB.toByte(),
+            0xEC.toByte(),
+            0xED.toByte(),
+            0xEE.toByte(),
+            0xEF.toByte(),
+            0xFE.toByte()
+        )
     }
 }

@@ -1,96 +1,79 @@
-package org.baiyu.fuckshare.exifhelper;
+package org.baiyu.fuckshare.exifhelper
 
-import org.baiyu.fuckshare.Utils;
+import org.baiyu.fuckshare.Utils
+import timber.log.Timber
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Set;
-
-import timber.log.Timber;
-
-public class pngExifHelper implements ExifHelper {
-
-    private static final Set<String> pngCriticalChunks = Set.of(
-            "acTL", //   animation control
-            "bKGD", //   background color
-            "cHRM", //   Primary Chromaticities
-            "gAMA", //   Gamma
-            "gIFg", //   GIFGraphicControlExtension
-            "gIFt", //   GIFPlainTextExtension
-            "gIFx", //   GIFApplicationExtension
-            "fcTL", // * frame control
-            "fdAT", // * frame data
-            "hIST", //   PaletteHistogram
-            "IDAT", // * image data
-            "IEND", // * trailer
-            "IHDR", // * header
-            "pCAL", //   Pixel Calibration
-            "pHYs", //   PhysicalPixel
-            "PLTE", // * palette
-            "sBIT", //   SignificantBits
-            "sCAL", //   SubjectScale
-            "sRGB", //   SRGBRendering
-            "sTER", //   StereoImage
-            "tRNS", //   Transparency
-            "vpAg"  //   VirtualPage
-    );
-
-    @Override
-    public void removeMetadata(InputStream inputStream, OutputStream outputStream) throws ImageFormatException, IOException {
+class PngExifHelper : ExifHelper {
+    @Throws(ImageFormatException::class, IOException::class)
+    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?) {
         try {
+            val bis = inputStream as? BufferedInputStream ?: BufferedInputStream(inputStream)
+            val bos = outputStream as? BufferedOutputStream ?: BufferedOutputStream(outputStream)
 
-            BufferedInputStream bis;
-            BufferedOutputStream bos;
+            val buffer = ByteArray(8)
+            bis.read(buffer, 0, 8)
+            bos.write(buffer)
+//            Utils.copy(bis, bos, 8)
 
-            if (inputStream instanceof BufferedInputStream) {
-                bis = (BufferedInputStream) inputStream;
-            } else {
-                bis = new BufferedInputStream(inputStream);
-            }
-
-            if (outputStream instanceof BufferedOutputStream) {
-                bos = (BufferedOutputStream) outputStream;
-            } else {
-                bos = new BufferedOutputStream(outputStream);
-            }
-
-            byte[] byteArray = new byte[8];
-            Utils.inputStreamRead(bis, byteArray);
-            bos.write(byteArray);
-
-            byte[] chunkLengthBytes = new byte[4];
-            byte[] chunkNameBytes = new byte[4];
-            long chunkDataCRCLength;
-
+            val chunkLengthBytes = ByteArray(4)
+            val chunkNameBytes = ByteArray(4)
+            var chunkDataCRCLength: Long
             while (bis.available() > 0) {
-                Utils.inputStreamRead(bis, chunkLengthBytes);
+                Utils.inputStreamRead(bis, chunkLengthBytes)
                 // 4 bytes of crc
-                chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4;
-
-                Utils.inputStreamRead(bis, chunkNameBytes);
-                String chunkName = new String(chunkNameBytes);
-
+                chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4
+                Utils.inputStreamRead(bis, chunkNameBytes)
+                val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
                 if (pngCriticalChunks.contains(chunkName)) {
-                    bos.write(chunkLengthBytes);
-                    bos.write(chunkNameBytes);
-                    chunkDataCRCLength -= Utils.copy(bis, bos, chunkDataCRCLength);
-                    Timber.d("Copy chunk: %s size: %d", chunkName, chunkDataCRCLength + 4);
+                    bos.write(chunkLengthBytes)
+                    bos.write(chunkNameBytes)
+                    Timber.d("Copy chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
+                    chunkDataCRCLength -= Utils.copy(bis, bos, chunkDataCRCLength)
                 } else {
                     // skip chunkData and chunkCrc
-                    chunkDataCRCLength -= Utils.inputStreamSkip(bis, chunkDataCRCLength);
-                    Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4);
+                    Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
+                    chunkDataCRCLength -= Utils.inputStreamSkip(bis, chunkDataCRCLength)
                 }
-                assert chunkDataCRCLength == 0;
-                if (chunkName.equals("IEND")) {
-                    break;
+                assert(chunkDataCRCLength == 0L)
+                if (chunkName == "IEND") {
+                    break
                 }
             }
-            bos.flush();
-        } catch (AssertionError error) {
-            throw new ImageFormatException();
+            bos.flush()
+        } catch (error: AssertionError) {
+            throw ImageFormatException()
         }
+    }
+
+    companion object {
+        private val pngCriticalChunks = setOf(
+            "acTL",  //   animation control
+            "bKGD",  //   background color
+            "cHRM",  //   Primary Chromaticities
+            "gAMA",  //   Gamma
+            "gIFg",  //   GIFGraphicControlExtension
+            "gIFt",  //   GIFPlainTextExtension
+            "gIFx",  //   GIFApplicationExtension
+            "fcTL",  // * frame control
+            "fdAT",  // * frame data
+            "hIST",  //   PaletteHistogram
+            "IDAT",  // * image data
+            "IEND",  // * trailer
+            "IHDR",  // * header
+            "pCAL",  //   Pixel Calibration
+            "pHYs",  //   PhysicalPixel
+            "PLTE",  // * palette
+            "sBIT",  //   SignificantBits
+            "sCAL",  //   SubjectScale
+            "sRGB",  //   SRGBRendering
+            "sTER",  //   StereoImage
+            "tRNS",  //   Transparency
+            "vpAg" //   VirtualPage
+        )
     }
 }

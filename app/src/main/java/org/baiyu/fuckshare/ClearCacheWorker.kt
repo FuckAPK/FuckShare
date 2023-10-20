@@ -1,30 +1,22 @@
-package org.baiyu.fuckshare;
+package org.baiyu.fuckshare
 
-import android.content.Context;
+import android.content.Context
+import androidx.work.Worker
+import androidx.work.WorkerParameters
+import timber.log.Timber
 
-import androidx.annotation.NonNull;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
-
-import timber.log.Timber;
-
-public class ClearCacheWorker extends Worker {
-    public static final String id = "clearCache";
-    private final Context context;
-
-    public ClearCacheWorker(
-            @NonNull Context context,
-            @NonNull WorkerParameters params) {
-        super(context, params);
-        this.context = context;
+class ClearCacheWorker(
+    private val context: Context,
+    params: WorkerParameters
+) : Worker(context, params) {
+    override fun doWork(): Result {
+        val timeDurationMillis = 1000L * 60L * 30L // 30 mins
+        val result = Utils.clearCache(context, timeDurationMillis)
+        Timber.d("Cache cleared with result: %b", result)
+        return if (result) Result.success() else Result.failure()
     }
 
-    @NonNull
-    @Override
-    public Result doWork() {
-        final long timeDurationMillis = 1000 * 60 * 30; // 30 mins
-        boolean result = Utils.clearCache(context, timeDurationMillis);
-        Timber.d("Cache cleared with result: %b", result);
-        return result ? Result.success() : Result.failure();
+    companion object {
+        const val id = "clearCache"
     }
 }

@@ -1,45 +1,47 @@
-package org.baiyu.fuckshare.filetype;
+package org.baiyu.fuckshare.filetype
 
-import java.util.Map;
-import java.util.Set;
-
-public enum AudioType implements FileType {
-    MP3("mp3", Set.of(
-            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xFB}),
-            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xF2}),
-            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xF3}),
-            Map.of(0, new byte[]{(byte) 0x49, (byte) 0x44, (byte) 0x33})
-    )),
-    FLAC("flac", Set.of(
-            Map.of(0, new byte[]{(byte) 0x66, (byte) 0x4C, (byte) 0x61, (byte) 0x43})
-    )),
-    WAVE("wav", Set.of(
-            Map.of(0, new byte[]{(byte) 0x52, (byte) 0x49, (byte) 0x46, (byte) 0x46},
-                    8, new byte[]{(byte) 0x57, (byte) 0x41, (byte) 0x56, (byte) 0x45})
-    )),
-    OGG("ogg", Set.of(
-            Map.of(0, new byte[]{(byte) 0x4F, (byte) 0x67, (byte) 0x67, (byte) 0x53})
-    )),
-    AIFF("aiff", Set.of(
-            Map.of(0, new byte[]{(byte) 0x46, (byte) 0x4F, (byte) 0x52, (byte) 0x4D},
-                    8, new byte[]{(byte) 0x41, (byte) 0x49, (byte) 0x46, (byte) 0x46})
-    ));
-
-    private final String extension;
-    private final Set<Map<Integer, byte[]>> signatures;
-
-    AudioType(String extension, Set<Map<Integer, byte[]>> signatures) {
-        this.extension = extension;
-        this.signatures = signatures;
-    }
-
-    @Override
-    public String getExtension() {
-        return extension;
-    }
-
-    @Override
-    public Set<Map<Integer, byte[]>> getSignatures() {
-        return signatures;
-    }
+enum class AudioType(
+    override val extension: String,
+    override val signatures: Set<Map<Int, ByteArray>>
+) : FileType {
+    MP3(
+        "mp3", setOf(
+            mapOf(0 to byteArrayOf(0xFF.toByte(), 0xFB.toByte())),
+            mapOf(0 to byteArrayOf(0xFF.toByte(), 0xF2.toByte())),
+            mapOf(0 to byteArrayOf(0xFF.toByte(), 0xF3.toByte())),
+            mapOf(0 to byteArrayOf(0x49.toByte(), 0x44.toByte(), 0x33.toByte()))
+        )
+    ),
+    FLAC(
+        "flac", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(0x66.toByte(), 0x4C.toByte(), 0x61.toByte(), 0x43.toByte())
+            )
+        )
+    ),
+    WAVE(
+        "wav", setOf(
+            mapOf(
+                0 to byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte()),
+                8 to byteArrayOf(0x57.toByte(), 0x41.toByte(), 0x56.toByte(), 0x45.toByte())
+            )
+        )
+    ),
+    OGG(
+        "ogg", setOf(
+            mapOf(
+                0 to
+                        byteArrayOf(0x4F.toByte(), 0x67.toByte(), 0x67.toByte(), 0x53.toByte())
+            )
+        )
+    ),
+    AIFF(
+        "aiff", setOf(
+            mapOf(
+                0 to byteArrayOf(0x46.toByte(), 0x4F.toByte(), 0x52.toByte(), 0x4D.toByte()),
+                8 to byteArrayOf(0x41.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte())
+            )
+        )
+    );
 }

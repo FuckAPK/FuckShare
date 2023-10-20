@@ -1,226 +1,227 @@
-package org.baiyu.fuckshare;
+package org.baiyu.fuckshare
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.FileUtils;
-import android.os.Parcelable;
-import android.widget.Toast;
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.ComponentName
+import android.content.Intent
+import android.content.SharedPreferences
+import android.net.Uri
+import android.os.Bundle
+import android.os.FileUtils
+import android.os.Parcelable
+import android.widget.Toast
+import androidx.core.app.ShareCompat.IntentBuilder
+import androidx.core.content.FileProvider
+import androidx.exifinterface.media.ExifInterface
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
+import org.baiyu.fuckshare.exifhelper.ExifHelper
+import org.baiyu.fuckshare.exifhelper.ImageFormatException
+import org.baiyu.fuckshare.exifhelper.JpegExifHelper
+import org.baiyu.fuckshare.exifhelper.PngExifHelper
+import org.baiyu.fuckshare.exifhelper.WebpExifHelper
+import org.baiyu.fuckshare.filetype.FileType
+import org.baiyu.fuckshare.filetype.ImageType
+import org.baiyu.fuckshare.filetype.OtherType
+import timber.log.Timber
+import timber.log.Timber.DebugTree
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 
-import androidx.annotation.NonNull;
-import androidx.core.app.ShareCompat;
-import androidx.core.content.FileProvider;
-import androidx.exifinterface.media.ExifInterface;
-import androidx.work.Constraints;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-
-import org.baiyu.fuckshare.exifhelper.ExifHelper;
-import org.baiyu.fuckshare.exifhelper.ImageFormatException;
-import org.baiyu.fuckshare.exifhelper.jpegExifHelper;
-import org.baiyu.fuckshare.exifhelper.pngExifHelper;
-import org.baiyu.fuckshare.exifhelper.webpExifHelper;
-import org.baiyu.fuckshare.filetype.FileType;
-import org.baiyu.fuckshare.filetype.ImageType;
-import org.baiyu.fuckshare.filetype.OtherType;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-import timber.log.Timber;
-
-public class HandleShareActivity extends Activity {
-    private static Settings settings;
-
+class HandleShareActivity : Activity() {
     @SuppressLint("WorldReadableFiles")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (BuildConfig.DEBUG) {
-            Timber.plant(new Timber.DebugTree());
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (BuildConfig.DEBUG && Timber.treeCount == 0) {
+            Timber.plant(DebugTree())
         }
-        SharedPreferences prefs;
-        try {
-            //noinspection deprecation
-            prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", Context.MODE_WORLD_READABLE);
-        } catch (SecurityException ignore) {
-            prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", Context.MODE_PRIVATE);
+        val prefs: SharedPreferences = try {
+            @Suppress("DEPRECATION")
+            getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_WORLD_READABLE)
+        } catch (ignore: SecurityException) {
+            getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_PRIVATE)
         }
-        settings = Settings.getInstance(prefs);
+        settings = Settings.getInstance(prefs)
 
-        Intent intent = getIntent();
-        if ("text/plain".equals(intent.getType())) {
-            handleSendText(intent);
+        val intent = intent
+        if ("text/plain" == intent.type) {
+            handleSendText(intent)
         } else {
-            List<Uri> uris = Utils.getUrisFromIntent(intent);
-            assert uris != null;
-            assert !uris.isEmpty();
-            handleUris(uris);
+            val uris = Utils.getUrisFromIntent(intent)!!
+            assert(uris.isNotEmpty())
+            handleUris(uris)
         }
-        finish();
+        finish()
     }
 
-    @Override
-    public void finish() {
-        PeriodicWorkRequest clearCacheWorkRequest = new PeriodicWorkRequest.Builder(
-                ClearCacheWorker.class,
-                1, TimeUnit.DAYS
-        ).setConstraints(new Constraints.Builder().setRequiresDeviceIdle(true).build())
-                .setInitialDelay(10, TimeUnit.MINUTES)
-                .build();
-
+    override fun finish() {
+        val clearCacheWorkRequest: PeriodicWorkRequest = PeriodicWorkRequest.Builder(
+            ClearCacheWorker::class.java,
+            1, TimeUnit.DAYS
+        ).setConstraints(Constraints.Builder().setRequiresDeviceIdle(true).build())
+            .setInitialDelay(10, TimeUnit.MINUTES)
+            .build()
         WorkManager.getInstance(this)
-                .enqueueUniquePeriodicWork(ClearCacheWorker.id, ExistingPeriodicWorkPolicy.KEEP, clearCacheWorkRequest);
-        super.finish();
+            .enqueueUniquePeriodicWork(
+                ClearCacheWorker.id,
+                ExistingPeriodicWorkPolicy.KEEP,
+                clearCacheWorkRequest
+            )
+        super.finish()
     }
 
-    void handleSendText(@NonNull Intent intent) {
-        ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this);
-        ib.setType(intent.getType());
-        ib.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT));
-        Intent chooserIntent = ib.createChooserIntent();
+    private fun handleSendText(intent: Intent) {
+        val ib = IntentBuilder(this)
+        ib.setType(intent.type)
+        ib.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
+        val chooserIntent = ib.createChooserIntent()
         chooserIntent.putExtra(
-                Intent.EXTRA_EXCLUDE_COMPONENTS,
-                List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
-        startActivity(chooserIntent);
+            Intent.EXTRA_EXCLUDE_COMPONENTS,
+            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray<Parcelable>()
+        )
+        startActivity(chooserIntent)
     }
 
-    private void handleUris(@NonNull List<Uri> uris) {
-        ShareCompat.IntentBuilder ib = new ShareCompat.IntentBuilder(this)
-                .setType(getIntent().getType());
-        uris.parallelStream()
-                .map(this::refreshUri)
-                .filter(Objects::nonNull)
-                .forEachOrdered(ib::addStream);
-        Intent chooserIntent = ib.createChooserIntent();
-        chooserIntent.putExtra(
-                Intent.EXTRA_EXCLUDE_COMPONENTS,
-                List.of(new ComponentName(this, HandleShareActivity.class)).toArray(new Parcelable[]{}));
-        startActivity(chooserIntent);
+    private fun handleUris(uris: List<Uri?>) {
+        val ib = IntentBuilder(this).setType(intent.type)
+        uris.filterNotNull()
+            .parallelStream()
+            .map { refreshUri(it) }
+            .forEachOrdered { it?.let { it1 -> ib.addStream(it1) } }
+
+        val chooserIntent = ib.createChooserIntent()
+//        chooserIntent.putExtra(
+//            Intent.EXTRA_EXCLUDE_COMPONENTS,
+//            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray<Parcelable>()
+//        )
+        Timber.d("intent: %s", chooserIntent.toString())
+        startActivity(chooserIntent)
     }
 
-    @Nullable
-    private Uri refreshUri(Uri uri) {
-        String originName = Utils.getRealFileName(this, uri);
-        File tempfile = new File(getCacheDir(), Utils.getRandomString());
-        try {
-            byte[] magickBytes = new byte[16];
-            try (InputStream uin = this.getContentResolver().openInputStream(uri)) {
-                assert uin != null;
-                Utils.inputStreamRead(uin, magickBytes);
+    private fun refreshUri(uri: Uri): Uri? {
+        val originName = Utils.getRealFileName(this, uri)
+        var tempFile = File(cacheDir, Utils.randomString)
+        return try {
+            val magickBytes = ByteArray(16)
+            this.contentResolver.openInputStream(uri).use { uin ->
+                assert(uin != null)
+                Utils.inputStreamRead(uin!!, magickBytes)
             }
-            FileType fileType = Utils.getFileType(magickBytes);
-
-            if (fileType instanceof ImageType imageType
-                    && imageType.isSupportMetadata()
-                    && settings.enableRemoveExif()) {
+            var fileType = Utils.getFileType(magickBytes)
+            if (fileType is ImageType
+                && fileType.isSupportMetadata
+                && settings!!.enableRemoveExif()
+            ) {
                 try {
-                    processImgMetadata(tempfile, imageType, uri);
-                } catch (ImageFormatException e) {
-                    //noinspection ResultOfMethodCallIgnored
-                    tempfile.delete();
-                    Timber.e("Format error: %s Type: %s", originName, imageType);
-                    Toast.makeText(this, "Format error: " + originName + " Type: " + imageType, Toast.LENGTH_SHORT).show();
-                    if (settings.enableFallbackToFile()) {
-                        copyFileFromUri(uri, tempfile);
-                        fileType = OtherType.UNKNOWN;
+                    processImgMetadata(tempFile, fileType, uri)
+                } catch (e: ImageFormatException) {
+                    tempFile.delete()
+                    Timber.e("Format error: %s Type: %s", originName, fileType)
+                    Toast.makeText(
+                        this,
+                        "Format error: $originName Type: $fileType",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    fileType = if (settings!!.enableFallbackToFile()) {
+                        copyFileFromUri(uri, tempFile)
+                        OtherType.UNKNOWN
                     } else {
-                        return null;
+                        return null
                     }
                 }
             } else {
-                copyFileFromUri(uri, tempfile);
+                copyFileFromUri(uri, tempFile)
             }
             // rename
-            String newNameNoExt = getNewNameNoExt(fileType, originName);
-            String ext = getExt(fileType, originName);
-            String newFullName = Utils.mergeFilename(newNameNoExt, ext);
-
-            File renamed = new File(getCacheDir(), newFullName);
+            val newNameNoExt = getNewNameNoExt(fileType, originName)
+            val ext = getExt(fileType, originName)
+            val newFullName = Utils.mergeFilename(newNameNoExt, ext)
+            var renamed = File(cacheDir, newFullName)
             if (renamed.exists()) {
-                File oneTimeCacheDir = new File(getCacheDir(), Utils.getRandomString());
-                //noinspection ResultOfMethodCallIgnored
-                oneTimeCacheDir.mkdirs();
-                renamed = new File(oneTimeCacheDir, newFullName);
+                val oneTimeCacheDir = File(cacheDir, Utils.randomString)
+                oneTimeCacheDir.mkdirs()
+                renamed = File(oneTimeCacheDir, newFullName)
             }
-            if (tempfile.renameTo(renamed)) {
-                tempfile = renamed;
+            if (tempFile.renameTo(renamed)) {
+                tempFile = renamed
             }
-            return FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempfile);
-        } catch (IOException e) {
-            Timber.e(e);
-            Toast.makeText(this, "Failed to process: " + originName, Toast.LENGTH_SHORT).show();
-            return null;
+            FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", tempFile)
+        } catch (e: IOException) {
+            Timber.e(e)
+            Toast.makeText(this, "Failed to process: $originName", Toast.LENGTH_SHORT).show()
+            null
         }
     }
 
-    private void copyFileFromUri(Uri uri, File file) throws IOException {
-        try (InputStream uin = getContentResolver().openInputStream(uri);
-             OutputStream fout = new FileOutputStream(file)) {
-            assert uin != null;
-            FileUtils.copy(uin, fout);
+    @Throws(IOException::class)
+    private fun copyFileFromUri(uri: Uri, file: File) {
+        contentResolver.openInputStream(uri).use { uin ->
+            FileOutputStream(file).use { fout ->
+                assert(uin != null)
+                FileUtils.copy(uin!!, fout)
+            }
         }
     }
 
-    private void processImgMetadata(File file, @NonNull ImageType imageType, Uri uri) throws IOException, ImageFormatException {
-        ExifHelper eh = null;
-        switch (imageType) {
-            case JPEG -> eh = new jpegExifHelper();
-            case PNG -> eh = new pngExifHelper();
-            case WEBP -> eh = new webpExifHelper();
+    @Throws(IOException::class, ImageFormatException::class)
+    private fun processImgMetadata(file: File, imageType: ImageType, uri: Uri) {
+        val eh: ExifHelper? = when (imageType) {
+            ImageType.JPEG -> JpegExifHelper()
+            ImageType.PNG -> PngExifHelper()
+            ImageType.WEBP -> WebpExifHelper()
+            else -> null
         }
         if (eh == null) {
-            Timber.e("unsupported image type: %s", imageType);
+            Timber.e("unsupported image type: %s", imageType)
         } else {
-            try (InputStream uin = getContentResolver().openInputStream(uri);
-                 OutputStream fout = new FileOutputStream(file)) {
-                eh.removeMetadata(uin, fout);
+            contentResolver.openInputStream(uri).use { uin ->
+                FileOutputStream(file).use { fout ->
+                    eh.removeMetadata(
+                        uin!!, fout
+                    )
+                }
             }
         }
-        if (imageType.isSupportMetadata()) {
-            try (InputStream uin = getContentResolver().openInputStream(uri)) {
-                assert uin != null;
+        if (imageType.isSupportMetadata) {
+            contentResolver.openInputStream(uri).use { uin ->
+                assert(uin != null)
                 ExifHelper.writeBackMetadata(
-                        new ExifInterface(uin),
-                        new ExifInterface(file),
-                        settings.getExifTagsToKeep());
+                    ExifInterface(uin!!),
+                    ExifInterface(file),
+                    settings!!.exifTagsToKeep
+                )
             }
         }
     }
 
-    private String getNewNameNoExt(FileType fileType, String originName) {
-        String newNameNoExt;
-        if ((fileType instanceof ImageType && settings.enableImageRename()) ||
-                (!(fileType instanceof ImageType) && settings.enableFileRename())) {
-            newNameNoExt = Utils.getRandomString();
-        } else {
-            newNameNoExt = Utils.getFileNameNoExt(originName);
+    private fun getNewNameNoExt(fileType: FileType?, originName: String?): String {
+        return when (fileType) {
+            is ImageType -> if (settings!!.enableImageRename()) Utils.randomString else Utils.getFileNameNoExt(
+                originName!!
+            )
+
+            else -> if (settings!!.enableFileRename()) Utils.randomString else Utils.getFileNameNoExt(
+                originName!!
+            )
         }
-        return newNameNoExt;
     }
 
-    @Nullable
-    private String getExt(FileType fileType, String originName) {
-        String extension = null;
-        if (settings.enableFileTypeSniff()) {
-            extension = fileType.getExtension();
+    private fun getExt(fileType: FileType, originName: String?): String? {
+        var extension: String? = null
+        if (settings!!.enableFileTypeSniff()) {
+            extension = fileType.extension
         }
         if (extension == null) {
-            extension = Utils.getFileRealExt(originName);
+            extension = Utils.getFileRealExt(originName!!)
         }
-        return extension;
+        return extension
+    }
+
+    companion object {
+        private var settings: Settings? = null
     }
 }
