@@ -14,7 +14,7 @@
     <string name="title_rename">Rename</string>
     <string name="title_metadata">Metadata</string>
     <string name="title_enable_fallback_to_file">Fallback to file</string>
-    <string name="desc_enable_fallback_to_file">Fallback to faile when failed</string>
+    <string name="desc_enable_fallback_to_file">Fallback to file when failed</string>
     <string name="desc_enable_file_type_sniff">Error may occur</string>
     <string name="clear_cache_success">Cache cleared!</string>
     <string name="clear_cache_failed">Failed to clear cache!</string>
