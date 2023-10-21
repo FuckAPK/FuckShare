@@ -25,7 +25,6 @@ import org.baiyu.fuckshare.filetype.OtherType
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -60,6 +59,7 @@ class HandleShareActivity : Activity() {
             ClearCacheWorker::class.java,
             1, TimeUnit.DAYS
         ).setInitialDelay(1, TimeUnit.HOURS).build()
+
         WorkManager.getInstance(this)
             .enqueueUniquePeriodicWork(
                 ClearCacheWorker.id,
@@ -102,9 +102,8 @@ class HandleShareActivity : Activity() {
         var tempFile = File(cacheDir, Utils.randomString)
         return try {
             val magickBytes = ByteArray(16)
-            this.contentResolver.openInputStream(uri).use { uin ->
-                assert(uin != null)
-                Utils.inputStreamRead(uin!!, magickBytes)
+            this.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
+                Utils.inputStreamRead(uin, magickBytes)
             }
             var fileType = Utils.getFileType(magickBytes)
             if (fileType is ImageType
@@ -154,9 +153,9 @@ class HandleShareActivity : Activity() {
 
     @Throws(IOException::class)
     private fun copyFileFromUri(uri: Uri, file: File) {
-        contentResolver.openInputStream(uri)?.buffered().use { uin ->
+        contentResolver.openInputStream(uri)!!.buffered().use { uin ->
             file.outputStream().buffered().use { fout ->
-                uin?.copyTo(fout)
+                uin.copyTo(fout)
             }
         }
     }
@@ -172,11 +171,9 @@ class HandleShareActivity : Activity() {
         if (eh == null) {
             Timber.e("unsupported image type: %s", imageType)
         } else {
-            contentResolver.openInputStream(uri).use { uin ->
-                FileOutputStream(file).use { fout ->
-                    eh.removeMetadata(
-                        uin!!, fout
-                    )
+            contentResolver.openInputStream(uri)!!.buffered().use { uin ->
+                file.outputStream().buffered().use { fout ->
+                    eh.removeMetadata(uin, fout)
                 }
             }
         }
