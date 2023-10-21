@@ -143,18 +143,16 @@ object Utils {
     fun bigEndianBytesToLong(bytes: ByteArray): Long {
         val newBytes = ByteArray(8)
         System.arraycopy(bytes, 0, newBytes, 8 - bytes.size, bytes.size)
-        val bb = ByteBuffer.wrap(newBytes).apply {
+        return ByteBuffer.wrap(newBytes).apply {
             order(ByteOrder.BIG_ENDIAN)
-        }
-        return bb.long
+        }.long
     }
 
     fun littleEndianBytesToLong(bytes: ByteArray): Long {
         val newBytes = bytes.copyOf(8)
-        val bb = ByteBuffer.wrap(newBytes).apply {
+        return ByteBuffer.wrap(newBytes).apply {
             order(ByteOrder.LITTLE_ENDIAN)
-        }
-        return bb.long
+        }.long
     }
 
     fun longToBytes(num: Long, order: ByteOrder): ByteArray {
@@ -173,27 +171,23 @@ object Utils {
     }
 
     @Throws(IOException::class)
-    fun inputStreamRead(inputStream: InputStream, bytes: ByteArray?, offset: Int, n: Int): Int {
-        var read = 0
-        while (inputStream.available() > 0 && read < n) {
-            read += inputStream.read(bytes, offset + read, n - read)
+    fun inputStreamRead(inputStream: InputStream, b: ByteArray, off: Int, len: Int): Int {
+        Objects.checkFromIndexSize(off, len, b.size)
+        var count: Int
+        var n = 0
+        while (n < len) {
+            count = inputStream.read(b, off + n, len - n)
+            if (count < 0) break
+            n += count
         }
-        return read
-    }
-
-    @Throws(IOException::class)
-    fun inputStreamSkip(inputStream: InputStream, n: Long): Long {
-        var remaining = n
-        while (inputStream.available() > 0 && remaining > 0) {
-            remaining -= inputStream.skip(remaining)
-        }
-        return n - remaining
+        return n
     }
 
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
         val timeBefore = System.currentTimeMillis() - timeDurationMillis
         return context.cacheDir.listFiles()?.asSequence()
             ?.filter { it.lastModified() < timeBefore }
-            ?.all { it.deleteRecursively() } ?: true
+            ?.all { it.deleteRecursively() }
+            ?: true
     }
 }

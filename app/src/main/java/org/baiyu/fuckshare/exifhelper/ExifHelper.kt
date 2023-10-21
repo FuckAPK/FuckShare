@@ -8,7 +8,7 @@ import java.io.OutputStream
 
 interface ExifHelper {
     @Throws(IOException::class, ImageFormatException::class)
-    fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?)
+    fun removeMetadata(inputStream: InputStream, outputStream: OutputStream)
 
     companion object {
         @Throws(IOException::class)

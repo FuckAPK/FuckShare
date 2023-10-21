@@ -3,67 +3,70 @@ package org.baiyu.fuckshare.exifhelper
 import android.os.FileUtils
 import org.baiyu.fuckshare.Utils
 import timber.log.Timber
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
 class JpegExifHelper : ExifHelper {
     @Throws(IOException::class, ImageFormatException::class)
-    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?) {
-        try {
-            val bis = inputStream as? BufferedInputStream ?: BufferedInputStream(inputStream)
-            val bos = outputStream as? BufferedOutputStream ?: BufferedOutputStream(outputStream)
+    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream) {
+        val bis = inputStream.buffered()
+        val bos = outputStream.buffered()
 
-            val maker = ByteArray(2)
-            val lenBytes = ByteArray(2)
-            var chunkDataLength: Long = 0
-            while (bis.available() > 0) {
-                Utils.inputStreamRead(bis, maker)
-                assert(maker[0] == 0xFF.toByte())
-                when (maker[1]) {
-                    0xD8.toByte() -> {
-                        bos.write(maker)
-                        Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
-                    }
+        val maker = ByteArray(2)
+        val lenBytes = ByteArray(2)
+        var chunkDataLength = 0L
 
-                    0xD9.toByte() -> {   // EOI
-                        bos.write(maker)
-                        Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
-                        break
-                    }
+        while (bis.available() > 0) {
 
-                    in jpegSkippableChunks -> {
-                        Utils.inputStreamRead(bis, lenBytes)
-                        chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
-                        Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4)
-                        chunkDataLength -= Utils.inputStreamSkip(bis, chunkDataLength)
-                    }
+            Utils.inputStreamRead(bis, maker)
 
-                    0xDA.toByte() -> {   // SOS
-                        bos.write(maker)
-                        // write all data
-                        chunkDataLength = bis.available().toLong()
-                        Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2)
-                        chunkDataLength -= FileUtils.copy(bis, bos)
-                    }
-
-                    else -> {
-                        Utils.inputStreamRead(bis, lenBytes)
-                        chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
-                        bos.write(maker)
-                        bos.write(lenBytes)
-                        Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4)
-                        chunkDataLength -= Utils.copy(bis, bos, chunkDataLength)
-                    }
-                }
-                assert(chunkDataLength == 0L)
+            if (maker[0] != 0xFF.toByte()) {
+                throw ImageFormatException()
             }
-            bos.flush()
-        } catch (error: AssertionError) {
-            throw ImageFormatException()
+
+            when (maker[1]) {
+                0xD8.toByte() -> {
+                    bos.write(maker)
+                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
+                }
+
+                0xD9.toByte() -> {   // EOI
+                    bos.write(maker)
+                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
+                    break
+                }
+
+                0xDA.toByte() -> {   // SOS
+                    bos.write(maker)
+                    // write all data
+                    chunkDataLength = bis.available().toLong()
+                    Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2)
+                    chunkDataLength -= FileUtils.copy(bis, bos)
+                }
+
+                in jpegSkippableChunks -> {
+                    Utils.inputStreamRead(bis, lenBytes)
+                    chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
+                    Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4)
+                    chunkDataLength -= bis.skip(chunkDataLength)
+                }
+
+                else -> {
+                    Utils.inputStreamRead(bis, lenBytes)
+                    chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
+                    bos.write(maker)
+                    bos.write(lenBytes)
+                    Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4)
+                    chunkDataLength -= Utils.copy(bis, bos, chunkDataLength)
+                }
+            }
+
+            if (chunkDataLength != 0L) {
+                throw ImageFormatException()
+            }
         }
+        bos.flush()
     }
 
     companion object {

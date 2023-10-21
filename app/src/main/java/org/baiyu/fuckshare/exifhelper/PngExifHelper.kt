@@ -2,52 +2,46 @@ package org.baiyu.fuckshare.exifhelper
 
 import org.baiyu.fuckshare.Utils
 import timber.log.Timber
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 
 class PngExifHelper : ExifHelper {
     @Throws(ImageFormatException::class, IOException::class)
-    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream?) {
-        try {
-            val bis = inputStream as? BufferedInputStream ?: BufferedInputStream(inputStream)
-            val bos = outputStream as? BufferedOutputStream ?: BufferedOutputStream(outputStream)
+    override fun removeMetadata(inputStream: InputStream, outputStream: OutputStream) {
+        val bis = inputStream.buffered()
+        val bos = outputStream.buffered()
 
-            val buffer = ByteArray(8)
-            bis.read(buffer, 0, 8)
-            bos.write(buffer)
-//            Utils.copy(bis, bos, 8)
+        Utils.copy(bis, bos, 8)
 
-            val chunkLengthBytes = ByteArray(4)
-            val chunkNameBytes = ByteArray(4)
-            var chunkDataCRCLength: Long
-            while (bis.available() > 0) {
-                Utils.inputStreamRead(bis, chunkLengthBytes)
-                // 4 bytes of crc
-                chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4
-                Utils.inputStreamRead(bis, chunkNameBytes)
-                val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
-                if (pngCriticalChunks.contains(chunkName)) {
-                    bos.write(chunkLengthBytes)
-                    bos.write(chunkNameBytes)
-                    Timber.d("Copy chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
-                    chunkDataCRCLength -= Utils.copy(bis, bos, chunkDataCRCLength)
-                } else {
-                    // skip chunkData and chunkCrc
-                    Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
-                    chunkDataCRCLength -= Utils.inputStreamSkip(bis, chunkDataCRCLength)
-                }
-                assert(chunkDataCRCLength == 0L)
-                if (chunkName == "IEND") {
-                    break
-                }
+        val chunkLengthBytes = ByteArray(4)
+        val chunkNameBytes = ByteArray(4)
+        var chunkDataCRCLength: Long
+
+        while (bis.available() > 0) {
+            Utils.inputStreamRead(bis, chunkLengthBytes)
+            // 4 bytes of crc
+            chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4
+            Utils.inputStreamRead(bis, chunkNameBytes)
+            val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
+            if (pngCriticalChunks.contains(chunkName)) {
+                bos.write(chunkLengthBytes)
+                bos.write(chunkNameBytes)
+                Timber.d("Copy chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
+                chunkDataCRCLength -= Utils.copy(bis, bos, chunkDataCRCLength)
+            } else {
+                // skip chunkData and chunkCrc
+                Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
+                chunkDataCRCLength -= bis.skip(chunkDataCRCLength)
             }
-            bos.flush()
-        } catch (error: AssertionError) {
-            throw ImageFormatException()
+            if (chunkDataCRCLength != 0L) {
+                throw ImageFormatException()
+            }
+            if (chunkName == "IEND") {
+                break
+            }
         }
+        bos.flush()
     }
 
     companion object {
