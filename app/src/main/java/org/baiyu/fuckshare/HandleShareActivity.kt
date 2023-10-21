@@ -103,7 +103,7 @@ class HandleShareActivity : Activity() {
         return try {
             val magickBytes = ByteArray(16)
             this.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
-                Utils.inputStreamRead(uin, magickBytes)
+                Utils.readNBytes(uin, magickBytes)
             }
             var fileType = Utils.getFileType(magickBytes)
             if (fileType is ImageType

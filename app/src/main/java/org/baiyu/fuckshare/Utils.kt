@@ -166,12 +166,15 @@ object Utils {
     /** @noinspection UnusedReturnValue
      */
     @Throws(IOException::class)
-    fun inputStreamRead(inputStream: InputStream, bytes: ByteArray): Int {
-        return inputStreamRead(inputStream, bytes, 0, bytes.size)
+    fun readNBytes(inputStream: InputStream, bytes: ByteArray): Int {
+        return readNBytes(inputStream, bytes, 0, bytes.size)
     }
 
+    /**
+     * copy of InputStream.readNBytes, which has a api 33 limit
+     */
     @Throws(IOException::class)
-    fun inputStreamRead(inputStream: InputStream, b: ByteArray, off: Int, len: Int): Int {
+    fun readNBytes(inputStream: InputStream, b: ByteArray, off: Int, len: Int): Int {
         Objects.checkFromIndexSize(off, len, b.size)
         var count: Int
         var n = 0
@@ -181,6 +184,30 @@ object Utils {
             n += count
         }
         return n
+    }
+
+    /**
+     * copy (not extract) of InputStream.skipNBytes with return, which has a api 33 limit
+     *
+     */
+    fun skipNBytes(inputStream: InputStream, len: Long): Long {
+        var n = len
+        while (n > 0L) {
+            val ns: Long = inputStream.skip(n)
+            if (ns in 1L..n) {
+                n -= ns
+                continue
+            }
+            if (ns == 0L) {
+                if (inputStream.read() == -1) {
+                    break
+                }
+                --n
+                continue
+            }
+            throw IOException("Unable to skip exactly")
+        }
+        return len - n
     }
 
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {

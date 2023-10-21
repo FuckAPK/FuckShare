@@ -22,17 +22,17 @@ class WebpExifHelper : ExifHelper {
         // file size doesn't contain first 8 bytes
         var newSize = (bis.available() - 8).toLong()
         bis.mark(bis.available())
-        bis.skip(12)
+        Utils.skipNBytes(bis, 12)
         while (bis.available() > 0) {
-            Utils.inputStreamRead(bis, chunkNameBytes)
+            Utils.readNBytes(bis, chunkNameBytes)
             val chunkName = chunkNameBytes.toString()
-            Utils.inputStreamRead(bis, chunkDataLenBytes)
+            Utils.readNBytes(bis, chunkDataLenBytes)
             realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes)
             realChunkDataLength += realChunkDataLength % 2
             if (webpSkippableChunks.contains(chunkName)) {
                 newSize -= realChunkDataLength + 8
             }
-            realChunkDataLength -= bis.skip(realChunkDataLength)
+            realChunkDataLength -= Utils.skipNBytes(bis, realChunkDataLength)
             if (realChunkDataLength != 0L) {
                 throw ImageFormatException()
             }
@@ -40,20 +40,20 @@ class WebpExifHelper : ExifHelper {
         bis.reset()
 
         // rewrite with new size
-        Utils.inputStreamRead(bis, webpHeader)
+        Utils.readNBytes(bis, webpHeader)
         bos.write(webpHeader, 0, 4)
         bos.write(Utils.longToBytes(newSize, ByteOrder.LITTLE_ENDIAN), 0, 4)
         bos.write(webpHeader, 8, 4)
         while (bis.available() > 0) {
-            Utils.inputStreamRead(bis, chunkNameBytes)
+            Utils.readNBytes(bis, chunkNameBytes)
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
-            Utils.inputStreamRead(bis, chunkDataLenBytes)
+            Utils.readNBytes(bis, chunkDataLenBytes)
             realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes)
             // standard of tiff: fill in end with 0x00 if chunk size if odd
             realChunkDataLength += realChunkDataLength % 2
 
             if (webpSkippableChunks.contains(chunkName)) {
-                realChunkDataLength -= bis.skip(realChunkDataLength)
+                realChunkDataLength -= Utils.skipNBytes(bis, realChunkDataLength)
                 Timber.d("Discord chunk: %s size: %d", chunkName, realChunkDataLength)
             } else {
                 bos.write(chunkNameBytes)

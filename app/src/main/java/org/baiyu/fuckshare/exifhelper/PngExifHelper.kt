@@ -19,10 +19,10 @@ class PngExifHelper : ExifHelper {
         var chunkDataCRCLength: Long
 
         while (bis.available() > 0) {
-            Utils.inputStreamRead(bis, chunkLengthBytes)
+            Utils.readNBytes(bis, chunkLengthBytes)
             // 4 bytes of crc
             chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4
-            Utils.inputStreamRead(bis, chunkNameBytes)
+            Utils.readNBytes(bis, chunkNameBytes)
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
             if (pngCriticalChunks.contains(chunkName)) {
                 bos.write(chunkLengthBytes)
@@ -32,7 +32,7 @@ class PngExifHelper : ExifHelper {
             } else {
                 // skip chunkData and chunkCrc
                 Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
-                chunkDataCRCLength -= bis.skip(chunkDataCRCLength)
+                chunkDataCRCLength -= Utils.skipNBytes(bis, chunkDataCRCLength)
             }
             if (chunkDataCRCLength != 0L) {
                 throw ImageFormatException()

@@ -18,7 +18,7 @@ class JpegExifHelper : ExifHelper {
 
         while (bis.available() > 0) {
 
-            Utils.inputStreamRead(bis, maker)
+            Utils.readNBytes(bis, maker)
 
             if (maker[0] != 0xFF.toByte()) {
                 throw ImageFormatException()
@@ -45,14 +45,14 @@ class JpegExifHelper : ExifHelper {
                 }
 
                 in jpegSkippableChunks -> {
-                    Utils.inputStreamRead(bis, lenBytes)
+                    Utils.readNBytes(bis, lenBytes)
                     chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
                     Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4)
-                    chunkDataLength -= bis.skip(chunkDataLength)
+                    chunkDataLength -= Utils.skipNBytes(bis, chunkDataLength)
                 }
 
                 else -> {
-                    Utils.inputStreamRead(bis, lenBytes)
+                    Utils.readNBytes(bis, lenBytes)
                     chunkDataLength = Utils.bigEndianBytesToLong(lenBytes) - 2
                     bos.write(maker)
                     bos.write(lenBytes)
