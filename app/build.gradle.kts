@@ -9,8 +9,8 @@ android {
         applicationId = "org.baiyu.fuckshare"
         minSdk = 30
         targetSdk = 34
-        versionCode = 32
-        versionName = "5.3"
+        versionCode = 33
+        versionName = "5.4"
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
