@@ -69,7 +69,6 @@ object Utils {
             return file.name
         } else if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
             context.contentResolver.query(uri, null, null, null, null).use { cursor ->
-                assert(cursor != null)
                 cursor!!.moveToFirst()
                 val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
                 return cursor.getString(nameIndex)

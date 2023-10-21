@@ -48,7 +48,6 @@ class HandleShareActivity : Activity() {
             handleSendText(intent)
         } else {
             val uris = Utils.getUrisFromIntent(intent)!!
-            assert(uris.isNotEmpty())
             handleUris(uris)
         }
         finish()
@@ -179,7 +178,6 @@ class HandleShareActivity : Activity() {
         }
         if (imageType.isSupportMetadata) {
             contentResolver.openInputStream(uri).use { uin ->
-                assert(uin != null)
                 ExifHelper.writeBackMetadata(
                     ExifInterface(uin!!),
                     ExifInterface(file),
