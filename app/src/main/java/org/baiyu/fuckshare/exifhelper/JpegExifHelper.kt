@@ -1,6 +1,5 @@
 package org.baiyu.fuckshare.exifhelper
 
-import android.os.FileUtils
 import org.baiyu.fuckshare.Utils
 import timber.log.Timber
 import java.io.IOException
@@ -42,7 +41,7 @@ class JpegExifHelper : ExifHelper {
                     // write all data
                     chunkDataLength = bis.available().toLong()
                     Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2)
-                    chunkDataLength -= FileUtils.copy(bis, bos)
+                    chunkDataLength -= bis.copyTo(bos)
                 }
 
                 in jpegSkippableChunks -> {

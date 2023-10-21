@@ -112,7 +112,7 @@ object Utils {
      */
     @Throws(IOException::class)
     fun copy(inputStream: InputStream, outputStream: OutputStream, len: Long): Long {
-        val buffer = ByteArray(4096) // Set the buffer size as per your requirement
+        val buffer = ByteArray(8192) // Set the buffer size as per your requirement
         var bytesRemaining = len
         while (bytesRemaining > 0) {
             val bytesRead =

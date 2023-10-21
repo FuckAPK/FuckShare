@@ -7,12 +7,10 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
-import android.os.FileUtils
 import android.widget.Toast
 import androidx.core.app.ShareCompat.IntentBuilder
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
-import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
@@ -61,9 +59,7 @@ class HandleShareActivity : Activity() {
         val clearCacheWorkRequest: PeriodicWorkRequest = PeriodicWorkRequest.Builder(
             ClearCacheWorker::class.java,
             1, TimeUnit.DAYS
-        ).setConstraints(Constraints.Builder().setRequiresDeviceIdle(true).build())
-            .setInitialDelay(10, TimeUnit.MINUTES)
-            .build()
+        ).setInitialDelay(1, TimeUnit.HOURS).build()
         WorkManager.getInstance(this)
             .enqueueUniquePeriodicWork(
                 ClearCacheWorker.id,
@@ -158,10 +154,9 @@ class HandleShareActivity : Activity() {
 
     @Throws(IOException::class)
     private fun copyFileFromUri(uri: Uri, file: File) {
-        contentResolver.openInputStream(uri).use { uin ->
-            FileOutputStream(file).use { fout ->
-                assert(uin != null)
-                FileUtils.copy(uin!!, fout)
+        contentResolver.openInputStream(uri)?.buffered().use { uin ->
+            file.outputStream().buffered().use { fout ->
+                uin?.copyTo(fout)
             }
         }
     }
