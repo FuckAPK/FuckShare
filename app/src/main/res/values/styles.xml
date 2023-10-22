@@ -7,10 +7,11 @@
     </style>
 
     <style name="MaterialPreferenceThemeOverlay" parent="PreferenceThemeOverlay">
-        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompat</item>
+        <item name="switchPreferenceCompatStyle">@style/Preference.SwitchPreferenceCompatCustom
+        </item>
     </style>
 
-    <style name="Preference.SwitchPreferenceCompat" parent="Preference.SwitchPreferenceCompat.Material">
+    <style name="Preference.SwitchPreferenceCompatCustom" parent="Preference.SwitchPreferenceCompat.Material">
         <item name="android:widgetLayout">@layout/preference_material_switch</item>
     </style>
 
