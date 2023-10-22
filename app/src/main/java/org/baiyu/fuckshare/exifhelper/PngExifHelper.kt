@@ -1,10 +1,12 @@
 package org.baiyu.fuckshare.exifhelper
 
 import org.baiyu.fuckshare.Utils
+import org.baiyu.fuckshare.Utils.toUInt
 import timber.log.Timber
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.nio.ByteOrder
 
 class PngExifHelper : ExifHelper {
     @Throws(ImageFormatException::class, IOException::class)
@@ -21,7 +23,7 @@ class PngExifHelper : ExifHelper {
         while (bis.available() > 0) {
             Utils.readNBytes(bis, chunkLengthBytes)
             // 4 bytes of crc
-            chunkDataCRCLength = Utils.bigEndianBytesToLong(chunkLengthBytes) + 4
+            chunkDataCRCLength = chunkLengthBytes.toUInt(ByteOrder.BIG_ENDIAN).toLong() + 4
             Utils.readNBytes(bis, chunkNameBytes)
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
             if (pngCriticalChunks.contains(chunkName)) {

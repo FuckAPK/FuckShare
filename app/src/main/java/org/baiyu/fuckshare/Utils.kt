@@ -139,31 +139,24 @@ object Utils {
             .orElse(OtherType.UNKNOWN)
     }
 
-    fun bigEndianBytesToLong(bytes: ByteArray): Long {
-        val newBytes = ByteArray(8)
-        System.arraycopy(bytes, 0, newBytes, 8 - bytes.size, bytes.size)
-        return ByteBuffer.wrap(newBytes).apply {
-            order(ByteOrder.BIG_ENDIAN)
-        }.long
-    }
-
-    fun littleEndianBytesToLong(bytes: ByteArray): Long {
-        val newBytes = bytes.copyOf(8)
-        return ByteBuffer.wrap(newBytes).apply {
-            order(ByteOrder.LITTLE_ENDIAN)
-        }.long
-    }
-
-    fun longToBytes(num: Long, order: ByteOrder): ByteArray {
-        val bb = ByteBuffer.allocate(8).apply {
-            order(order)
-        }
-        bb.putLong(num)
-        return bb.array()
-    }
-
-    /** @noinspection UnusedReturnValue
+    /**
+     * 4.. bytes to UInt
      */
+    fun ByteArray.toUInt(order: ByteOrder): UInt {
+        return ByteBuffer.wrap(this).apply {
+            order(order)
+        }.int.toUInt()
+    }
+
+    /**
+     * 2.. bytes to UShort
+     */
+    fun ByteArray.toUShort(order: ByteOrder): UShort {
+        return ByteBuffer.wrap(this).apply {
+            order(order)
+        }.short.toUShort()
+    }
+
     @Throws(IOException::class)
     fun readNBytes(inputStream: InputStream, bytes: ByteArray): Int {
         return readNBytes(inputStream, bytes, 0, bytes.size)
@@ -187,7 +180,6 @@ object Utils {
 
     /**
      * copy (not extract) of InputStream.skipNBytes with return, which has a api 33 limit
-     *
      */
     fun skipNBytes(inputStream: InputStream, len: Long): Long {
         var n = len

@@ -31,17 +31,18 @@ class MainHook : IXposedHookLoadPackage {
                     if (!settings.enableForceForwardHook()) {
                         return
                     }
-                    val intent = Utils.getParcelableExtra(
+                    Utils.getParcelableExtra(
                         chooserIntent,
                         Intent.EXTRA_INTENT,
                         Intent::class.java
-                    )!!
-                    if (Intent.ACTION_SEND == intent.action || Intent.ACTION_SEND_MULTIPLE == intent.action) {
-                        param.args[3] = intent.apply {
-                            setClassName(
-                                BuildConfig.APPLICATION_ID,
-                                HandleShareActivity::class.java.name
-                            )
+                    )?.let {
+                        if (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action) {
+                            param.args[3] = it.apply {
+                                setClassName(
+                                    BuildConfig.APPLICATION_ID,
+                                    HandleShareActivity::class.java.name
+                                )
+                            }
                         }
                     }
                 }

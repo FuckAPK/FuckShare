@@ -1,10 +1,13 @@
 package org.baiyu.fuckshare.exifhelper
 
 import org.baiyu.fuckshare.Utils
+import org.baiyu.fuckshare.Utils.toUInt
 import timber.log.Timber
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.RandomAccessFile
+import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 class WebpExifHelper : ExifHelper {
@@ -13,42 +16,18 @@ class WebpExifHelper : ExifHelper {
         val bis = inputStream.buffered()
         val bos = outputStream.buffered()
 
-        val webpHeader = ByteArray(12)
         val chunkNameBytes = ByteArray(4)
         val chunkDataLenBytes = ByteArray(4)
         var realChunkDataLength: Long
 
-        // calculate size
-        // file size doesn't contain first 8 bytes
-        var newSize = (bis.available() - 8).toLong()
-        bis.mark(bis.available())
-        Utils.skipNBytes(bis, 12)
+        // copy header
+        Utils.copy(bis, bos, 12)
         while (bis.available() > 0) {
             Utils.readNBytes(bis, chunkNameBytes)
-            val chunkName = chunkNameBytes.toString()
             Utils.readNBytes(bis, chunkDataLenBytes)
-            realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes)
-            realChunkDataLength += realChunkDataLength % 2
-            if (webpSkippableChunks.contains(chunkName)) {
-                newSize -= realChunkDataLength + 8
-            }
-            realChunkDataLength -= Utils.skipNBytes(bis, realChunkDataLength)
-            if (realChunkDataLength != 0L) {
-                throw ImageFormatException()
-            }
-        }
-        bis.reset()
 
-        // rewrite with new size
-        Utils.readNBytes(bis, webpHeader)
-        bos.write(webpHeader, 0, 4)
-        bos.write(Utils.longToBytes(newSize, ByteOrder.LITTLE_ENDIAN), 0, 4)
-        bos.write(webpHeader, 8, 4)
-        while (bis.available() > 0) {
-            Utils.readNBytes(bis, chunkNameBytes)
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
-            Utils.readNBytes(bis, chunkDataLenBytes)
-            realChunkDataLength = Utils.littleEndianBytesToLong(chunkDataLenBytes)
+            realChunkDataLength = chunkDataLenBytes.toUInt(ByteOrder.LITTLE_ENDIAN).toLong()
             // standard of tiff: fill in end with 0x00 if chunk size if odd
             realChunkDataLength += realChunkDataLength % 2
 
@@ -66,6 +45,15 @@ class WebpExifHelper : ExifHelper {
             }
         }
         bos.flush()
+    }
+
+    fun fixHeaderSize(file: RandomAccessFile) {
+        ByteBuffer.allocate(4).let {
+            it.order(ByteOrder.LITTLE_ENDIAN)
+            it.putShort((file.length() - 8).toShort())
+            file.seek(4)
+            file.write(it.array())
+        }
     }
 
     companion object {

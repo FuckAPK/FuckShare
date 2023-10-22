@@ -26,6 +26,7 @@ import timber.log.Timber
 import timber.log.Timber.DebugTree
 import java.io.File
 import java.io.IOException
+import java.io.RandomAccessFile
 import java.util.concurrent.TimeUnit
 
 class HandleShareActivity : Activity() {
@@ -175,14 +176,19 @@ class HandleShareActivity : Activity() {
                     eh.removeMetadata(uin, fout)
                 }
             }
-        }
-        if (imageType.isSupportMetadata) {
-            contentResolver.openInputStream(uri).use { uin ->
-                ExifHelper.writeBackMetadata(
-                    ExifInterface(uin!!),
-                    ExifInterface(file),
-                    settings!!.exifTagsToKeep
-                )
+            (eh as? WebpExifHelper)?.let { webpExifHelper ->
+                RandomAccessFile(file, "rw").use {
+                    webpExifHelper.fixHeaderSize(it)
+                }
+            }
+            if (imageType.isSupportMetadata) {
+                contentResolver.openInputStream(uri)!!.use { uin ->
+                    ExifHelper.writeBackMetadata(
+                        ExifInterface(uin),
+                        ExifInterface(file),
+                        settings!!.exifTagsToKeep
+                    )
+                }
             }
         }
     }
