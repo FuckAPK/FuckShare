@@ -7,20 +7,55 @@ enum class VideoType(
     MP4(
         "mp4", setOf(
             mapOf(
-                0 to
+                4 to
                         byteArrayOf(
-                            0x00.toByte(),
-                            0x00.toByte(),
-                            0x00.toByte(),
-                            0x20.toByte(),
                             0x66.toByte(),
                             0x74.toByte(),
                             0x79.toByte(),
                             0x70.toByte(),
-                            0x69.toByte(),
+                            0x69.toByte(), // isom
                             0x73.toByte(),
                             0x6F.toByte(),
                             0x6D.toByte()
+                        )
+            ),
+            mapOf(
+                4 to
+                        byteArrayOf(
+                            0x66.toByte(),
+                            0x74.toByte(),
+                            0x79.toByte(),
+                            0x70.toByte(),
+                            0x69.toByte(), // iso2
+                            0x73.toByte(),
+                            0x6F.toByte(),
+                            0x32.toByte()
+                        )
+            ),
+            mapOf(
+                4 to
+                        byteArrayOf(
+                            0x66.toByte(),
+                            0x74.toByte(),
+                            0x79.toByte(),
+                            0x70.toByte(),
+                            0x6D.toByte(), // mp41
+                            0x70.toByte(),
+                            0x34.toByte(),
+                            0x31.toByte()
+                        )
+            ),
+            mapOf(
+                4 to
+                        byteArrayOf(
+                            0x66.toByte(),
+                            0x74.toByte(),
+                            0x79.toByte(),
+                            0x70.toByte(),
+                            0x6D.toByte(), // mp42
+                            0x70.toByte(),
+                            0x34.toByte(),
+                            0x32.toByte()
                         )
             )
         )
