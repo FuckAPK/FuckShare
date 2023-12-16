@@ -10,7 +10,6 @@
     <string name="title_enable_file_type_sniff">嗅探扩展名</string>
     <string name="desc_enable_remove_exif">当前支持 jpeg、png 和 webp</string>
     <string name="title_keep_launcher_icon">保留桌面图标</string>
-    <string name="desc_enable_force_forward_hook">需要 Xposed</string>
     <string name="title_rename">重命名</string>
     <string name="title_metadata">元数据</string>
     <string name="title_enable_fallback_to_file">失败时回退</string>
@@ -21,4 +20,5 @@
     <string name="compose_shortcut_short_clear">清除缓存</string>
     <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
     <string name="title_others">其它</string>
+    <string name="desc_enable_force_forward_hook">需要 xposed</string>
 </resources>

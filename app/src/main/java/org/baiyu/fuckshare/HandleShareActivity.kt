@@ -4,16 +4,11 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import androidx.core.app.ShareCompat.IntentBuilder
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequest
-import androidx.work.WorkManager
 import timber.log.Timber
 import timber.log.Timber.DebugTree
-import java.util.concurrent.TimeUnit
 
 class HandleShareActivity : Activity() {
     @SuppressLint("WorldReadableFiles")
@@ -22,12 +17,7 @@ class HandleShareActivity : Activity() {
         if (BuildConfig.DEBUG && Timber.treeCount == 0) {
             Timber.plant(DebugTree())
         }
-        val prefs: SharedPreferences = try {
-            @Suppress("DEPRECATION")
-            getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_WORLD_READABLE)
-        } catch (ignore: SecurityException) {
-            getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_PRIVATE)
-        }
+        val prefs = Utils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
         if ("text/plain" == intent.type) {
@@ -40,17 +30,7 @@ class HandleShareActivity : Activity() {
     }
 
     override fun finish() {
-        val clearCacheWorkRequest: PeriodicWorkRequest = PeriodicWorkRequest.Builder(
-            ClearCacheWorker::class.java,
-            1, TimeUnit.DAYS
-        ).setInitialDelay(1, TimeUnit.HOURS).build()
-
-        WorkManager.getInstance(this)
-            .enqueueUniquePeriodicWork(
-                ClearCacheWorker.id,
-                ExistingPeriodicWorkPolicy.KEEP,
-                clearCacheWorkRequest
-            )
+        Utils.setWorker(this)
         super.finish()
     }
 
@@ -61,7 +41,7 @@ class HandleShareActivity : Activity() {
         val chooserIntent = ib.createChooserIntent()
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
-            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray()
+            listOf(ComponentName(this, this::class.java)).toTypedArray()
         )
         startActivity(chooserIntent)
     }
@@ -76,7 +56,7 @@ class HandleShareActivity : Activity() {
         val chooserIntent = ib.createChooserIntent()
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
-            listOf(ComponentName(this, HandleShareActivity::class.java)).toTypedArray()
+            listOf(ComponentName(this, this::class.java)).toTypedArray()
         )
         Timber.d("intent: %s", chooserIntent.toString())
         startActivity(chooserIntent)

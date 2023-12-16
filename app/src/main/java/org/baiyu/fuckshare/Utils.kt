@@ -1,8 +1,11 @@
 package org.baiyu.fuckshare
 
+import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
 import android.os.Parcelable
@@ -10,6 +13,9 @@ import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkManager
 import org.baiyu.fuckshare.exifhelper.ExifHelper
 import org.baiyu.fuckshare.exifhelper.ImageFormatException
 import org.baiyu.fuckshare.exifhelper.JpegExifHelper
@@ -31,6 +37,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Objects
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 object Utils {
     fun getUrisFromIntent(intent: Intent): List<Uri?>? {
@@ -73,6 +80,22 @@ object Utils {
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableArrayListExtra(name)
+        }
+    }
+
+    @SuppressLint("WorldReadableFiles")
+    fun getPrefs(context: Context): SharedPreferences {
+        return try {
+            @Suppress("DEPRECATION")
+            context.getSharedPreferences(
+                BuildConfig.APPLICATION_ID + "_preferences",
+                Activity.MODE_WORLD_READABLE
+            )
+        } catch (ignore: SecurityException) {
+            context.getSharedPreferences(
+                BuildConfig.APPLICATION_ID + "_preferences",
+                Activity.MODE_PRIVATE
+            )
         }
     }
 
@@ -347,6 +370,20 @@ object Utils {
             throw IOException("Unable to skip exactly")
         }
         return len - n
+    }
+
+    fun setWorker(context: Context) {
+        val clearCacheWorkRequest: PeriodicWorkRequest = PeriodicWorkRequest.Builder(
+            ClearCacheWorker::class.java,
+            1, TimeUnit.DAYS
+        ).setInitialDelay(1, TimeUnit.HOURS).build()
+
+        WorkManager.getInstance(context)
+            .enqueueUniquePeriodicWork(
+                ClearCacheWorker.id,
+                ExistingPeriodicWorkPolicy.KEEP,
+                clearCacheWorkRequest
+            )
     }
 
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
