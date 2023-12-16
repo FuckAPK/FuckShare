@@ -20,5 +20,7 @@
     <string name="compose_shortcut_short_clear">Clear cache</string>
     <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
     <string name="title_others">Others</string>
-    <string name="desc_enable_force_forward_hook" >need xposed to work</string>
+    <string name="desc_enable_force_forward_hook">need xposed to work</string>
+    <string name="desc_enable_picker_forward_hook">need xposed to work</string>
+    <string name="title_enable_picker_forward_hook">Enable force picker hook</string>
 </resources>

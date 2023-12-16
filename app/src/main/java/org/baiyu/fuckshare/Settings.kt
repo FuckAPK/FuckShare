@@ -7,6 +7,10 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         return prefs.getBoolean(PREF_ENABLE_FORCE_FORWARD_HOOK, false)
     }
 
+    fun enableForcePickerHook(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FORCE_PICKER_HOOK, false)
+    }
+
     fun enableRemoveExif(): Boolean {
         return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, true)
     }
@@ -41,6 +45,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
 
     companion object {
         private const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
+        private const val PREF_ENABLE_FORCE_PICKER_HOOK = "enable_force_picker_hook"
         private const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
         private const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"
         private const val PREF_ENABLE_IMAGE_RENAME = "enable_image_rename"

@@ -54,6 +54,12 @@
             app:summary="@string/desc_enable_force_forward_hook"
             app:title="@string/title_enable_force_forward_hook" />
         <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="enable_force_picker_hook"
+            app:summary="@string/desc_enable_picker_forward_hook"
+            app:title="@string/title_enable_picker_forward_hook" />
+        <SwitchPreferenceCompat
             app:defaultValue="true"
             app:iconSpaceReserved="false"
             app:key="keep_launcher_icon"

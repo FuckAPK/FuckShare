@@ -28,19 +28,24 @@ class MainHook : IXposedHookLoadPackage {
                     }
 
                     prefs.reload()
-                    if (!settings.enableForceForwardHook()) {
-                        return
-                    }
+
                     Utils.getParcelableExtra(
                         chooserIntent,
                         Intent.EXTRA_INTENT,
                         Intent::class.java
                     )?.let {
-                        if (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action) {
+                        if (settings.enableForceForwardHook() && (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action)) {
                             param.args[3] = it.apply {
                                 setClassName(
                                     BuildConfig.APPLICATION_ID,
                                     HandleShareActivity::class.java.name
+                                )
+                            }
+                        } else if (settings.enableForcePickerHook() && Intent.ACTION_PICK == it.action) {
+                            param.args[3] = it.apply {
+                                setClassName(
+                                    BuildConfig.APPLICATION_ID,
+                                    ContentProxyActivity::class.java.name
                                 )
                             }
                         }

@@ -21,4 +21,6 @@
     <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
     <string name="title_others">其它</string>
     <string name="desc_enable_force_forward_hook">需要 xposed</string>
+    <string name="desc_enable_picker_forward_hook">需要 xposed</string>
+    <string name="title_enable_picker_forward_hook">Hook 系统选择</string>
 </resources>
