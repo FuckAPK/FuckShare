@@ -7,6 +7,14 @@ import android.net.Uri
 import android.os.Build
 import android.os.Parcelable
 import android.provider.OpenableColumns
+import android.widget.Toast
+import androidx.core.content.FileProvider
+import androidx.exifinterface.media.ExifInterface
+import org.baiyu.fuckshare.exifhelper.ExifHelper
+import org.baiyu.fuckshare.exifhelper.ImageFormatException
+import org.baiyu.fuckshare.exifhelper.JpegExifHelper
+import org.baiyu.fuckshare.exifhelper.PngExifHelper
+import org.baiyu.fuckshare.exifhelper.WebpExifHelper
 import org.baiyu.fuckshare.filetype.ArchiveType
 import org.baiyu.fuckshare.filetype.AudioType
 import org.baiyu.fuckshare.filetype.FileType
@@ -18,6 +26,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Objects
@@ -41,7 +50,11 @@ object Utils {
         }
     }
 
-    fun <T : Parcelable?> getParcelableExtra(intent: Intent, name: String?, clazz: Class<T>): T? {
+    fun <T : Parcelable?> getParcelableExtra(
+        intent: Intent,
+        name: String?,
+        clazz: Class<T>
+    ): T? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(name, clazz)
         } else {
@@ -50,7 +63,7 @@ object Utils {
         }
     }
 
-    fun <T : Parcelable?> getParcelableArrayListExtra(
+    private fun <T : Parcelable?> getParcelableArrayListExtra(
         intent: Intent,
         name: String?,
         clazz: Class<T>
@@ -63,7 +76,142 @@ object Utils {
         }
     }
 
-    fun getRealFileName(context: Context, uri: Uri): String? {
+
+    fun refreshUri(context: Context, settings: Settings, uri: Uri): Uri? {
+        val originName = getRealFileName(context, uri)
+        var tempFile = File(context.cacheDir, randomString)
+        return try {
+            val magickBytes = ByteArray(16)
+            context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
+                readNBytes(uin, magickBytes)
+            }
+            var fileType = getFileType(magickBytes)
+            if (fileType is ImageType
+                && fileType.isSupportMetadata
+                && settings.enableRemoveExif()
+            ) {
+                try {
+                    processImgMetadata(context, settings, tempFile, fileType, uri)
+                } catch (e: ImageFormatException) {
+                    tempFile.delete()
+                    Timber.e("Format error: %s Type: %s", originName, fileType)
+                    Toast.makeText(
+                        context,
+                        "Format error: $originName Type: $fileType",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    fileType = if (settings.enableFallbackToFile()) {
+                        copyFileFromUri(context, uri, tempFile)
+                        OtherType.UNKNOWN
+                    } else {
+                        return null
+                    }
+                }
+            } else {
+                copyFileFromUri(context, uri, tempFile)
+            }
+            // rename
+            val newNameNoExt = getNewNameNoExt(settings, fileType, originName)
+            val ext = getExt(settings, fileType, originName)
+            val newFullName = mergeFilename(newNameNoExt, ext)
+            var renamed = File(context.cacheDir, newFullName)
+            if (renamed.exists()) {
+                val oneTimeCacheDir = File(context.cacheDir, randomString)
+                oneTimeCacheDir.mkdirs()
+                renamed = File(oneTimeCacheDir, newFullName)
+            }
+            if (tempFile.renameTo(renamed)) {
+                tempFile = renamed
+            }
+            FileProvider.getUriForFile(
+                context,
+                BuildConfig.APPLICATION_ID + ".fileprovider",
+                tempFile
+            )
+        } catch (e: IOException) {
+            Timber.e(e)
+            Toast.makeText(context, "Failed to process: $originName", Toast.LENGTH_SHORT).show()
+            null
+        }
+    }
+
+    @Throws(IOException::class)
+    private fun copyFileFromUri(context: Context, uri: Uri, file: File) {
+        context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
+            file.outputStream().buffered().use { fout ->
+                uin.copyTo(fout)
+            }
+        }
+    }
+
+    @Throws(IOException::class, ImageFormatException::class)
+    private fun processImgMetadata(
+        context: Context,
+        settings: Settings,
+        file: File,
+        imageType: ImageType,
+        uri: Uri
+    ) {
+        val eh: ExifHelper? = when (imageType) {
+            ImageType.JPEG -> JpegExifHelper()
+            ImageType.PNG -> PngExifHelper()
+            ImageType.WEBP -> WebpExifHelper()
+            else -> null
+        }
+        if (eh == null) {
+            Timber.e("unsupported image type: %s", imageType)
+        } else {
+            context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
+                file.outputStream().buffered().use { fout ->
+                    eh.removeMetadata(uin, fout)
+                }
+            }
+            (eh as? WebpExifHelper)?.let { webpExifHelper ->
+                RandomAccessFile(file, "rw").use {
+                    webpExifHelper.fixHeaderSize(it)
+                }
+            }
+            if (imageType.isSupportMetadata) {
+                context.contentResolver.openInputStream(uri)!!.use { uin ->
+                    ExifHelper.writeBackMetadata(
+                        ExifInterface(uin),
+                        ExifInterface(file),
+                        settings.exifTagsToKeep
+                    )
+                }
+            }
+        }
+    }
+
+    private fun getNewNameNoExt(
+        settings: Settings,
+        fileType: FileType?,
+        originName: String?
+    ): String {
+        return when (fileType) {
+            is ImageType -> if (settings.enableImageRename()) randomString else getFileNameNoExt(
+                originName!!
+            )
+
+            else -> if (settings.enableFileRename()) randomString else getFileNameNoExt(
+                originName!!
+            )
+        }
+    }
+
+    private fun getExt(settings: Settings, fileType: FileType, originName: String?): String? {
+        var extension: String? = null
+        if (settings.enableFileTypeSniff()) {
+            extension = fileType.extension
+        }
+        if (extension == null) {
+            extension = getFileRealExt(originName!!)
+        }
+        return extension
+    }
+
+
+    private fun getRealFileName(context: Context, uri: Uri): String? {
         if (ContentResolver.SCHEME_FILE == uri.scheme) {
             val file = File(Objects.requireNonNull(uri.path))
             return file.name
@@ -79,7 +227,7 @@ object Utils {
         }
     }
 
-    fun getFileNameNoExt(fullFilename: String): String {
+    private fun getFileNameNoExt(fullFilename: String): String {
         val lastIndex = fullFilename.lastIndexOf('.')
         return if (lastIndex > 0 && lastIndex < fullFilename.length - 1) {
             fullFilename.substring(0, lastIndex)
@@ -88,7 +236,7 @@ object Utils {
         }
     }
 
-    fun getFileRealExt(fullFilename: String): String? {
+    private fun getFileRealExt(fullFilename: String): String? {
         val lastIndex = fullFilename.lastIndexOf('.')
         return if (lastIndex > 0 && lastIndex < fullFilename.length - 1) {
             fullFilename.substring(lastIndex + 1)
@@ -97,11 +245,11 @@ object Utils {
         }
     }
 
-    fun mergeFilename(filename: String, extension: String?): String {
+    private fun mergeFilename(filename: String, extension: String?): String {
         return if (extension == null) filename else "${filename}.${extension}"
     }
 
-    val randomString: String
+    private val randomString: String
         get() = UUID.randomUUID().toString()
 
     /**
@@ -125,13 +273,13 @@ object Utils {
         return len - bytesRemaining
     }
 
-    fun getFileType(bytes: ByteArray?): FileType {
+    private fun getFileType(bytes: ByteArray?): FileType {
         val fileTypes = setOf(
-            *ImageType.values(),
-            *VideoType.values(),
-            *AudioType.values(),
-            *ArchiveType.values(),
-            *OtherType.values()
+            *ImageType.entries.toTypedArray(),
+            *VideoType.entries.toTypedArray(),
+            *AudioType.entries.toTypedArray(),
+            *ArchiveType.entries.toTypedArray(),
+            *OtherType.entries.toTypedArray()
         )
         return fileTypes.parallelStream()
             .filter { it.signatureMatch(bytes) }

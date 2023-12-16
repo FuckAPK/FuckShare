@@ -9,8 +9,8 @@ android {
         applicationId = "org.baiyu.fuckshare"
         minSdk = 30
         targetSdk = 34
-        versionCode = 36
-        versionName = "5.7"
+        versionCode = 37
+        versionName = "5.8"
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
@@ -40,11 +40,11 @@ android {
     }
 }
 dependencies {
-    implementation("androidx.exifinterface:exifinterface:1.3.6")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("com.geyifeng.immersionbar:immersionbar:3.2.2")
-    implementation("com.google.android.material:material:1.10.0")
+    implementation("com.google.android.material:material:1.11.0")
     compileOnly("de.robv.android.xposed:api:82")
 }
