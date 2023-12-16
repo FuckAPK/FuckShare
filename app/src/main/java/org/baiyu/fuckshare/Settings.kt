@@ -15,6 +15,10 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         return prefs.getBoolean(PREF_ENABLE_FORCE_CONTENT_HOOK, false)
     }
 
+    fun enableForceDocumentHook(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FORCE_DOCUMENT_HOOK, false)
+    }
+
     fun enableForcePickerHook(): Boolean {
         return prefs.getBoolean(PREF_ENABLE_FORCE_PICKER_HOOK, false)
     }
@@ -55,6 +59,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         private const val PREF_ENABLE_HOOK = "enable_hook"
         private const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
         private const val PREF_ENABLE_FORCE_CONTENT_HOOK = "enable_force_content_hook"
+        private const val PREF_ENABLE_FORCE_DOCUMENT_HOOK = "enable_force_document_hook"
         private const val PREF_ENABLE_FORCE_PICKER_HOOK = "enable_force_picker_hook"
         private const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
         private const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"

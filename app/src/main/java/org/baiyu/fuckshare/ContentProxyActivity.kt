@@ -36,7 +36,7 @@ class ContentProxyActivity : Activity() {
                 listOf(ComponentName(this, this::class.java)).toTypedArray()
             ), 0
         )
-        if (intent.action == Intent.ACTION_GET_CONTENT) {
+        if (intent.action == Intent.ACTION_GET_CONTENT || intent.action == Intent.ACTION_OPEN_DOCUMENT) {
             val applicationName = applicationInfo.loadLabel(packageManager).toString()
             Toast.makeText(this, applicationName, Toast.LENGTH_SHORT).show()
         }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fuck Share</string>
-    <string name="app_desc">Fuck Share!</string>
+    <string name="app_name" translatable="false">Fuck Share</string>
+    <string name="app_desc" translatable="false">Fuck Share!</string>
     <string name="title_enable_force_forward_hook" translatable="false">Hook SEND SEND_MULTIPLE</string>
     <string name="title_enable_remove_exif">Remove Exif metadata</string>
     <string name="title_enable_image_rename">Auto rename images</string>
@@ -18,7 +18,7 @@
     <string name="clear_cache_success">Cache cleared!</string>
     <string name="clear_cache_failed">Failed to clear cache!</string>
     <string name="compose_shortcut_short_clear">Clear cache</string>
-    <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
+    <string name="clear_cache_empty" translatable="false">ᕕ(◠ڼ◠)ᕗ</string>
     <string name="title_others">Others</string>
     <string name="desc_enable_force_picker_hook" translatable="false">android.intent.action.PICK</string>
     <string name="title_enable_force_picker_hook" translatable="false">Hook PICK</string>
@@ -28,4 +28,6 @@
     <string name="title_enable_hook">Enable hook</string>
     <string name="desc_enable_force_forward_hook" translatable="false">android.intent.action.SEND android.intent.action.SEND_MULTIPLE</string>
     <string name="title_hook" translatable="false">Hook</string>
+    <string name="desc_enable_force_document_hook" translatable="false">android.intent.action.OPEN_DOCUMENT</string>
+    <string name="title_enable_force_document_hook" translatable="false">Hook OPEN_DOCUMENT</string>
 </resources>

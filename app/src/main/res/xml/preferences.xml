@@ -74,6 +74,13 @@
             app:key="enable_force_content_hook"
             app:summary="@string/desc_enable_force_content_hook"
             app:title="@string/title_enable_force_content_hook" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:dependency="enable_hook"
+            app:iconSpaceReserved="false"
+            app:key="enable_force_document_hook"
+            app:summary="@string/desc_enable_force_document_hook"
+            app:title="@string/title_enable_force_document_hook" />
     </PreferenceCategory>
     <PreferenceCategory
         app:iconSpaceReserved="false"

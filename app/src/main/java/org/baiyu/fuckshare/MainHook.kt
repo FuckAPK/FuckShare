@@ -23,6 +23,7 @@ class MainHook : IXposedHookLoadPackage {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     val callingPackage = param.args[1] as? String ?: return
                     val chooserIntent = param.args[3] as? Intent ?: return
+
                     if (callingPackage == BuildConfig.APPLICATION_ID || Intent.ACTION_CHOOSER != chooserIntent.action) {
                         return
                     }
@@ -37,7 +38,9 @@ class MainHook : IXposedHookLoadPackage {
                         Intent.EXTRA_INTENT,
                         Intent::class.java
                     )?.let {
-                        if (settings.enableForceForwardHook() && (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action)) {
+                        if (settings.enableForceForwardHook()
+                            && (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action)
+                        ) {
                             param.args[3] = it.apply {
                                 setClassName(
                                     BuildConfig.APPLICATION_ID,
@@ -46,6 +49,7 @@ class MainHook : IXposedHookLoadPackage {
                             }
                         } else if (settings.enableForcePickerHook() && Intent.ACTION_PICK == it.action
                             || settings.enableForceContentHook() && Intent.ACTION_GET_CONTENT == it.action
+                            || settings.enableForceDocumentHook() && Intent.ACTION_OPEN_DOCUMENT == it.action
                         ) {
                             param.args[3] = it.apply {
                                 setClassName(
