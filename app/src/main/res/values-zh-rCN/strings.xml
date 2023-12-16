@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">Fuck Share</string>
     <string name="app_desc">Fuck Share!</string>
-    <string name="title_enable_force_forward_hook">Hook 系统转发</string>
     <string name="title_enable_remove_exif">移除元数据</string>
     <string name="title_enable_image_rename">图片重命名</string>
     <string name="title_enable_file_rename">文件重命名</string>
@@ -20,7 +19,6 @@
     <string name="compose_shortcut_short_clear">清除缓存</string>
     <string name="clear_cache_empty">ᕕ(◠ڼ◠)ᕗ</string>
     <string name="title_others">其它</string>
-    <string name="desc_enable_force_forward_hook">需要 xposed</string>
-    <string name="desc_enable_picker_forward_hook">需要 xposed</string>
-    <string name="title_enable_picker_forward_hook">Hook 系统选择</string>
+    <string name="desc_enable_hook">需要 xposed</string>
+    <string name="title_enable_hook">开启 Hook</string>
 </resources>

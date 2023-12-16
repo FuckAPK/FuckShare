@@ -28,6 +28,9 @@ class MainHook : IXposedHookLoadPackage {
                     }
 
                     prefs.reload()
+                    if (!settings.enableHook()) {
+                        return
+                    }
 
                     Utils.getParcelableExtra(
                         chooserIntent,
@@ -41,7 +44,9 @@ class MainHook : IXposedHookLoadPackage {
                                     HandleShareActivity::class.java.name
                                 )
                             }
-                        } else if (settings.enableForcePickerHook() && Intent.ACTION_PICK == it.action) {
+                        } else if (settings.enableForcePickerHook() && Intent.ACTION_PICK == it.action
+                            || settings.enableForceContentHook() && Intent.ACTION_GET_CONTENT == it.action
+                        ) {
                             param.args[3] = it.apply {
                                 setClassName(
                                     BuildConfig.APPLICATION_ID,

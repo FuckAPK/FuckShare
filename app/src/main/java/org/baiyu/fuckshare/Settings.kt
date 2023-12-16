@@ -3,8 +3,16 @@ package org.baiyu.fuckshare
 import android.content.SharedPreferences
 
 class Settings private constructor(private val prefs: SharedPreferences) {
+    fun enableHook(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_HOOK, false)
+    }
+
     fun enableForceForwardHook(): Boolean {
         return prefs.getBoolean(PREF_ENABLE_FORCE_FORWARD_HOOK, false)
+    }
+
+    fun enableForceContentHook(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_FORCE_CONTENT_HOOK, false)
     }
 
     fun enableForcePickerHook(): Boolean {
@@ -44,7 +52,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
     }
 
     companion object {
+        private const val PREF_ENABLE_HOOK = "enable_hook"
         private const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
+        private const val PREF_ENABLE_FORCE_CONTENT_HOOK = "enable_force_content_hook"
         private const val PREF_ENABLE_FORCE_PICKER_HOOK = "enable_force_picker_hook"
         private const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
         private const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"

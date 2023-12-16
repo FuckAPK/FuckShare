@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import timber.log.Timber
 
 class ContentProxyActivity : Activity() {
@@ -35,6 +36,10 @@ class ContentProxyActivity : Activity() {
                 listOf(ComponentName(this, this::class.java)).toTypedArray()
             ), 0
         )
+        if (intent.action == Intent.ACTION_GET_CONTENT) {
+            val applicationName = applicationInfo.loadLabel(packageManager).toString()
+            Toast.makeText(this, applicationName, Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun finish() {

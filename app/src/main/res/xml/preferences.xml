@@ -46,19 +46,38 @@
     </PreferenceCategory>
     <PreferenceCategory
         app:iconSpaceReserved="false"
-        app:title="@string/title_others">
+        app:title="@string/title_hook">
         <SwitchPreferenceCompat
             app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="enable_hook"
+            app:summary="@string/desc_enable_hook"
+            app:title="@string/title_enable_hook" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:dependency="enable_hook"
             app:iconSpaceReserved="false"
             app:key="enable_force_forward_hook"
             app:summary="@string/desc_enable_force_forward_hook"
             app:title="@string/title_enable_force_forward_hook" />
         <SwitchPreferenceCompat
             app:defaultValue="false"
+            app:dependency="enable_hook"
             app:iconSpaceReserved="false"
             app:key="enable_force_picker_hook"
-            app:summary="@string/desc_enable_picker_forward_hook"
-            app:title="@string/title_enable_picker_forward_hook" />
+            app:summary="@string/desc_enable_force_picker_hook"
+            app:title="@string/title_enable_force_picker_hook" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:dependency="enable_hook"
+            app:iconSpaceReserved="false"
+            app:key="enable_force_content_hook"
+            app:summary="@string/desc_enable_force_content_hook"
+            app:title="@string/title_enable_force_content_hook" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        app:title="@string/title_others">
         <SwitchPreferenceCompat
             app:defaultValue="true"
             app:iconSpaceReserved="false"
