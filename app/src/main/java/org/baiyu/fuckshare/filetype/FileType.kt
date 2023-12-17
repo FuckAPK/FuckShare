@@ -9,21 +9,15 @@ interface FileType {
         get() = false
 
     fun signatureMatch(bytes: ByteArray?): Boolean {
-        val signature = signatures
-        if (bytes == null || signature == null) {
-            return false
-        }
-//        val signatureRequireLength = signature
-//            .flatMap { it.entries }.maxOfOrNull { it.key + it.value.size } ?: return false
-//        if (signatureRequireLength <= 0 || bytes.size < signatureRequireLength) {
-//            return false
-//        }
+        bytes ?: return false
 
-        return signature.parallelStream().anyMatch { integerMap ->
+        return signatures?.parallelStream()?.anyMatch { integerMap ->
             integerMap.entries.parallelStream()
                 .allMatch {
-                    ByteBuffer.wrap(it.value).equals(ByteBuffer.wrap(bytes, it.key, it.value.size))
+                    it.key + it.value.size >= bytes.size
+                            && ByteBuffer.wrap(it.value)
+                        .equals(ByteBuffer.wrap(bytes, it.key, it.value.size))
                 }
-        }
+        } ?: false
     }
 }

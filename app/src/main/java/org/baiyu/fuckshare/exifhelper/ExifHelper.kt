@@ -13,7 +13,8 @@ interface ExifHelper {
     companion object {
         @Throws(IOException::class)
         fun writeBackMetadata(exifFrom: ExifInterface, exifTo: ExifInterface, tags: Set<String?>) {
-            val tagsValue = tags.asSequence().filterNotNull()
+            val tagsValue = tags.asSequence()
+                .filterNotNull()
                 .filter { exifFrom.hasAttribute(it) }
                 .map { it to exifFrom.getAttribute(it) }
                 .filterNot { it.first == ExifInterface.TAG_ORIENTATION && it.second == ExifInterface.ORIENTATION_UNDEFINED.toString() }

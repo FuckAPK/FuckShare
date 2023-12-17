@@ -23,8 +23,10 @@ class HandleShareActivity : Activity() {
         if ("text/plain" == intent.type) {
             handleText(intent)
         } else {
-            val uris = Utils.getUrisFromIntent(intent)!!
-            handleUris(uris)
+            Utils.getUrisFromIntent(intent)?.let {
+                handleUris(it)
+            } ?: Timber.d("Uri is empty: %s", intent.toString())
+
         }
         finish()
     }

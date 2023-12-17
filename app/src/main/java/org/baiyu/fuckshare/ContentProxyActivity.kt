@@ -29,7 +29,7 @@ class ContentProxyActivity : Activity() {
                 intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
             )
         }
-        Timber.d(intent.toString())
+        Timber.d("intent: %s", intent.toString())
         startActivityForResult(
             Intent.createChooser(pickIntent, "").putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
@@ -70,6 +70,7 @@ class ContentProxyActivity : Activity() {
             }
             resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             setResult(RESULT_OK, resultIntent)
+            Timber.d("intent: %s", resultIntent.toString())
         } else {
             setResult(RESULT_CANCELED)
         }
