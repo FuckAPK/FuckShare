@@ -30,18 +30,11 @@ class ContentProxyActivity : Activity() {
 
     private fun setupChooserIntent(): Intent {
         Timber.d("origin intent: %s", intent.toString())
-        val pickIntent = Intent().apply {
-            action = intent.action
-            type = intent.type
-            intent.categories?.forEach { addCategory(it) }
-            putExtra(
-                Intent.EXTRA_ALLOW_MULTIPLE,
-                intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
-            )
-        }
+        val pickIntent = cloneIntent(intent)
+
         Timber.d("new intent: %s", pickIntent.toString())
-        val chooserIntent =
-            Intent.createChooser(pickIntent, resources.getString(R.string.app_name)).putExtra(
+        val chooserIntent = Intent.createChooser(pickIntent, resources.getString(R.string.app_name))
+            .putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
                 listOf(ComponentName(this, this::class.java)).toTypedArray()
             )
@@ -49,12 +42,33 @@ class ContentProxyActivity : Activity() {
         Utils.getParcelableArrayExtra<Intent>(
             intent,
             Intent.EXTRA_INITIAL_INTENTS
-        )?.let {
+        )?.map {
+            cloneIntent(it)
+        }?.toTypedArray()?.let {
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
             Timber.d("%s: %s", Intent.EXTRA_INITIAL_INTENTS, it.toString())
         }
 
         return chooserIntent
+    }
+
+    private fun cloneIntent(intent: Intent): Intent {
+        return Intent().apply {
+            action = intent.action
+            identifier = intent.identifier
+            setDataAndType(intent.data, intent.type)
+            intent.categories?.forEach { addCategory(it) }
+
+            if (intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)) {
+                putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            }
+            if (intent.getBooleanExtra(Intent.EXTRA_LOCAL_ONLY, false)) {
+                putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            }
+            intent.getStringArrayExtra(Intent.EXTRA_MIME_TYPES)?.let {
+                putExtra(Intent.EXTRA_MIME_TYPES, it)
+            }
+        }
     }
 
     override fun finish() {
