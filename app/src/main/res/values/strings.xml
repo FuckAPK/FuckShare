@@ -30,4 +30,5 @@
     <string name="title_hook" translatable="false">Hook</string>
     <string name="desc_enable_force_document_hook" translatable="false">android.intent.action.OPEN_DOCUMENT</string>
     <string name="title_enable_force_document_hook" translatable="false">Hook OPEN_DOCUMENT</string>
+    <string name="title_toast_time">Toast Time (ms, 0 to disable)</string>
 </resources>

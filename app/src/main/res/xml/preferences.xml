@@ -90,5 +90,11 @@
             app:iconSpaceReserved="false"
             app:key="keep_launcher_icon"
             app:title="@string/title_keep_launcher_icon" />
+        <EditTextPreference
+            app:defaultValue="500"
+            app:iconSpaceReserved="false"
+            app:key="toast_time"
+            app:title="@string/title_toast_time"
+            app:useSimpleSummaryProvider="true" />
     </PreferenceCategory>
 </PreferenceScreen>

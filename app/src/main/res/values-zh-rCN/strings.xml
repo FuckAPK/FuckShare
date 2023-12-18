@@ -18,4 +18,5 @@
     <string name="title_others">其它</string>
     <string name="desc_enable_hook">需要 xposed</string>
     <string name="title_enable_hook">开启 Hook</string>
+    <string name="title_toast_time">气泡提示时间（毫秒，0 关闭）</string>
 </resources>

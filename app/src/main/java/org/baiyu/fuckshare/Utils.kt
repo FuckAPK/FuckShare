@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Build
+import android.os.CountDownTimer
 import android.os.Parcelable
 import android.provider.OpenableColumns
 import android.widget.Toast
@@ -384,7 +385,7 @@ object Utils {
         return len - n
     }
 
-    fun setWorker(context: Context) {
+    fun setupWorker(context: Context) {
         val clearCacheWorkRequest: PeriodicWorkRequest = PeriodicWorkRequest.Builder(
             ClearCacheWorker::class.java,
             1, TimeUnit.DAYS
@@ -396,6 +397,22 @@ object Utils {
                 ExistingPeriodicWorkPolicy.KEEP,
                 clearCacheWorkRequest
             )
+    }
+
+    fun showToast(context: Context, message: String, length: Int) {
+        val toast = Toast.makeText(context, message, Toast.LENGTH_LONG)
+        val toastCountDown: CountDownTimer =
+            object : CountDownTimer(length.toLong(), 1000L) {
+                override fun onTick(millisUntilFinished: Long) {
+                    toast?.show()
+                }
+
+                override fun onFinish() {
+                    toast?.cancel()
+                }
+            }
+        toast.show()
+        toastCountDown.start()
     }
 
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {

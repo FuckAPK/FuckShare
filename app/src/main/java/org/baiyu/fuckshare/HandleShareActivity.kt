@@ -20,19 +20,23 @@ class HandleShareActivity : Activity() {
         val prefs = Utils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
+        if (settings.toastTime > 0) {
+            val applicationName = applicationInfo.loadLabel(packageManager).toString()
+            Utils.showToast(this, applicationName, settings.toastTime)
+        }
+
         if ("text/plain" == intent.type) {
             handleText(intent)
         } else {
             Utils.getUrisFromIntent(intent)?.let {
                 handleUris(it)
             } ?: Timber.d("Uri is empty: %s", intent.toString())
-
         }
         finish()
     }
 
     override fun finish() {
-        Utils.setWorker(this)
+        Utils.setupWorker(this)
         super.finish()
     }
 

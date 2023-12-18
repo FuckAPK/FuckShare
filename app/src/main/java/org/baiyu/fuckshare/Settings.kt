@@ -55,18 +55,26 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, true)
     }
 
+    val toastTime: Int
+        get() {
+            return prefs.getString(PREF_TOAST_TIME, null)
+                ?.takeIf { it.isNotBlank() }
+                ?.toInt() ?: 500
+        }
+
     companion object {
-        private const val PREF_ENABLE_HOOK = "enable_hook"
-        private const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
-        private const val PREF_ENABLE_FORCE_CONTENT_HOOK = "enable_force_content_hook"
-        private const val PREF_ENABLE_FORCE_DOCUMENT_HOOK = "enable_force_document_hook"
-        private const val PREF_ENABLE_FORCE_PICKER_HOOK = "enable_force_picker_hook"
-        private const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
-        private const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"
-        private const val PREF_ENABLE_IMAGE_RENAME = "enable_image_rename"
-        private const val PREF_ENABLE_FILE_RENAME = "enable_file_rename"
-        private const val PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff"
-        private const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
+        const val PREF_ENABLE_HOOK = "enable_hook"
+        const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
+        const val PREF_ENABLE_FORCE_CONTENT_HOOK = "enable_force_content_hook"
+        const val PREF_ENABLE_FORCE_DOCUMENT_HOOK = "enable_force_document_hook"
+        const val PREF_ENABLE_FORCE_PICKER_HOOK = "enable_force_picker_hook"
+        const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
+        const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"
+        const val PREF_ENABLE_IMAGE_RENAME = "enable_image_rename"
+        const val PREF_ENABLE_FILE_RENAME = "enable_file_rename"
+        const val PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff"
+        const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
+        const val PREF_TOAST_TIME = "toast_time"
 
         @Volatile
         private var INSTANCE: Settings? = null

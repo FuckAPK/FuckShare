@@ -6,7 +6,9 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.text.InputType
 import androidx.appcompat.app.AppCompatActivity
+import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
@@ -54,6 +56,12 @@ class SettingsActivity : AppCompatActivity() {
     class MySettingsFragment : PreferenceFragmentCompat() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
+            // setup toast time
+            val toastTimePreferences = findPreference<EditTextPreference>(Settings.PREF_TOAST_TIME)
+            toastTimePreferences?.setOnBindEditTextListener {
+                it.inputType = InputType.TYPE_CLASS_NUMBER
+            }
+            // setup keep launcher icon
             val keepLauncherIconPreference = findPreference<SwitchPreferenceCompat>(
                 PREF_KEEP_LAUNCHER_ICON
             )!!

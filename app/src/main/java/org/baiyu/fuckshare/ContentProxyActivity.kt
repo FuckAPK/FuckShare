@@ -5,7 +5,6 @@ import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import timber.log.Timber
 
 class ContentProxyActivity : Activity() {
@@ -20,9 +19,9 @@ class ContentProxyActivity : Activity() {
         val prefs = Utils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
-        if (intent.action == Intent.ACTION_GET_CONTENT || intent.action == Intent.ACTION_OPEN_DOCUMENT) {
+        if (settings.toastTime > 0) {
             val applicationName = applicationInfo.loadLabel(packageManager).toString()
-            Toast.makeText(this, applicationName, Toast.LENGTH_SHORT).show()
+            Utils.showToast(this, applicationName, settings.toastTime)
         }
 
         startActivityForResult(setupChooserIntent(), 0)
@@ -72,7 +71,7 @@ class ContentProxyActivity : Activity() {
     }
 
     override fun finish() {
-        Utils.setWorker(this)
+        Utils.setupWorker(this)
         super.finish()
     }
 
