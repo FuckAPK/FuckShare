@@ -40,7 +40,7 @@ class HandleShareActivity : Activity() {
         val ib = IntentBuilder(this)
         ib.setType(intent.type)
         ib.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
-        val chooserIntent = ib.createChooserIntent()
+        val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()
@@ -55,7 +55,7 @@ class HandleShareActivity : Activity() {
             .map { Utils.refreshUri(this, settings, it) }
             .forEachOrdered { it?.let { ib.addStream(it) } }
 
-        val chooserIntent = ib.createChooserIntent()
+        val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()

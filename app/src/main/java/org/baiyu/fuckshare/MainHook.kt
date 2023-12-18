@@ -33,11 +33,20 @@ class MainHook : IXposedHookLoadPackage {
                         return
                     }
 
-                    Utils.getParcelableExtra(
+                    val extraIntent = Utils.getParcelableExtra(
                         chooserIntent,
                         Intent.EXTRA_INTENT,
                         Intent::class.java
+                    ) ?: return
+
+                    Utils.getParcelableArrayExtra<Intent>(
+                        chooserIntent,
+                        Intent.EXTRA_INITIAL_INTENTS
                     )?.let {
+                        extraIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
+                    }
+
+                    extraIntent.let {
                         if (settings.enableForceForwardHook()
                             && (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action)
                         ) {

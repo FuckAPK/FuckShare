@@ -70,7 +70,7 @@ object Utils {
         }
     }
 
-    private fun <T : Parcelable?> getParcelableArrayListExtra(
+    fun <T : Parcelable?> getParcelableArrayListExtra(
         intent: Intent,
         name: String?,
         clazz: Class<T>
@@ -82,6 +82,19 @@ object Utils {
             intent.getParcelableArrayListExtra(name)
         }
     }
+
+    inline fun <reified T : Parcelable?> getParcelableArrayExtra(
+        intent: Intent,
+        name: String?
+    ): Array<T>? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableArrayExtra(name, Parcelable::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableArrayExtra(name)
+        }?.map { it as T }?.toTypedArray()
+    }
+
 
     @SuppressLint("WorldReadableFiles")
     fun getPrefs(context: Context): SharedPreferences {
@@ -98,7 +111,6 @@ object Utils {
             )
         }
     }
-
 
     fun refreshUri(context: Context, settings: Settings, uri: Uri): Uri? {
         val originName = getRealFileName(context, uri)

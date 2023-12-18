@@ -20,6 +20,16 @@ class ContentProxyActivity : Activity() {
         val prefs = Utils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
+        if (intent.action == Intent.ACTION_GET_CONTENT || intent.action == Intent.ACTION_OPEN_DOCUMENT) {
+            val applicationName = applicationInfo.loadLabel(packageManager).toString()
+            Toast.makeText(this, applicationName, Toast.LENGTH_SHORT).show()
+        }
+
+        startActivityForResult(setupChooserIntent(), 0)
+    }
+
+    private fun setupChooserIntent(): Intent {
+        Timber.d("origin intent: %s", intent.toString())
         val pickIntent = Intent().apply {
             action = intent.action
             type = intent.type
@@ -29,17 +39,22 @@ class ContentProxyActivity : Activity() {
                 intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
             )
         }
-        Timber.d("intent: %s", intent.toString())
-        startActivityForResult(
-            Intent.createChooser(pickIntent, "").putExtra(
+        Timber.d("new intent: %s", pickIntent.toString())
+        val chooserIntent =
+            Intent.createChooser(pickIntent, resources.getString(R.string.app_name)).putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
                 listOf(ComponentName(this, this::class.java)).toTypedArray()
-            ), 0
-        )
-        if (intent.action == Intent.ACTION_GET_CONTENT || intent.action == Intent.ACTION_OPEN_DOCUMENT) {
-            val applicationName = applicationInfo.loadLabel(packageManager).toString()
-            Toast.makeText(this, applicationName, Toast.LENGTH_SHORT).show()
+            )
+
+        Utils.getParcelableArrayExtra<Intent>(
+            intent,
+            Intent.EXTRA_INITIAL_INTENTS
+        )?.let {
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
+            Timber.d("%s: %s", Intent.EXTRA_INITIAL_INTENTS, it.toString())
         }
+
+        return chooserIntent
     }
 
     override fun finish() {
