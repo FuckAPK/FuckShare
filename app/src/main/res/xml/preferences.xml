@@ -90,6 +90,12 @@
             app:iconSpaceReserved="false"
             app:key="keep_launcher_icon"
             app:title="@string/title_keep_launcher_icon" />
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="enable_viewer"
+            app:summary="@string/desc_enable_viewer"
+            app:title="@string/title_enable_viewer" />
         <EditTextPreference
             app:defaultValue="500"
             app:iconSpaceReserved="false"

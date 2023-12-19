@@ -1,9 +1,7 @@
 package org.baiyu.fuckshare
 
 import android.annotation.SuppressLint
-import android.content.ComponentName
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.text.InputType
@@ -68,34 +66,51 @@ class SettingsActivity : AppCompatActivity() {
             updateLauncherActivityStatus()
             keepLauncherIconPreference.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
-                    enableDisableLauncherIcon(newValue as Boolean)
+                    Utils.setActivityStatus(
+                        requireContext(),
+                        LAUNCHER_ACTIVITY_NAME,
+                        newValue as Boolean
+                    )
+                    updateLauncherActivityStatus()
+                    true
+                }
+            // setup viewer
+            val viewerPreference = findPreference<SwitchPreferenceCompat>(PREF_ENABLE_VIEWER)!!
+            updateViewerActivityStatus()
+            viewerPreference.onPreferenceChangeListener =
+                Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
+                    Utils.setActivityStatus(
+                        requireContext(),
+                        VIEWER_ACTIVITY_NAME,
+                        newValue as Boolean
+                    )
+                    updateViewerActivityStatus()
                     true
                 }
         }
 
         private fun updateLauncherActivityStatus() {
-            val pm = requireContext().applicationContext.packageManager
-            val cn = ComponentName(BuildConfig.APPLICATION_ID, LAUNCHER_ACTIVITY_NAME)
-            val status =
-                pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            val status = Utils.getActivityStatus(requireContext(), LAUNCHER_ACTIVITY_NAME)
             val editor = prefs!!.edit()
             editor.putBoolean(PREF_KEEP_LAUNCHER_ICON, status)
             editor.apply()
         }
 
-        private fun enableDisableLauncherIcon(enable: Boolean) {
-            val pm = requireContext().applicationContext.packageManager
-            val cn = ComponentName(BuildConfig.APPLICATION_ID, LAUNCHER_ACTIVITY_NAME)
-            val status =
-                if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-            pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
-            updateLauncherActivityStatus()
+        private fun updateViewerActivityStatus() {
+            val status = Utils.getActivityStatus(requireContext(), VIEWER_ACTIVITY_NAME)
+            val editor = prefs!!.edit()
+            editor.putBoolean(PREF_ENABLE_VIEWER, status)
+            editor.apply()
         }
+
 
         companion object {
             private const val PREF_KEEP_LAUNCHER_ICON = "keep_launcher_icon"
             private const val LAUNCHER_ACTIVITY_NAME =
                 BuildConfig.APPLICATION_ID + ".LauncherActivity"
+            private const val PREF_ENABLE_VIEWER = "enable_viewer"
+            private const val VIEWER_ACTIVITY_NAME =
+                BuildConfig.APPLICATION_ID + ".ViewerActivity"
         }
     }
 

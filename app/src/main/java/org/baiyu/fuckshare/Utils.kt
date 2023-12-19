@@ -2,10 +2,12 @@ package org.baiyu.fuckshare
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.CountDownTimer
@@ -42,19 +44,29 @@ import java.util.concurrent.TimeUnit
 
 object Utils {
     fun getUrisFromIntent(intent: Intent): List<Uri?>? {
-        return if (Intent.ACTION_SEND == intent.action) {
-            val uri = getParcelableExtra(
-                intent,
-                Intent.EXTRA_STREAM,
-                Uri::class.java
-            )!!
-            listOf(uri)
-        } else {
-            getParcelableArrayListExtra(
-                intent,
-                Intent.EXTRA_STREAM,
-                Uri::class.java
-            )
+        return when (intent.action) {
+            Intent.ACTION_SEND -> {
+                val uri = getParcelableExtra(
+                    intent,
+                    Intent.EXTRA_STREAM,
+                    Uri::class.java
+                )!!
+                listOf(uri)
+            }
+
+            Intent.ACTION_SEND_MULTIPLE -> {
+                getParcelableArrayListExtra(
+                    intent,
+                    Intent.EXTRA_STREAM,
+                    Uri::class.java
+                )
+            }
+
+            Intent.ACTION_VIEW -> {
+                listOf(intent.data)
+            }
+
+            else -> null
         }
     }
 
@@ -413,6 +425,21 @@ object Utils {
             }
         toast.show()
         toastCountDown.start()
+    }
+
+    fun getActivityStatus(context: Context, activityName: String): Boolean {
+        val pm = context.applicationContext.packageManager
+        val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
+        return pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+    }
+
+    fun setActivityStatus(context: Context, activityName: String, enable: Boolean) {
+        val pm = context.applicationContext.packageManager
+        val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
+        val status =
+            if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
     }
 
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
