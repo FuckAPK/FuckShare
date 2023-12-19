@@ -47,8 +47,10 @@ class MainHook : IXposedHookLoadPackage {
                             }
                         } ?: return
                     } else {
-                        if (intent.component?.packageName == "com.android.documentsui") {
-                            return
+                        intent.component?.let {
+                            if (it.packageName != "com.android.documentsui") {
+                                return
+                            }
                         }
                         intent
                     }
