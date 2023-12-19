@@ -22,9 +22,9 @@ class MainHook : IXposedHookLoadPackage {
             object : XC_MethodHook() {
                 override fun beforeHookedMethod(param: MethodHookParam) {
                     val callingPackage = param.args[1] as? String ?: return
-                    val chooserIntent = param.args[3] as? Intent ?: return
+                    val intent = param.args[3] as? Intent ?: return
 
-                    if (callingPackage == BuildConfig.APPLICATION_ID || Intent.ACTION_CHOOSER != chooserIntent.action) {
+                    if (callingPackage == BuildConfig.APPLICATION_ID || intent.action !in hookedIntent) {
                         return
                     }
 
@@ -33,22 +33,29 @@ class MainHook : IXposedHookLoadPackage {
                         return
                     }
 
-                    val extraIntent = Utils.getParcelableExtra(
-                        chooserIntent,
-                        Intent.EXTRA_INTENT,
-                        Intent::class.java
-                    ) ?: return
-
-                    Utils.getParcelableArrayExtra<Intent>(
-                        chooserIntent,
-                        Intent.EXTRA_INITIAL_INTENTS
-                    )?.let {
-                        extraIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
+                    val extraIntent = if (intent.action == Intent.ACTION_CHOOSER) {
+                        Utils.getParcelableExtra(
+                            intent,
+                            Intent.EXTRA_INTENT,
+                            Intent::class.java
+                        )?.apply {
+                            Utils.getParcelableArrayExtra<Intent>(
+                                intent,
+                                Intent.EXTRA_INITIAL_INTENTS
+                            )?.let {
+                                putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
+                            }
+                        } ?: return
+                    } else {
+                        if (intent.component?.packageName == "com.android.documentsui") {
+                            return
+                        }
+                        intent
                     }
 
                     extraIntent.let {
-                        if (settings.enableForceForwardHook()
-                            && (Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action)
+                        if ((Intent.ACTION_SEND == it.action || Intent.ACTION_SEND_MULTIPLE == it.action)
+                            && settings.enableForceForwardHook()
                         ) {
                             param.args[3] = it.apply {
                                 setClassName(
@@ -56,9 +63,9 @@ class MainHook : IXposedHookLoadPackage {
                                     HandleShareActivity::class.java.name
                                 )
                             }
-                        } else if (settings.enableForcePickerHook() && Intent.ACTION_PICK == it.action
-                            || settings.enableForceContentHook() && Intent.ACTION_GET_CONTENT == it.action
-                            || settings.enableForceDocumentHook() && Intent.ACTION_OPEN_DOCUMENT == it.action
+                        } else if (Intent.ACTION_PICK == it.action && settings.enableForcePickerHook()
+                            || Intent.ACTION_GET_CONTENT == it.action && settings.enableForceContentHook()
+                            || Intent.ACTION_OPEN_DOCUMENT == it.action && settings.enableForceDocumentHook()
                         ) {
                             param.args[3] = it.apply {
                                 setClassName(
@@ -75,6 +82,14 @@ class MainHook : IXposedHookLoadPackage {
 
     companion object {
         private val prefs = XSharedPreferences(BuildConfig.APPLICATION_ID)
-        private val settings: Settings = Settings.getInstance(prefs)
+        private val settings = Settings.getInstance(prefs)
+        private val hookedIntent = setOf(
+            Intent.ACTION_CHOOSER,
+            Intent.ACTION_SEND,
+            Intent.ACTION_SEND_MULTIPLE,
+            Intent.ACTION_PICK,
+            Intent.ACTION_GET_CONTENT,
+            Intent.ACTION_OPEN_DOCUMENT
+        )
     }
 }
