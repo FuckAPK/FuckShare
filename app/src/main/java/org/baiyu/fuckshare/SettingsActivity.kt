@@ -2,7 +2,6 @@ package org.baiyu.fuckshare
 
 import android.annotation.SuppressLint
 import android.content.ComponentName
-import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -49,9 +48,6 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     class MySettingsFragment : PreferenceFragmentCompat() {
-        private val context: Context by lazy {
-            requireContext()
-        }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
@@ -103,13 +99,13 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         private fun getActivityStatus(activityName: String): Boolean {
-            val pm = context.applicationContext.packageManager
+            val pm = requireContext().applicationContext.packageManager
             val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
             return pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         }
 
         private fun setActivityStatus(activityName: String, enable: Boolean) {
-            val pm = context.applicationContext.packageManager
+            val pm = requireContext().applicationContext.packageManager
             val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
             val status =
                 if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
