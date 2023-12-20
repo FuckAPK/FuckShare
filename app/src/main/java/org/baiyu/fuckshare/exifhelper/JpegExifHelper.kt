@@ -1,7 +1,8 @@
 package org.baiyu.fuckshare.exifhelper
 
-import org.baiyu.fuckshare.Utils
-import org.baiyu.fuckshare.Utils.toUShort
+import org.baiyu.fuckshare.utils.ByteUtils
+import org.baiyu.fuckshare.utils.ByteUtils.toUShort
+import org.baiyu.fuckshare.utils.FileUtils
 import timber.log.Timber
 import java.io.IOException
 import java.io.InputStream
@@ -20,7 +21,7 @@ class JpegExifHelper : ExifHelper {
 
         while (bis.available() > 0) {
 
-            Utils.readNBytes(bis, maker)
+            ByteUtils.readNBytes(bis, maker)
 
             if (maker[0] != 0xFF.toByte()) {
                 throw ImageFormatException()
@@ -47,19 +48,19 @@ class JpegExifHelper : ExifHelper {
                 }
 
                 in jpegSkippableChunks -> {
-                    Utils.readNBytes(bis, lenBytes)
+                    ByteUtils.readNBytes(bis, lenBytes)
                     chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
                     Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4)
-                    chunkDataLength -= Utils.skipNBytes(bis, chunkDataLength)
+                    chunkDataLength -= ByteUtils.skipNBytes(bis, chunkDataLength)
                 }
 
                 else -> {
-                    Utils.readNBytes(bis, lenBytes)
+                    ByteUtils.readNBytes(bis, lenBytes)
                     chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
                     bos.write(maker)
                     bos.write(lenBytes)
                     Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4)
-                    chunkDataLength -= Utils.copy(bis, bos, chunkDataLength)
+                    chunkDataLength -= FileUtils.copy(bis, bos, chunkDataLength)
                 }
             }
 

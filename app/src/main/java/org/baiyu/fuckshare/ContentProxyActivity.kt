@@ -5,6 +5,9 @@ import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import org.baiyu.fuckshare.utils.AppUtils
+import org.baiyu.fuckshare.utils.FileUtils
+import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
 
 class ContentProxyActivity : Activity() {
@@ -16,12 +19,12 @@ class ContentProxyActivity : Activity() {
             Timber.plant(Timber.DebugTree())
         }
 
-        val prefs = Utils.getPrefs(this)
+        val prefs = AppUtils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
         if (settings.toastTime > 0) {
             val applicationName = applicationInfo.loadLabel(packageManager).toString()
-            Utils.showToast(this, applicationName, settings.toastTime)
+            AppUtils.showToast(this, applicationName, settings.toastTime)
         }
 
         startActivityForResult(setupChooserIntent(), 0)
@@ -38,7 +41,7 @@ class ContentProxyActivity : Activity() {
                 listOf(ComponentName(this, this::class.java)).toTypedArray()
             )
 
-        Utils.getParcelableArrayExtra<Intent>(
+        IntentUtils.getParcelableArrayExtra<Intent>(
             intent,
             Intent.EXTRA_INITIAL_INTENTS
         )?.map {
@@ -71,7 +74,7 @@ class ContentProxyActivity : Activity() {
     }
 
     override fun finish() {
-        Utils.setupWorker(this)
+        AppUtils.scheduleClearCacheWorker(this)
         super.finish()
     }
 
@@ -81,13 +84,13 @@ class ContentProxyActivity : Activity() {
         if (resultCode == RESULT_OK && data != null) {
             val resultIntent = Intent()
             data.data?.let {
-                resultIntent.data = Utils.refreshUri(this, settings, it)
+                resultIntent.data = FileUtils.refreshUri(this, settings, it)
             }
             data.clipData?.let { clipData ->
                 val resultUris = (0 until clipData.itemCount)
                     .asSequence()
                     .map { clipData.getItemAt(it).uri }
-                    .map { Utils.refreshUri(this, settings, it) }
+                    .map { FileUtils.refreshUri(this, settings, it) }
                     .filterNotNull()
                     .map { ClipData.Item(it) }
                     .toMutableList()

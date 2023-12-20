@@ -1,7 +1,8 @@
 package org.baiyu.fuckshare.exifhelper
 
-import org.baiyu.fuckshare.Utils
-import org.baiyu.fuckshare.Utils.toUInt
+import org.baiyu.fuckshare.utils.ByteUtils
+import org.baiyu.fuckshare.utils.ByteUtils.toUInt
+import org.baiyu.fuckshare.utils.FileUtils
 import timber.log.Timber
 import java.io.IOException
 import java.io.InputStream
@@ -21,10 +22,10 @@ class WebpExifHelper : ExifHelper {
         var realChunkDataLength: Long
 
         // copy header
-        Utils.copy(bis, bos, 12)
+        FileUtils.copy(bis, bos, 12)
         while (bis.available() > 0) {
-            Utils.readNBytes(bis, chunkNameBytes)
-            Utils.readNBytes(bis, chunkDataLenBytes)
+            ByteUtils.readNBytes(bis, chunkNameBytes)
+            ByteUtils.readNBytes(bis, chunkDataLenBytes)
 
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
             realChunkDataLength = chunkDataLenBytes.toUInt(ByteOrder.LITTLE_ENDIAN).toLong()
@@ -32,13 +33,13 @@ class WebpExifHelper : ExifHelper {
             realChunkDataLength += realChunkDataLength % 2
 
             if (webpSkippableChunks.contains(chunkName)) {
-                realChunkDataLength -= Utils.skipNBytes(bis, realChunkDataLength)
+                realChunkDataLength -= ByteUtils.skipNBytes(bis, realChunkDataLength)
                 Timber.d("Discord chunk: %s size: %d", chunkName, realChunkDataLength)
             } else {
                 bos.write(chunkNameBytes)
                 bos.write(chunkDataLenBytes)
                 Timber.d("Copy chunk: %s size: %d", chunkName, realChunkDataLength)
-                realChunkDataLength -= Utils.copy(bis, bos, realChunkDataLength)
+                realChunkDataLength -= FileUtils.copy(bis, bos, realChunkDataLength)
             }
             if (realChunkDataLength != 0L) {
                 throw ImageFormatException()

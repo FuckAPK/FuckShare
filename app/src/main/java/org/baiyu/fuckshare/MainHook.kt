@@ -7,6 +7,7 @@ import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import org.baiyu.fuckshare.utils.IntentUtils
 
 class MainHook : IXposedHookLoadPackage {
 
@@ -60,12 +61,12 @@ class MainHook : IXposedHookLoadPackage {
                 return
             }
             val extraIntent = if (intent.action == Intent.ACTION_CHOOSER) {
-                Utils.getParcelableExtra(
+                IntentUtils.getParcelableExtra(
                     intent,
                     Intent.EXTRA_INTENT,
                     Intent::class.java
                 )?.apply {
-                    Utils.getParcelableArrayExtra<Intent>(
+                    IntentUtils.getParcelableArrayExtra<Intent>(
                         intent,
                         Intent.EXTRA_INITIAL_INTENTS
                     )?.let {

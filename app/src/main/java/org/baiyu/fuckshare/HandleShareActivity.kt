@@ -7,6 +7,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.core.app.ShareCompat.IntentBuilder
+import org.baiyu.fuckshare.utils.AppUtils
+import org.baiyu.fuckshare.utils.FileUtils
+import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
 import timber.log.Timber.DebugTree
 
@@ -17,18 +20,18 @@ class HandleShareActivity : Activity() {
         if (BuildConfig.DEBUG && Timber.treeCount == 0) {
             Timber.plant(DebugTree())
         }
-        val prefs = Utils.getPrefs(this)
+        val prefs = AppUtils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
         if (settings.toastTime > 0) {
             val applicationName = applicationInfo.loadLabel(packageManager).toString()
-            Utils.showToast(this, applicationName, settings.toastTime)
+            AppUtils.showToast(this, applicationName, settings.toastTime)
         }
 
         if ("text/plain" == intent.type) {
             handleText(intent)
         } else {
-            Utils.getUrisFromIntent(intent)?.let {
+            IntentUtils.getUrisFromIntent(intent)?.let {
                 handleUris(it)
             } ?: Timber.d("Uri is empty: %s", intent.toString())
         }
@@ -36,7 +39,7 @@ class HandleShareActivity : Activity() {
     }
 
     override fun finish() {
-        Utils.setupWorker(this)
+        AppUtils.scheduleClearCacheWorker(this)
         super.finish()
     }
 
@@ -56,7 +59,7 @@ class HandleShareActivity : Activity() {
         val ib = IntentBuilder(this).setType(intent.type)
         uris.filterNotNull()
             .parallelStream()
-            .map { Utils.refreshUri(this, settings, it) }
+            .map { FileUtils.refreshUri(this, settings, it) }
             .forEachOrdered { it?.let { ib.addStream(it) } }
 
         val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()

@@ -1,9 +1,7 @@
 package org.baiyu.fuckshare
 
 import android.annotation.SuppressLint
-import android.content.ComponentName
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.text.InputType
@@ -13,6 +11,8 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreferenceCompat
 import com.gyf.immersionbar.ImmersionBar
+import org.baiyu.fuckshare.utils.AppUtils
+import org.baiyu.fuckshare.utils.AppUtils.getActivityStatus
 
 class SettingsActivity : AppCompatActivity() {
     @SuppressLint("WorldReadableFiles")
@@ -26,7 +26,7 @@ class SettingsActivity : AppCompatActivity() {
             .init()
         setStatusBarFontColor(resources.configuration)
 
-        prefs = Utils.getPrefs(this)
+        prefs = AppUtils.getPrefs(this)
 
         supportFragmentManager
             .beginTransaction()
@@ -63,7 +63,8 @@ class SettingsActivity : AppCompatActivity() {
             updateLauncherActivityStatus()
             keepLauncherIconPreference.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
-                    setActivityStatus(
+                    AppUtils.setActivityStatus(
+                        requireContext(),
                         LAUNCHER_ACTIVITY_NAME,
                         newValue as Boolean
                     )
@@ -75,7 +76,8 @@ class SettingsActivity : AppCompatActivity() {
             updateViewerActivityStatus()
             viewerPreference.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
-                    setActivityStatus(
+                    AppUtils.setActivityStatus(
+                        requireContext(),
                         VIEWER_ACTIVITY_NAME,
                         newValue as Boolean
                     )
@@ -85,33 +87,19 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         private fun updateLauncherActivityStatus() {
-            val status = getActivityStatus(LAUNCHER_ACTIVITY_NAME)
-            val editor = prefs!!.edit()
+            val status = getActivityStatus(requireContext(), LAUNCHER_ACTIVITY_NAME)
+            val editor = prefs.edit()
             editor.putBoolean(PREF_KEEP_LAUNCHER_ICON, status)
             editor.apply()
         }
 
         private fun updateViewerActivityStatus() {
-            val status = getActivityStatus(VIEWER_ACTIVITY_NAME)
-            val editor = prefs!!.edit()
+            val status = getActivityStatus(requireContext(), VIEWER_ACTIVITY_NAME)
+            val editor = prefs.edit()
             editor.putBoolean(PREF_ENABLE_VIEWER, status)
             editor.apply()
         }
 
-        private fun getActivityStatus(activityName: String): Boolean {
-            val pm = requireContext().applicationContext.packageManager
-            val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
-            return pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        }
-
-        private fun setActivityStatus(activityName: String, enable: Boolean) {
-            val pm = requireContext().applicationContext.packageManager
-            val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
-            val status =
-                if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-            pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
-        }
 
         companion object {
             private const val PREF_KEEP_LAUNCHER_ICON = "keep_launcher_icon"
@@ -124,6 +112,6 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     companion object {
-        private var prefs: SharedPreferences? = null
+        private lateinit var prefs: SharedPreferences
     }
 }

@@ -3,6 +3,7 @@ package org.baiyu.fuckshare
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import org.baiyu.fuckshare.utils.AppUtils
 import timber.log.Timber
 
 class ClearCacheWorker(
@@ -11,7 +12,7 @@ class ClearCacheWorker(
 ) : Worker(context, params) {
     override fun doWork(): Result {
         val timeDurationMillis = 1000L * 60L * 30L // 30 mins
-        val result = Utils.clearCache(context, timeDurationMillis)
+        val result = AppUtils.clearCache(context, timeDurationMillis)
         Timber.d("Cache cleared with result: %b", result)
         return if (result) Result.success() else Result.failure()
     }
