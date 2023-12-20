@@ -1,7 +1,10 @@
 package org.baiyu.fuckshare
 
 import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.text.InputType
@@ -23,15 +26,9 @@ class SettingsActivity : AppCompatActivity() {
             .transparentNavigationBar()
             .init()
         setStatusBarFontColor(resources.configuration)
-        try {
-            @Suppress("DEPRECATION")
-            prefs = getSharedPreferences(
-                BuildConfig.APPLICATION_ID + "_preferences",
-                MODE_WORLD_READABLE
-            )
-        } catch (e: Exception) {
-            prefs = getSharedPreferences(BuildConfig.APPLICATION_ID + "_preferences", MODE_PRIVATE)
-        }
+
+        prefs = Utils.getPrefs(this)
+
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.settings_container, MySettingsFragment())
@@ -52,6 +49,10 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     class MySettingsFragment : PreferenceFragmentCompat() {
+        private val context: Context by lazy {
+            requireContext()
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.preferences, rootKey)
             // setup toast time
@@ -66,8 +67,7 @@ class SettingsActivity : AppCompatActivity() {
             updateLauncherActivityStatus()
             keepLauncherIconPreference.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
-                    Utils.setActivityStatus(
-                        requireContext(),
+                    setActivityStatus(
                         LAUNCHER_ACTIVITY_NAME,
                         newValue as Boolean
                     )
@@ -79,8 +79,7 @@ class SettingsActivity : AppCompatActivity() {
             updateViewerActivityStatus()
             viewerPreference.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
-                    Utils.setActivityStatus(
-                        requireContext(),
+                    setActivityStatus(
                         VIEWER_ACTIVITY_NAME,
                         newValue as Boolean
                     )
@@ -90,19 +89,33 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         private fun updateLauncherActivityStatus() {
-            val status = Utils.getActivityStatus(requireContext(), LAUNCHER_ACTIVITY_NAME)
+            val status = getActivityStatus(LAUNCHER_ACTIVITY_NAME)
             val editor = prefs!!.edit()
             editor.putBoolean(PREF_KEEP_LAUNCHER_ICON, status)
             editor.apply()
         }
 
         private fun updateViewerActivityStatus() {
-            val status = Utils.getActivityStatus(requireContext(), VIEWER_ACTIVITY_NAME)
+            val status = getActivityStatus(VIEWER_ACTIVITY_NAME)
             val editor = prefs!!.edit()
             editor.putBoolean(PREF_ENABLE_VIEWER, status)
             editor.apply()
         }
 
+        private fun getActivityStatus(activityName: String): Boolean {
+            val pm = context.applicationContext.packageManager
+            val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
+            return pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        }
+
+        private fun setActivityStatus(activityName: String, enable: Boolean) {
+            val pm = context.applicationContext.packageManager
+            val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
+            val status =
+                if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+                else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
+        }
 
         companion object {
             private const val PREF_KEEP_LAUNCHER_ICON = "keep_launcher_icon"

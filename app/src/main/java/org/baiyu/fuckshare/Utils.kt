@@ -2,12 +2,10 @@ package org.baiyu.fuckshare
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.CountDownTimer
@@ -126,7 +124,7 @@ object Utils {
     }
 
     fun refreshUri(context: Context, settings: Settings, uri: Uri): Uri? {
-        val originName = getRealFileName(context, uri)
+        val originName = getRealFileName(context, uri) ?: randomString
         var tempFile = File(context.cacheDir, randomString)
         return try {
             val magickBytes = ByteArray(16)
@@ -161,7 +159,7 @@ object Utils {
             // rename
             val newNameNoExt = getNewNameNoExt(settings, fileType, originName)
             val ext = getExt(settings, fileType, originName)
-            val newFullName = mergeFilename(newNameNoExt, ext)
+            val newFullName = if (ext == null) newNameNoExt else "${newNameNoExt}.${ext}"
             var renamed = File(context.cacheDir, newFullName)
             if (renamed.exists()) {
                 val oneTimeCacheDir = File(context.cacheDir, randomString)
@@ -247,13 +245,18 @@ object Utils {
         }
     }
 
-    private fun getExt(settings: Settings, fileType: FileType, originName: String?): String? {
+    private fun getExt(settings: Settings, fileType: FileType, originName: String): String? {
         var extension: String? = null
         if (settings.enableFileTypeSniff()) {
             extension = fileType.extension
         }
         if (extension == null) {
-            extension = getFileRealExt(originName!!)
+            val lastIndex = originName.lastIndexOf('.')
+            extension = if (lastIndex > 0 && lastIndex < originName.length - 1) {
+                originName.substring(lastIndex + 1)
+            } else {
+                null
+            }
         }
         return extension
     }
@@ -282,19 +285,6 @@ object Utils {
         } else {
             fullFilename
         }
-    }
-
-    private fun getFileRealExt(fullFilename: String): String? {
-        val lastIndex = fullFilename.lastIndexOf('.')
-        return if (lastIndex > 0 && lastIndex < fullFilename.length - 1) {
-            fullFilename.substring(lastIndex + 1)
-        } else {
-            null
-        }
-    }
-
-    private fun mergeFilename(filename: String, extension: String?): String {
-        return if (extension == null) filename else "${filename}.${extension}"
     }
 
     private val randomString: String
@@ -425,21 +415,6 @@ object Utils {
             }
         toast.show()
         toastCountDown.start()
-    }
-
-    fun getActivityStatus(context: Context, activityName: String): Boolean {
-        val pm = context.applicationContext.packageManager
-        val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
-        return pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-    }
-
-    fun setActivityStatus(context: Context, activityName: String, enable: Boolean) {
-        val pm = context.applicationContext.packageManager
-        val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
-        val status =
-            if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
-            else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-        pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
     }
 
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
