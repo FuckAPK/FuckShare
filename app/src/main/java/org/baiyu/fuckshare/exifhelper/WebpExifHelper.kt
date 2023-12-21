@@ -34,11 +34,11 @@ class WebpExifHelper : ExifHelper {
 
             if (webpSkippableChunks.contains(chunkName)) {
                 realChunkDataLength -= ByteUtils.skipNBytes(bis, realChunkDataLength)
-                Timber.d("Discord chunk: %s size: %d", chunkName, realChunkDataLength)
+                Timber.d("Discord chunk: $chunkName size: $realChunkDataLength")
             } else {
                 bos.write(chunkNameBytes)
                 bos.write(chunkDataLenBytes)
-                Timber.d("Copy chunk: %s size: %d", chunkName, realChunkDataLength)
+                Timber.d("Copy chunk: $chunkName size: $realChunkDataLength")
                 realChunkDataLength -= FileUtils.copy(bis, bos, realChunkDataLength)
             }
             if (realChunkDataLength != 0L) {

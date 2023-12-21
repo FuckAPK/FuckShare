@@ -21,4 +21,5 @@
     <string name="title_toast_time">气泡提示时间（毫秒，0 关闭）</string>
     <string name="desc_enable_viewer">在打开方式中显示</string>
     <string name="title_enable_viewer">开启查看器</string>
+    <string name="fail_to_process">%d/%d 处理失败</string>
 </resources>

@@ -12,6 +12,7 @@ import org.baiyu.fuckshare.utils.FileUtils
 import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
 import timber.log.Timber.DebugTree
+import java.util.concurrent.atomic.AtomicInteger
 
 class HandleShareActivity : Activity() {
     @SuppressLint("WorldReadableFiles")
@@ -33,7 +34,7 @@ class HandleShareActivity : Activity() {
         } else {
             IntentUtils.getUrisFromIntent(intent)?.let {
                 handleUris(it)
-            } ?: Timber.d("Uri is empty: %s", intent.toString())
+            } ?: Timber.d("Uri is empty: $intent")
         }
         finish()
     }
@@ -57,17 +58,32 @@ class HandleShareActivity : Activity() {
 
     private fun handleUris(uris: List<Uri?>) {
         val ib = IntentBuilder(this).setType(intent.type)
+        val nullCount = AtomicInteger(0)
         uris.filterNotNull()
             .parallelStream()
             .map { FileUtils.refreshUri(this, settings, it) }
-            .forEachOrdered { it?.let { ib.addStream(it) } }
+            .forEachOrdered {
+                it?.let { ib.addStream(it) }
+                    ?: nullCount.incrementAndGet()
+            }
+
+        nullCount.get().let {
+            if (it > 0) {
+                Timber.e("Failed to process $it of ${uris.size}")
+                AppUtils.showToast(
+                    this,
+                    resources.getString(R.string.fail_to_process).format(it, uris.size),
+                    settings.toastTime
+                )
+            }
+        }
 
         val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()
         )
-        Timber.d("intent: %s", chooserIntent.toString())
+        Timber.d("chooser intent: $chooserIntent")
         startActivity(chooserIntent)
     }
 

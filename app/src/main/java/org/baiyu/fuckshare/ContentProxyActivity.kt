@@ -9,6 +9,7 @@ import org.baiyu.fuckshare.utils.AppUtils
 import org.baiyu.fuckshare.utils.FileUtils
 import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
+import java.util.stream.Collectors
 
 class ContentProxyActivity : Activity() {
 
@@ -30,11 +31,77 @@ class ContentProxyActivity : Activity() {
         startActivityForResult(setupChooserIntent(), 0)
     }
 
+    override fun finish() {
+        AppUtils.scheduleClearCacheWorker(this)
+        super.finish()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode == RESULT_OK && data != null) {
+            val resultIntent = Intent()
+            data.data?.let { originUri ->
+                FileUtils.refreshUri(this, settings, originUri)?.let {
+                    resultIntent.data = it
+                } ?: {
+                    Timber.e("Failed to process $originUri")
+                    AppUtils.showToast(
+                        this,
+                        resources.getString(R.string.fail_to_process).format(1, 1),
+                        settings.toastTime
+                    )
+                    setResult(RESULT_CANCELED)
+                    finish()
+                }
+            }
+            data.clipData?.let { clipData ->
+                val uris = (0 until clipData.itemCount)
+                    .mapNotNull { clipData.getItemAt(it).uri }
+
+                val resultUris = uris
+                    .parallelStream()
+                    .map { FileUtils.refreshUri(this, settings, it) }
+                    .filter { it != null }
+                    .map { ClipData.Item(it) }
+                    .collect(Collectors.toList())
+
+                (uris.count() - resultUris.size).let {
+                    if (it > 0) {
+                        Timber.e("Failed to process $it of ${uris.count()}")
+                        AppUtils.showToast(
+                            this,
+                            resources.getString(R.string.fail_to_process).format(it, uris.count()),
+                            settings.toastTime
+                        )
+                    }
+                }
+
+                if (resultUris.isNotEmpty()) {
+                    val resultClipData = ClipData(clipData.description, resultUris.removeAt(0))
+                    resultUris.forEach { resultClipData.addItem(it) }
+                    resultIntent.clipData = resultClipData
+                } else {
+                    Timber.w("result uris is empty")
+                    setResult(RESULT_CANCELED)
+                    finish()
+                }
+
+            }
+            resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            setResult(RESULT_OK, resultIntent)
+            Timber.d("result intent: $resultIntent")
+        } else {
+            setResult(RESULT_CANCELED)
+        }
+        finish()
+    }
+
     private fun setupChooserIntent(): Intent {
-        Timber.d("origin intent: %s", intent.toString())
+        Timber.d("origin intent: $intent")
         val pickIntent = cloneIntent(intent)
 
-        Timber.d("new intent: %s", pickIntent.toString())
+        Timber.d("new intent: $pickIntent")
         val chooserIntent = Intent.createChooser(pickIntent, resources.getString(R.string.app_name))
             .putExtra(
                 Intent.EXTRA_EXCLUDE_COMPONENTS,
@@ -48,7 +115,7 @@ class ContentProxyActivity : Activity() {
             cloneIntent(it)
         }?.toTypedArray()?.let {
             chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
-            Timber.d("%s: %s", Intent.EXTRA_INITIAL_INTENTS, it.toString())
+            Timber.d("${Intent.EXTRA_INITIAL_INTENTS}: $it")
         }
 
         return chooserIntent
@@ -73,43 +140,7 @@ class ContentProxyActivity : Activity() {
         }
     }
 
-    override fun finish() {
-        AppUtils.scheduleClearCacheWorker(this)
-        super.finish()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (resultCode == RESULT_OK && data != null) {
-            val resultIntent = Intent()
-            data.data?.let {
-                resultIntent.data = FileUtils.refreshUri(this, settings, it)
-            }
-            data.clipData?.let { clipData ->
-                val resultUris = (0 until clipData.itemCount)
-                    .asSequence()
-                    .map { clipData.getItemAt(it).uri }
-                    .map { FileUtils.refreshUri(this, settings, it) }
-                    .filterNotNull()
-                    .map { ClipData.Item(it) }
-                    .toMutableList()
-
-                val resultClipData = ClipData(clipData.description, resultUris.removeAt(0))
-                resultUris.forEach { resultClipData.addItem(it) }
-                resultIntent.clipData = resultClipData
-            }
-            resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            setResult(RESULT_OK, resultIntent)
-            Timber.d("intent: %s", resultIntent.toString())
-        } else {
-            setResult(RESULT_CANCELED)
-        }
-        finish()
-    }
-
     companion object {
         private lateinit var settings: Settings
     }
-
 }

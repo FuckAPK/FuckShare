@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import org.baiyu.fuckshare.BuildConfig
@@ -48,52 +47,28 @@ object FileUtils {
             context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
                 ByteUtils.readNBytes(uin, magickBytes)
             }
-            var fileType = getFileType(magickBytes)
+            val fileType = getFileType(magickBytes)
             if (fileType is ImageType
-                && fileType.isSupportMetadata
+                && fileType.supportMetadata
                 && settings.enableRemoveExif()
             ) {
-                try {
-                    processImgMetadata(context, settings, tempFile, fileType, uri)
-                } catch (e: ImageFormatException) {
-                    tempFile.delete()
-                    Timber.e("Format error: %s Type: %s", originName, fileType)
-                    Toast.makeText(
-                        context,
-                        "Format error: $originName Type: $fileType",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    fileType = if (settings.enableFallbackToFile()) {
-                        copyFileFromUri(context, uri, tempFile)
-                        OtherType.UNKNOWN
-                    } else {
-                        return null
-                    }
-                }
+                processImage(context, settings, tempFile, fileType, uri)
             } else {
                 copyFileFromUri(context, uri, tempFile)
             }
             // rename
-            val newNameNoExt = getNewNameNoExt(settings, fileType, originName)
-            val ext = getExt(settings, fileType, originName)
-            val newFullName = if (ext == null) newNameNoExt else "${newNameNoExt}.${ext}"
-            var renamed = File(context.cacheDir, newFullName)
-            if (renamed.exists()) {
-                val oneTimeCacheDir = File(context.cacheDir, AppUtils.randomString)
-                oneTimeCacheDir.mkdirs()
-                renamed = File(oneTimeCacheDir, newFullName)
-            }
-            if (tempFile.renameTo(renamed)) {
-                tempFile = renamed
+            createNewName(context, settings, fileType, originName).let {
+                if (tempFile.renameTo(it)) {
+                    tempFile = it
+                }
             }
             FileProvider.getUriForFile(
                 context,
-                BuildConfig.APPLICATION_ID + ".fileprovider",
+                "${BuildConfig.APPLICATION_ID}.fileprovider",
                 tempFile
             )
         } catch (e: IOException) {
             Timber.e(e)
-            Toast.makeText(context, "Failed to process: $originName", Toast.LENGTH_SHORT).show()
             null
         }
     }
@@ -135,6 +110,26 @@ object FileUtils {
         }
     }
 
+    @Throws(IOException::class)
+    private fun processImage(
+        context: Context,
+        settings: Settings,
+        file: File,
+        imageType: ImageType,
+        uri: Uri
+    ) {
+        try {
+            processImgMetadata(context, settings, file, imageType, uri)
+        } catch (e: ImageFormatException) {
+            file.delete()
+            Timber.e("Format error: $uri Type: $imageType")
+            if (settings.enableFallbackToFile()) {
+                Timber.d("fallback to file: $uri")
+                copyFileFromUri(context, uri, file)
+            }
+        }
+    }
+
     /**
      * Processes the metadata of an image file, removing metadata if needed.
      */
@@ -164,7 +159,7 @@ object FileUtils {
                     exifHelper.fixHeaderSize(it)
                 }
             }
-            if (imageType.isSupportMetadata) {
+            if (imageType.supportMetadata) {
                 context.contentResolver.openInputStream(uri)!!.use { input ->
                     ExifHelper.writeBackMetadata(
                         ExifInterface(input),
@@ -173,7 +168,25 @@ object FileUtils {
                     )
                 }
             }
-        } ?: Timber.e("unsupported image type: %s", imageType)
+        } ?: Timber.e("unsupported image type: $imageType")
+    }
+
+    private fun createNewName(
+        context: Context,
+        settings: Settings,
+        fileType: FileType,
+        originName: String
+    ): File {
+        val newNameNoExt = getNewNameNoExt(settings, fileType, originName)
+        val ext = getExt(settings, fileType, originName)
+        val newFullName = if (ext == null) newNameNoExt else "${newNameNoExt}.${ext}"
+        var renamed = File(context.cacheDir, newFullName)
+        if (renamed.exists()) {
+            val oneTimeCacheDir = File(context.cacheDir, AppUtils.randomString)
+            oneTimeCacheDir.mkdirs()
+            renamed = File(oneTimeCacheDir, newFullName)
+        }
+        return renamed
     }
 
     /**
@@ -228,7 +241,7 @@ object FileUtils {
                 return cursor.getString(nameIndex)
             }
         } else {
-            Timber.e("Unknown scheme: %s", uri.scheme)
+            Timber.e("Unknown scheme: ${uri.scheme}")
             return null
         }
     }

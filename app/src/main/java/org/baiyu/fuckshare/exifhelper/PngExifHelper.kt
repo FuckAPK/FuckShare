@@ -30,11 +30,11 @@ class PngExifHelper : ExifHelper {
             chunkDataCRCLength -= if (pngCriticalChunks.contains(chunkName)) {
                 bos.write(chunkLengthBytes)
                 bos.write(chunkNameBytes)
-                Timber.d("Copy chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
+                Timber.d("Copy chunk: $chunkName size: ${chunkDataCRCLength + 4}")
                 FileUtils.copy(bis, bos, chunkDataCRCLength)
             } else {
                 // skip chunkData and chunkCrc
-                Timber.d("Discord chunk: %s size: %d", chunkName, chunkDataCRCLength + 4)
+                Timber.d("Discord chunk: $chunkName size: ${chunkDataCRCLength + 4}")
                 ByteUtils.skipNBytes(bis, chunkDataCRCLength)
             }
             if (chunkDataCRCLength != 0L) {

@@ -1,7 +1,7 @@
 package org.baiyu.fuckshare.filetype
 
 enum class ImageType(
-    override val isSupportMetadata: Boolean,
+    override val supportMetadata: Boolean,
     override val extension: String,
     override val signatures: Set<Map<Int, ByteArray>>
 ) : FileType {
@@ -9,11 +9,6 @@ enum class ImageType(
         true,
         "jpg",
         setOf(
-            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xDB}),
-            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0}),
-            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE1},
-            //                    6, new byte[]{(byte) 0x45, (byte) 0x78, (byte) 0x69, (byte) 0x66, (byte) 0x00, (byte) 0x00}),
-            //            Map.of(0, new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xEE})
             mapOf(0 to byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()))
         )
     ),

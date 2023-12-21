@@ -13,7 +13,7 @@ class ClearCacheWorker(
     override fun doWork(): Result {
         val timeDurationMillis = 1000L * 60L * 30L // 30 mins
         val result = AppUtils.clearCache(context, timeDurationMillis)
-        Timber.d("Cache cleared with result: %b", result)
+        Timber.d("Cache cleared with result: $result")
         return if (result) Result.success() else Result.failure()
     }
 

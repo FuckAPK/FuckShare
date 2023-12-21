@@ -10,21 +10,20 @@ class ClearCacheActivity : Activity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val files = cacheDir.listFiles()
-        if (files?.isEmpty() == true) {
+        val message = if (files?.isEmpty() == true) {
             Timber.d("No cache")
             resources.getString(R.string.clear_cache_empty)
         } else {
             // clear all cache
             val status = AppUtils.clearCache(this, 0)
-            Timber.d("Cache cleared with result: %b", status)
+            Timber.d("Cache cleared with result: $status")
             if (status) {
                 resources.getString(R.string.clear_cache_success)
             } else {
                 resources.getString(R.string.clear_cache_failed)
             }
-        }.also {
-            Toast.makeText(this, it, Toast.LENGTH_SHORT).show()
         }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         finish()
     }
 }

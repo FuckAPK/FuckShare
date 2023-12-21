@@ -15,16 +15,17 @@ interface ExifHelper {
         fun writeBackMetadata(exifFrom: ExifInterface, exifTo: ExifInterface, tags: Set<String?>) {
             val tagsValue = tags.asSequence()
                 .filterNotNull()
-                .filter { exifFrom.hasAttribute(it) }
                 .map { it to exifFrom.getAttribute(it) }
+                .filterNot { it.second == null }
                 .filterNot { it.first == ExifInterface.TAG_ORIENTATION && it.second == ExifInterface.ORIENTATION_UNDEFINED.toString() }
 
             if (tagsValue.count() == 0) {
+                Timber.d("no tags rewrite")
                 return
             }
 
             tagsValue.forEach { exifTo.setAttribute(it.first, it.second) }
-            Timber.d("tags rewrite: %s", tagsValue.toMap().toString())
+            Timber.d("tags rewrite: ${tagsValue.toMap()}")
             exifTo.saveAttributes()
         }
     }

@@ -36,15 +36,16 @@ object AppUtils {
      */
     @SuppressLint("WorldReadableFiles")
     fun getPrefs(context: Context): SharedPreferences {
+        val prefsName = "${BuildConfig.APPLICATION_ID}_preferences"
         return try {
             @Suppress("DEPRECATION")
             context.getSharedPreferences(
-                "${BuildConfig.APPLICATION_ID}_preferences",
+                prefsName,
                 Activity.MODE_WORLD_READABLE
             )
         } catch (ignore: SecurityException) {
             context.getSharedPreferences(
-                "${BuildConfig.APPLICATION_ID}_preferences",
+                prefsName,
                 Activity.MODE_PRIVATE
             )
         }
@@ -103,7 +104,8 @@ object AppUtils {
         val timeBefore = System.currentTimeMillis() - timeDurationMillis
         return context.cacheDir.listFiles()?.asSequence()
             ?.filter { it.lastModified() < timeBefore }
-            ?.all { it.deleteRecursively() }
+            ?.map { it.deleteRecursively() }
+            ?.findLast { !it }
             ?: true
     }
 

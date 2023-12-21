@@ -27,15 +27,17 @@ class JpegExifHelper : ExifHelper {
                 throw ImageFormatException()
             }
 
+            val makerName = maker[1].toUByte().toString(16).uppercase()
             when (maker[1]) {
                 0xD8.toByte() -> {
                     bos.write(maker)
-                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
+                    Timber.d("Copy chunk: $makerName size: 2")
+
                 }
 
                 0xD9.toByte() -> {   // EOI
                     bos.write(maker)
-                    Timber.d("Copy chunk: %02X size: %d", maker[1], 2)
+                    Timber.d("Copy chunk: $makerName size: 2")
                     break
                 }
 
@@ -43,14 +45,14 @@ class JpegExifHelper : ExifHelper {
                     bos.write(maker)
                     // write all data
                     chunkDataLength = bis.available().toLong()
-                    Timber.d("Copy DA and following chunks size: %s", chunkDataLength + 2)
+                    Timber.d("Copy DA and following chunks size: ${chunkDataLength + 2}")
                     chunkDataLength -= bis.copyTo(bos)
                 }
 
                 in jpegSkippableChunks -> {
                     ByteUtils.readNBytes(bis, lenBytes)
                     chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
-                    Timber.d("Discord chunk: %02X size: %d", maker[1], chunkDataLength + 4)
+                    Timber.d("Discord chunk: $makerName size: ${chunkDataLength + 4}")
                     chunkDataLength -= ByteUtils.skipNBytes(bis, chunkDataLength)
                 }
 
@@ -59,7 +61,7 @@ class JpegExifHelper : ExifHelper {
                     chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
                     bos.write(maker)
                     bos.write(lenBytes)
-                    Timber.d("Copy chunk: %02X size: %d", maker[1], chunkDataLength + 4)
+                    Timber.d("Copy chunk: $makerName size: ${chunkDataLength + 4}")
                     chunkDataLength -= FileUtils.copy(bis, bos, chunkDataLength)
                 }
             }

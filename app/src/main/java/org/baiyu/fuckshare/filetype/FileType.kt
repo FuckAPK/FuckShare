@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 interface FileType {
     val extension: String?
     val signatures: Set<Map<Int, ByteArray>>?
-    val isSupportMetadata: Boolean
+    val supportMetadata: Boolean
         get() = false
 
     fun signatureMatch(bytes: ByteArray?): Boolean {
