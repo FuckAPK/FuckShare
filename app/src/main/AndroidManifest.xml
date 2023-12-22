@@ -37,7 +37,6 @@
             android:name=".SettingsActivity"
             android:configChanges="uiMode"
             android:exported="true"
-            android:launchMode="singleInstance"
             android:theme="@style/Theme.Material3.Preference">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
@@ -65,7 +64,6 @@
             android:name=".HandleShareActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:launchMode="singleInstance"
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -81,6 +79,7 @@
         <activity-alias
             android:name=".ViewerActivity"
             android:enabled="false"
+            android:excludeFromRecents="true"
             android:exported="true"
             android:targetActivity=".HandleShareActivity">
             <intent-filter>
@@ -98,13 +97,11 @@
             android:excludeFromRecents="true"
             android:exported="true"
             android:icon="@mipmap/ic_shortcut_clear"
-            android:launchMode="singleInstance"
             android:theme="@android:style/Theme.NoDisplay" />
         <activity
             android:name=".ContentProxyActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:launchMode="singleInstance"
             android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen">
             <intent-filter>
                 <action android:name="android.intent.action.GET_CONTENT" />
