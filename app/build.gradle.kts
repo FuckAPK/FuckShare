@@ -28,6 +28,13 @@ android {
             keyAlias = properties.getProperty("keyAlias")
         }
     }
+    applicationVariants.all {
+        outputs
+            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach {
+                it.outputFileName = "Fuck Share_${defaultConfig.versionName}.apk"
+            }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
