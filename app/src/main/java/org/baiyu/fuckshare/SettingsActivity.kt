@@ -224,7 +224,6 @@ class SettingsActivity : AppCompatActivity() {
                 // viewer
                 it.addPreference(
                     SwitchPreferenceCompat(requireContext()).apply {
-                        key = PREF_ENABLE_VIEWER
                         title = getString(R.string.title_enable_viewer)
                         summary = getString(R.string.desc_enable_viewer)
                         isIconSpaceReserved = false
@@ -235,7 +234,7 @@ class SettingsActivity : AppCompatActivity() {
                         )
 
                         onPreferenceChangeListener =
-                            Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
+                            Preference.OnPreferenceChangeListener { _, newValue: Any ->
                                 AppUtils.setActivityStatus(
                                     requireContext(),
                                     VIEWER_ACTIVITY_NAME,
@@ -253,7 +252,6 @@ class SettingsActivity : AppCompatActivity() {
                 // launcher icon
                 it.addPreference(
                     SwitchPreferenceCompat(requireContext()).apply {
-                        key = PREF_KEEP_LAUNCHER_ICON
                         title = getString(R.string.title_keep_launcher_icon)
                         isIconSpaceReserved = false
 
@@ -263,7 +261,7 @@ class SettingsActivity : AppCompatActivity() {
                         )
 
                         onPreferenceChangeListener =
-                            Preference.OnPreferenceChangeListener { _: Preference?, newValue: Any ->
+                            Preference.OnPreferenceChangeListener { _, newValue: Any ->
                                 AppUtils.setActivityStatus(
                                     requireContext(),
                                     LAUNCHER_ACTIVITY_NAME,
@@ -281,10 +279,8 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         companion object {
-            private const val PREF_KEEP_LAUNCHER_ICON = "keep_launcher_icon"
             private const val LAUNCHER_ACTIVITY_NAME =
                 BuildConfig.APPLICATION_ID + ".LauncherActivity"
-            private const val PREF_ENABLE_VIEWER = "enable_viewer"
             private const val VIEWER_ACTIVITY_NAME =
                 BuildConfig.APPLICATION_ID + ".ViewerActivity"
         }
