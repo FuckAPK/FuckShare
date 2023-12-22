@@ -8,13 +8,11 @@ interface FileType {
     val supportMetadata: Boolean
         get() = false
 
-    fun signatureMatch(bytes: ByteArray?): Boolean {
-        bytes ?: return false
-
+    fun signatureMatch(bytes: ByteArray): Boolean {
         return signatures?.parallelStream()?.anyMatch { integerMap ->
             integerMap.entries.parallelStream()
                 .allMatch {
-                    it.key + it.value.size >= bytes.size
+                    bytes.size >= it.key + it.value.size
                             && ByteBuffer.wrap(it.value)
                         .equals(ByteBuffer.wrap(bytes, it.key, it.value.size))
                 }

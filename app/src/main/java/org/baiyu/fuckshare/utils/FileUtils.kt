@@ -261,7 +261,7 @@ object FileUtils {
     /**
      * Determines the file type based on the file's byte signature.
      */
-    private fun getFileType(bytes: ByteArray?): FileType {
+    private fun getFileType(bytes: ByteArray): FileType {
         val fileTypes = setOf(
             *ImageType.entries.toTypedArray(),
             *VideoType.entries.toTypedArray(),
