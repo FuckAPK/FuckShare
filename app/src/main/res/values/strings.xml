@@ -33,5 +33,5 @@
     <string name="title_toast_time">Toast Time (ms, 0 to disable)</string>
     <string name="desc_enable_viewer">show in \"open with\" menu</string>
     <string name="title_enable_viewer">Enable viewer</string>
-    <string name="fail_to_process">%d of %d failed!</string>
+    <string name="fail_to_process">%1$d of %2$d failed!</string>
 </resources>
