@@ -119,7 +119,21 @@ object AppUtils {
     fun getActivityStatus(context: Context, activityName: String): Boolean {
         val pm = context.applicationContext.packageManager
         val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
-        return pm.getComponentEnabledSetting(cn) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        return when (pm.getComponentEnabledSetting(cn)) {
+            PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
+            PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+            else -> {
+                val packageInfo = pm.getPackageInfo(
+                    BuildConfig.APPLICATION_ID,
+                    PackageManager.GET_ACTIVITIES
+                            or PackageManager.MATCH_DISABLED_COMPONENTS
+                )
+                packageInfo.activities?.asSequence()
+                    ?.find { it.name == activityName }
+                    ?.enabled
+                    ?: false
+            }
+        }
     }
 
     /**

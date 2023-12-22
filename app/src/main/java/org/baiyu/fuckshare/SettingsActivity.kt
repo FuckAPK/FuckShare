@@ -212,7 +212,7 @@ class SettingsActivity : AppCompatActivity() {
                         title = getString(R.string.title_toast_time)
                         summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
 
-                        setDefaultValue(Settings.DEFAULT_TOAST_TIME)
+                        setDefaultValue(Settings.DEFAULT_TOAST_TIME.toString())
                         isIconSpaceReserved = false
 
                         setOnBindEditTextListener { editText ->
