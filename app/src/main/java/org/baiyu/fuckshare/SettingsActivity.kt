@@ -87,7 +87,7 @@ class SettingsActivity : AppCompatActivity() {
                         key = Settings.PREF_EXIF_TAGS_TO_KEEP
                         title = getString(R.string.title_exif_tags_to_keep)
                         summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
-                        setDefaultValue(Settings.DEFAULT_EXIF_TAGS_TO_KEEP.joinToString(separator = " ,"))
+                        setDefaultValue(Settings.DEFAULT_EXIF_TAGS_TO_KEEP.joinToString(separator = ", "))
                         isIconSpaceReserved = false
                     }
                 )
