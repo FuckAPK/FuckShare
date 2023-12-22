@@ -79,7 +79,6 @@
         <activity-alias
             android:name=".ViewerActivity"
             android:enabled="false"
-            android:excludeFromRecents="true"
             android:exported="true"
             android:targetActivity=".HandleShareActivity">
             <intent-filter>
