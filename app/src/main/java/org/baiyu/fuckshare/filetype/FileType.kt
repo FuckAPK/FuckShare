@@ -1,5 +1,6 @@
 package org.baiyu.fuckshare.filetype
 
+import timber.log.Timber
 import java.nio.ByteBuffer
 
 interface FileType {
@@ -12,8 +13,11 @@ interface FileType {
         return signatures?.parallelStream()?.anyMatch { integerMap ->
             integerMap.entries.parallelStream()
                 .allMatch {
-                    bytes.size >= it.key + it.value.size
-                            && ByteBuffer.wrap(it.value)
+                    if (bytes.size < it.key + it.value.size) {
+                        Timber.e("bytes size too small to compare with signature")
+                        return@allMatch false
+                    }
+                    ByteBuffer.wrap(it.value)
                         .equals(ByteBuffer.wrap(bytes, it.key, it.value.size))
                 }
         } ?: false
