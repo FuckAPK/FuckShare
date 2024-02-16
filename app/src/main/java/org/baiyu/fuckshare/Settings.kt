@@ -51,6 +51,10 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, DEFAULT_ENABLE_FILE_TYPE_SNIFF)
     }
 
+    fun enableArchiveTypeSniff(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_ARCHIVE_TYPE_SNIFF, DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF)
+    }
+
     fun enableFallbackToFile(): Boolean {
         return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, DEFAULT_ENABLE_FALLBACK_TO_FILE)
     }
@@ -73,6 +77,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_IMAGE_RENAME = "enable_image_rename"
         const val PREF_ENABLE_FILE_RENAME = "enable_file_rename"
         const val PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff"
+        const val PREF_ENABLE_ARCHIVE_TYPE_SNIFF = "enable_archive_type_sniff"
         const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
         const val PREF_TOAST_TIME = "toast_time"
 
@@ -93,6 +98,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_IMAGE_RENAME = true
         const val DEFAULT_ENABLE_FILE_RENAME = false
         const val DEFAULT_ENABLE_FILE_TYPE_SNIFF = true
+        const val DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF = false
         const val DEFAULT_ENABLE_FALLBACK_TO_FILE = true
         const val DEFAULT_TOAST_TIME = 500
 

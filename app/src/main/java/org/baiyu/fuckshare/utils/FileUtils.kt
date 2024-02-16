@@ -212,9 +212,14 @@ object FileUtils {
      * Gets the file extension based on user settings, file type, and original name.
      */
     private fun getExt(settings: Settings, fileType: FileType, originName: String): String? {
-        var extension: String? = null
-        if (settings.enableFileTypeSniff()) {
-            extension = fileType.extension
+        var extension: String? = if (settings.enableFileTypeSniff()) {
+            if (fileType is ArchiveType && !settings.enableArchiveTypeSniff()) {
+                null
+            } else {
+                fileType.extension
+            }
+        } else {
+            null
         }
         if (extension == null) {
             val lastIndex = originName.lastIndexOf('.')

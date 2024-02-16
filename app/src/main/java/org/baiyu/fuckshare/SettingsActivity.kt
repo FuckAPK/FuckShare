@@ -111,6 +111,17 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 )
 
+                // sniff archive extension
+                it.addPreference(
+                    SwitchPreferenceCompat(requireContext()).apply {
+                        key = Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF
+                        title = getString(R.string.title_enable_archive_type_sniff)
+                        summary = getString(R.string.desc_enable_archive_type_sniff)
+                        setDefaultValue(Settings.DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF)
+                        isIconSpaceReserved = false
+                    }
+                )
+
                 // auto rename images
                 it.addPreference(
                     SwitchPreferenceCompat(requireContext()).apply {
@@ -130,6 +141,8 @@ class SettingsActivity : AppCompatActivity() {
                         isIconSpaceReserved = false
                     }
                 )
+
+                it.getPreference(1).dependency = Settings.PREF_ENABLE_FILE_TYPE_SNIFF
             }
 
             // hook category
