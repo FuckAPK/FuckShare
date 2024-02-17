@@ -142,7 +142,8 @@ class SettingsActivity : AppCompatActivity() {
                     }
                 )
 
-                it.getPreference(1).dependency = Settings.PREF_ENABLE_FILE_TYPE_SNIFF
+                it.findPreference<SwitchPreferenceCompat>(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF)?.dependency =
+                    Settings.PREF_ENABLE_FILE_TYPE_SNIFF
             }
 
             // hook category
