@@ -39,60 +39,60 @@ class ContentProxyActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (resultCode == RESULT_OK && data != null) {
-            val resultIntent = Intent()
-            data.data?.let { originUri ->
-                FileUtils.refreshUri(this, settings, originUri)?.let {
-                    resultIntent.data = it
-                } ?: {
-                    Timber.e("Failed to process $originUri")
+        Timber.i("data: $data")
+        if (resultCode != RESULT_OK || data == null) {
+            Timber.i("Result Code: $resultCode, data: $data")
+            setResult(resultCode)
+            finish()
+            return
+        }
+
+        val resultIntent = Intent()
+        data.data?.let { originUri ->
+            FileUtils.refreshUri(this, settings, originUri)?.let {
+                resultIntent.data = it
+            } ?: {
+                Timber.e("Failed to process $originUri")
+            }
+        }
+        data.clipData?.let { clipData ->
+            val uris = (0 until clipData.itemCount)
+                .mapNotNull { clipData.getItemAt(it).uri }
+
+            val resultUris = uris
+                .parallelStream()
+                .map { FileUtils.refreshUri(this, settings, it) }
+                .filter { it != null }
+                .map { ClipData.Item(it) }
+                .collect(Collectors.toList())
+
+            (uris.count() - resultUris.size).let {
+                if (it > 0) {
+                    Timber.e("Failed to process $it of ${uris.count()}")
                     AppUtils.showToast(
                         this,
-                        resources.getString(R.string.fail_to_process).format(1, 1),
+                        resources.getString(R.string.fail_to_process).format(it, uris.count()),
                         settings.toastTime
                     )
-                    setResult(RESULT_CANCELED)
-                    finish()
                 }
             }
-            data.clipData?.let { clipData ->
-                val uris = (0 until clipData.itemCount)
-                    .mapNotNull { clipData.getItemAt(it).uri }
 
-                val resultUris = uris
-                    .parallelStream()
-                    .map { FileUtils.refreshUri(this, settings, it) }
-                    .filter { it != null }
-                    .map { ClipData.Item(it) }
-                    .collect(Collectors.toList())
-
-                (uris.count() - resultUris.size).let {
-                    if (it > 0) {
-                        Timber.e("Failed to process $it of ${uris.count()}")
-                        AppUtils.showToast(
-                            this,
-                            resources.getString(R.string.fail_to_process).format(it, uris.count()),
-                            settings.toastTime
-                        )
-                    }
-                }
-
-                if (resultUris.isNotEmpty()) {
-                    val resultClipData = ClipData(clipData.description, resultUris.removeAt(0))
-                    resultUris.forEach { resultClipData.addItem(it) }
-                    resultIntent.clipData = resultClipData
-                } else {
-                    Timber.w("result uris is empty")
-                    setResult(RESULT_CANCELED)
-                    finish()
-                }
-
+            if (resultUris.isNotEmpty()) {
+                val resultClipData = ClipData(clipData.description, resultUris.removeAt(0))
+                resultUris.forEach { resultClipData.addItem(it) }
+                resultIntent.clipData = resultClipData
+            } else {
+                Timber.w("result uris is empty")
             }
+        }
+
+        if (resultIntent.data == null && resultIntent.clipData == null) {
+            setResult(RESULT_CANCELED)
+            Timber.e("result empty, cancelled")
+        } else {
             resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             setResult(RESULT_OK, resultIntent)
             Timber.d("result intent: $resultIntent")
-        } else {
-            setResult(RESULT_CANCELED)
         }
         finish()
     }
