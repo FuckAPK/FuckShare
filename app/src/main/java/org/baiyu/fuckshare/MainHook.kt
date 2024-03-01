@@ -23,7 +23,7 @@ class MainHook : IXposedHookLoadPackage {
             )
             XposedBridge.hookAllMethods(
                 activityTaskManagerServiceClass,
-                "startActivity",
+                "startActivityAsUser",
                 StartActivityHook
             )
         } catch (t: Throwable) {
