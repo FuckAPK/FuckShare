@@ -3,6 +3,7 @@ package org.baiyu.fuckshare
 import android.content.Intent
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -24,14 +25,37 @@ class MainHook : IXposedHookLoadPackage {
             XposedBridge.hookAllMethods(
                 activityTaskManagerServiceClass,
                 "startActivityAsUser",
-                StartActivityHook
+                StartActivityAsUserHook
+            )
+            XposedBridge.hookAllMethods(
+                activityTaskManagerServiceClass,
+                "startActivityIntentSender",
+                StartActivityIntentSenderHook
             )
         } catch (t: Throwable) {
             XposedBridge.log(t)
         }
     }
 
-    private object StartActivityHook : XC_MethodHook() {
+    private object StartActivityAsUserHook : XC_MethodHook() {
+        @Throws(Throwable::class)
+        override fun beforeHookedMethod(param: MethodHookParam) {
+            val callingPackage = param.args[1] as? String ?: return
+            val intent = param.args[3] as? Intent ?: return
+            process(intent, callingPackage, param)
+        }
+    }
+
+    private object StartActivityIntentSenderHook : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+            val key = XposedHelpers.getObjectField(param.args[1], "key")
+            val intent = XposedHelpers.getObjectField(key, "requestIntent") as? Intent ?: return
+            val packageName = XposedHelpers.getObjectField(key, "packageName") as? String ?: return
+            process(intent, packageName, param)
+        }
+    }
+
+    companion object {
         private val prefs: XSharedPreferences by lazy {
             XSharedPreferences(BuildConfig.APPLICATION_ID)
         }
@@ -47,11 +71,7 @@ class MainHook : IXposedHookLoadPackage {
             Intent.ACTION_OPEN_DOCUMENT
         )
 
-        @Throws(Throwable::class)
-        override fun beforeHookedMethod(param: MethodHookParam) {
-            val callingPackage = param.args[1] as? String ?: return
-            val intent = param.args[3] as? Intent ?: return
-
+        private fun process(intent: Intent, callingPackage: String, param: MethodHookParam) {
             if (callingPackage == BuildConfig.APPLICATION_ID || intent.action !in hookedIntents) {
                 return
             }

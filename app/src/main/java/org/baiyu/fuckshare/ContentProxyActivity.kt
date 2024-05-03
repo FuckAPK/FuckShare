@@ -123,10 +123,15 @@ class ContentProxyActivity : Activity() {
 
     private fun cloneIntent(intent: Intent): Intent {
         return Intent().apply {
-            action = intent.action
-            identifier = intent.identifier
-            setDataAndType(intent.data, intent.type)
-            intent.categories?.forEach { addCategory(it) }
+
+            fillIn(
+                intent,
+                Intent.FILL_IN_ACTION
+                        or Intent.FILL_IN_CATEGORIES
+                        or Intent.FILL_IN_DATA
+                        or Intent.FILL_IN_CLIP_DATA
+                        or Intent.FILL_IN_IDENTIFIER
+            )
 
             if (intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)) {
                 putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
