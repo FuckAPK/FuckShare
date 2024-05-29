@@ -23,8 +23,8 @@ object IntentUtils {
                     intent,
                     Intent.EXTRA_STREAM,
                     Uri::class.java
-                )!!
-                listOf(uri)
+                )
+                listOfNotNull(uri)
             }
 
             Intent.ACTION_SEND_MULTIPLE -> {
@@ -32,11 +32,11 @@ object IntentUtils {
                     intent,
                     Intent.EXTRA_STREAM,
                     Uri::class.java
-                )
+                )?.toList()
             }
 
             Intent.ACTION_VIEW -> {
-                listOf(intent.data)
+                listOfNotNull(intent.data)
             }
 
             else -> null
