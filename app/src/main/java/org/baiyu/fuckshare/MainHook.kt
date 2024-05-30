@@ -70,9 +70,13 @@ class MainHook : IXposedHookLoadPackage {
             Intent.ACTION_GET_CONTENT,
             Intent.ACTION_OPEN_DOCUMENT
         )
+        private val neverHookList = setOf(
+            BuildConfig.APPLICATION_ID,
+            "com.android.providers.media.module"
+        )
 
         private fun process(intent: Intent, callingPackage: String, param: MethodHookParam) {
-            if (callingPackage == BuildConfig.APPLICATION_ID || intent.action !in hookedIntents) {
+            if (callingPackage in neverHookList || intent.action !in hookedIntents) {
                 return
             }
 
@@ -103,6 +107,7 @@ class MainHook : IXposedHookLoadPackage {
             }
             handleExtraIntent(extraIntent)?.let {
                 param.args[3] = it
+                XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $it")
             }
         }
 
