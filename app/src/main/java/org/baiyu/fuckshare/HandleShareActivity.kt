@@ -30,13 +30,7 @@ class HandleShareActivity : Activity() {
             AppUtils.showToast(this, applicationName, settings.toastTime)
         }
 
-        if ("text/plain" == intent.type) {
-            handleText(intent)
-        } else {
-            IntentUtils.getUrisFromIntent(intent)?.let {
-                handleUris(it)
-            } ?: Timber.d("Uri is empty: $intent")
-        }
+        handleIntent()
         finish()
     }
 
@@ -45,31 +39,15 @@ class HandleShareActivity : Activity() {
         super.finish()
     }
 
-    private fun handleText(intent: Intent) {
-        val ib = IntentBuilder(this)
-        ib.setType(intent.type)
-        ib.setText(getIntent().getStringExtra(Intent.EXTRA_TEXT))
-        val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
-        chooserIntent.putExtra(
-            Intent.EXTRA_EXCLUDE_COMPONENTS,
-            listOf(ComponentName(this, this::class.java)).toTypedArray()
-        )
-        startActivity(chooserIntent)
-    }
-
-    private fun handleUris(uris: List<Uri?>) {
+    private fun handleIntent() {
+        val uris = IntentUtils.getUrisFromIntent(intent)
         val ib = IntentBuilder(this).apply {
-            intent.apply {
-                this@HandleShareActivity.intent.let {
-                    type = it.type
-                    clipData = it.clipData
-                }
-            }
+            setType(this@HandleShareActivity.intent.type)
+            this@HandleShareActivity.intent.getStringExtra(Intent.EXTRA_TEXT)?.let { setText(it) }
         }
 
         val nullCount = AtomicInteger(0)
-        uris.filterNotNull()
-            .parallelStream()
+        uris.parallelStream()
             .map { FileUtils.refreshUri(this, settings, it) }
             .forEachOrdered {
                 it?.let { ib.addStream(it) }

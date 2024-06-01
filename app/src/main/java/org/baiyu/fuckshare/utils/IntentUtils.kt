@@ -16,7 +16,7 @@ object IntentUtils {
      * @param intent The Intent to extract URIs from.
      * @return A list of URIs or null if the action is not supported.
      */
-    fun getUrisFromIntent(intent: Intent): List<Uri?>? {
+    fun getUrisFromIntent(intent: Intent): List<Uri> {
         return when (intent.action) {
             Intent.ACTION_SEND -> {
                 val uri = getParcelableExtra(
@@ -32,14 +32,14 @@ object IntentUtils {
                     intent,
                     Intent.EXTRA_STREAM,
                     Uri::class.java
-                )?.toList()
+                )?.toList() ?: listOf()
             }
 
             Intent.ACTION_VIEW -> {
                 listOfNotNull(intent.data)
             }
 
-            else -> null
+            else -> listOf()
         }
     }
 
