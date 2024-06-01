@@ -104,8 +104,7 @@
             android:name=".ContentProxyActivity"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:taskAffinity=""
-            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen">
+            android:taskAffinity="">
             <intent-filter>
                 <action android:name="android.intent.action.GET_CONTENT" />
 
