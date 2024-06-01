@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
+import com.gyf.immersionbar.ImmersionBar
 import org.baiyu.fuckshare.utils.AppUtils
 import org.baiyu.fuckshare.utils.FileUtils
 import org.baiyu.fuckshare.utils.IntentUtils
@@ -25,6 +26,11 @@ class ContentProxyActivity : ComponentActivity() {
         if (BuildConfig.DEBUG && Timber.treeCount == 0) {
             Timber.plant(Timber.DebugTree())
         }
+
+        ImmersionBar.with(this)
+            .transparentBar()
+            .fullScreen(false)
+            .init()
 
         val prefs = AppUtils.getPrefs(this)
         settings = Settings.getInstance(prefs)
