@@ -1,6 +1,8 @@
 package org.baiyu.fuckshare
 
 import android.content.Intent
+import android.os.Build
+import android.service.chooser.ChooserAction
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
@@ -95,6 +97,14 @@ class MainHook : IXposedHookLoadPackage {
                         Intent.EXTRA_INITIAL_INTENTS
                     )?.let {
                         putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        IntentUtils.getParcelableArrayExtra<ChooserAction>(
+                            intent,
+                            Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
+                        )?.let {
+                            putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, it)
+                        }
                     }
                 } ?: return
             } else {

@@ -4,8 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.service.chooser.ChooserAction
 import androidx.core.app.ShareCompat.IntentBuilder
 import org.baiyu.fuckshare.utils.AppUtils
 import org.baiyu.fuckshare.utils.FileUtils
@@ -91,6 +92,14 @@ class HandleShareActivity : Activity() {
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()
         )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            IntentUtils.getParcelableArrayExtra<ChooserAction>(
+                intent,
+                Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
+            )?.let {
+                chooserIntent.putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, it)
+            }
+        }
         Timber.d("chooser intent: $chooserIntent")
         startActivity(chooserIntent)
     }
