@@ -58,13 +58,12 @@ class HandleShareActivity : Activity() {
 
     private fun handleUris(uris: List<Uri?>) {
         val ib = IntentBuilder(this).apply {
-            this.intent.fillIn(
-                this@HandleShareActivity.intent,
-                Intent.FILL_IN_ACTION
-                        or Intent.FILL_IN_CATEGORIES
-                        or Intent.FILL_IN_CLIP_DATA
-                        or Intent.FILL_IN_IDENTIFIER
-            )
+            intent.apply {
+                this@HandleShareActivity.intent.let {
+                    type = it.type
+                    clipData = it.clipData
+                }
+            }
         }
 
         val nullCount = AtomicInteger(0)

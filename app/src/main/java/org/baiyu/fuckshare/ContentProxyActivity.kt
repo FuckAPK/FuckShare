@@ -1,17 +1,23 @@
 package org.baiyu.fuckshare
 
-import android.app.Activity
 import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import org.baiyu.fuckshare.utils.AppUtils
 import org.baiyu.fuckshare.utils.FileUtils
 import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
 import java.util.stream.Collectors
 
-class ContentProxyActivity : Activity() {
+class ContentProxyActivity : ComponentActivity() {
+
+    val resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            pickerResult(it.resultCode, it.data)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +34,7 @@ class ContentProxyActivity : Activity() {
             AppUtils.showToast(this, applicationName, settings.toastTime)
         }
 
-        startActivityForResult(setupChooserIntent(), 0)
+        resultLauncher.launch(setupChooserIntent())
     }
 
     override fun finish() {
@@ -36,9 +42,7 @@ class ContentProxyActivity : Activity() {
         super.finish()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
+    fun pickerResult(resultCode: Int, data: Intent?) {
         Timber.i("data: $data")
         if (resultCode != RESULT_OK || data == null) {
             Timber.i("Result Code: $resultCode, data: $data")
@@ -124,14 +128,10 @@ class ContentProxyActivity : Activity() {
     private fun cloneIntent(intent: Intent): Intent {
         return Intent().apply {
 
-            fillIn(
-                intent,
-                Intent.FILL_IN_ACTION
-                        or Intent.FILL_IN_CATEGORIES
-                        or Intent.FILL_IN_DATA
-                        or Intent.FILL_IN_CLIP_DATA
-                        or Intent.FILL_IN_IDENTIFIER
-            )
+            action = intent.action
+            type = intent.type
+            intent.categories?.forEach { addCategory(it) }
+            clipData = intent.clipData
 
             if (intent.getBooleanExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)) {
                 putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
