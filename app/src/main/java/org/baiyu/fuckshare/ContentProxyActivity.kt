@@ -118,14 +118,12 @@ class ContentProxyActivity : ComponentActivity() {
                 listOf(ComponentName(this, this::class.java)).toTypedArray()
             )
 
-        IntentUtils.getParcelableArrayExtra<Intent>(
-            intent,
-            Intent.EXTRA_INITIAL_INTENTS
-        )?.map {
-            cloneIntent(it)
-        }?.toTypedArray()?.let {
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
-            Timber.d("${Intent.EXTRA_INITIAL_INTENTS}: $it")
+        setOf(Intent.EXTRA_INITIAL_INTENTS, Intent.EXTRA_ALTERNATE_INTENTS).forEach {
+            IntentUtils.restoreArrayExtras<Intent>(
+                intent,
+                chooserIntent,
+                it
+            )
         }
 
         return chooserIntent

@@ -70,13 +70,19 @@ class HandleShareActivity : Activity() {
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()
         )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            IntentUtils.getParcelableArrayExtra<ChooserAction>(
+        setOf(Intent.EXTRA_INITIAL_INTENTS, Intent.EXTRA_ALTERNATE_INTENTS).forEach {
+            IntentUtils.restoreArrayExtras<Intent>(
                 intent,
+                chooserIntent,
+                it
+            )
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            IntentUtils.restoreArrayExtras<ChooserAction>(
+                intent,
+                chooserIntent,
                 Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
-            )?.let {
-                chooserIntent.putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, it)
-            }
+            )
         }
         Timber.d("chooser intent: $chooserIntent")
         startActivity(chooserIntent)

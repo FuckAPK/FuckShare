@@ -92,19 +92,19 @@ class MainHook : IXposedHookLoadPackage {
                     Intent.EXTRA_INTENT,
                     Intent::class.java
                 )?.apply {
-                    IntentUtils.getParcelableArrayExtra<Intent>(
-                        intent,
-                        Intent.EXTRA_INITIAL_INTENTS
-                    )?.let {
-                        putExtra(Intent.EXTRA_INITIAL_INTENTS, it)
+                    setOf(Intent.EXTRA_INITIAL_INTENTS, Intent.EXTRA_ALTERNATE_INTENTS).forEach {
+                        IntentUtils.backupArrayExtras<Intent>(
+                            intent,
+                            this,
+                            it
+                        )
                     }
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                        IntentUtils.getParcelableArrayExtra<ChooserAction>(
+                        IntentUtils.backupArrayExtras<ChooserAction>(
                             intent,
+                            this,
                             Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
-                        )?.let {
-                            putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, it)
-                        }
+                        )
                     }
                 } ?: return
             } else {

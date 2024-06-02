@@ -103,4 +103,48 @@ object IntentUtils {
             intent.getParcelableArrayExtra(name)
         }?.map { it as T }?.toTypedArray()
     }
+
+    /**
+     * Backs up a Parcelable array extra from one Intent to another.
+     *
+     * This function tries to retrieve a Parcelable array extra from the `from` Intent using a key
+     * with the specified suffix and then puts it into the `to` Intent using the original key.
+     *
+     * @param from The source Intent from which to get the Parcelable array extra.
+     * @param to The target Intent into which to put the Parcelable array extra.
+     * @param key The key used to retrieve and store the Parcelable array extra.
+     * @param T The type of Parcelable contained in the array.
+     */
+    inline fun <reified T : Parcelable> backupArrayExtras(
+        from: Intent,
+        to: Intent,
+        key: String
+    ) {
+        getParcelableArrayExtra<T>(from, key)?.let {
+            to.putExtra("$key$EXTRAS_KEY_SUFFIX", it)
+        }
+    }
+
+    /**
+     * Restores a Parcelable array extra from one Intent to another.
+     *
+     * This function tries to retrieve a Parcelable array extra from the `from` Intent using a key
+     * with the specified suffix and then puts it into the `to` Intent using the original key.
+     *
+     * @param from The source Intent from which to get the Parcelable array extra.
+     * @param to The target Intent into which to put the Parcelable array extra.
+     * @param key The key used to retrieve and store the Parcelable array extra.
+     * @param T The type of Parcelable contained in the array.
+     */
+    inline fun <reified T : Parcelable> restoreArrayExtras(
+        from: Intent,
+        to: Intent,
+        key: String
+    ) {
+        getParcelableArrayExtra<T>(from, "$key$EXTRAS_KEY_SUFFIX")?.let {
+            to.putExtra(key, it)
+        }
+    }
+
+    const val EXTRAS_KEY_SUFFIX = "_FS"
 }
