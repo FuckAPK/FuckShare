@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -25,7 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
@@ -58,112 +61,74 @@ class SettingsActivity : ComponentActivity() {
 fun SettingsScreen() {
     val context = LocalContext.current
     val prefs = remember { AppUtils.getPrefs(context) }
+    val settings = remember { Settings.getInstance(prefs) }
 
     var enableRemoveExif by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_REMOVE_EXIF,
-                Settings.DEFAULT_ENABLE_REMOVE_EXIF
-            )
+            settings.enableRemoveExif()
         )
     }
     var enableFallbackToFile by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FALLBACK_TO_FILE,
-                Settings.DEFAULT_ENABLE_FALLBACK_TO_FILE
-            )
+            settings.enableFallbackToFile()
         )
     }
     var exifTagsToKeep by remember {
         mutableStateOf(
-            prefs.getString(
-                Settings.PREF_EXIF_TAGS_TO_KEEP,
-                Settings.DEFAULT_EXIF_TAGS_TO_KEEP.joinToString(", ")
-            ) ?: ""
+            settings.exifTagsToKeep.joinToString(", ")
         )
     }
 
     var enableFileTypeSniff by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FILE_TYPE_SNIFF,
-                Settings.DEFAULT_ENABLE_FILE_TYPE_SNIFF
-            )
+            settings.enableFileTypeSniff()
         )
     }
     var enableArchiveTypeSniff by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF,
-                Settings.DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF
-            )
+            settings.enableArchiveTypeSniff()
         )
     }
     var enableImageRename by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_IMAGE_RENAME,
-                Settings.DEFAULT_ENABLE_IMAGE_RENAME
-            )
+            settings.enableImageRename()
         )
     }
     var enableFileRename by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FILE_RENAME,
-                Settings.DEFAULT_ENABLE_FILE_RENAME
-            )
+            settings.enableFileRename()
         )
     }
 
     var enableHook by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_HOOK,
-                Settings.DEFAULT_ENABLE_HOOK
-            )
+            settings.enableHook()
         )
     }
     var enableForceForwardHook by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FORCE_FORWARD_HOOK,
-                Settings.DEFAULT_ENABLE_FORCE_FORWARD_HOOK
-            )
+            settings.enableForceForwardHook()
         )
     }
     var enableForcePickerHook by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FORCE_PICKER_HOOK,
-                Settings.DEFAULT_ENABLE_FORCE_PICKER_HOOK
-            )
+            settings.enableForcePickerHook()
         )
     }
     var enableForceContentHook by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FORCE_CONTENT_HOOK,
-                Settings.DEFAULT_ENABLE_FORCE_CONTENT_HOOK
-            )
+            settings.enableForceContentHook()
         )
     }
     var enableForceDocumentHook by remember {
         mutableStateOf(
-            prefs.getBoolean(
-                Settings.PREF_ENABLE_FORCE_DOCUMENT_HOOK,
-                Settings.DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK
-            )
+            settings.enableForceDocumentHook()
         )
     }
 
     var toastTime by remember {
         mutableStateOf(
-            prefs.getInt(
-                Settings.PREF_TOAST_TIME,
-                Settings.DEFAULT_TOAST_TIME
-            ).toString()
+            settings.toastTime.toString()
         )
     }
 
@@ -384,12 +349,17 @@ fun TextFieldPreference(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+        val focusManager = LocalFocusManager.current
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             singleLine = false,
             maxLines = 3,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType,
+                imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),

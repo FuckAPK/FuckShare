@@ -61,9 +61,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
 
     val toastTime: Int
         get() {
-            return prefs.getString(PREF_TOAST_TIME, null)
-                ?.takeIf { it.isNotBlank() }
-                ?.toInt() ?: DEFAULT_TOAST_TIME
+            return prefs.getInt(PREF_TOAST_TIME, DEFAULT_TOAST_TIME)
         }
 
     companion object {
