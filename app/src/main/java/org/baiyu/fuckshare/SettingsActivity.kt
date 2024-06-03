@@ -1,306 +1,399 @@
 package org.baiyu.fuckshare
 
-import android.annotation.SuppressLint
-import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.os.Bundle
-import android.text.InputType
-import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.EditTextPreference
-import androidx.preference.Preference
-import androidx.preference.PreferenceCategory
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.SwitchPreferenceCompat
-import com.gyf.immersionbar.ImmersionBar
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import org.baiyu.fuckshare.utils.AppUtils
+import org.baiyu.fuckshare.ui.AppTheme as Theme
 
-class SettingsActivity : AppCompatActivity() {
-    @SuppressLint("WorldReadableFiles")
+class SettingsActivity : ComponentActivity() {
+
+    private var currentUiMode: Int? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.settings_layout)
-        ImmersionBar.with(this)
-            .transparentBar()
-            .statusBarView(R.id.status_bar_view)
-            .fullScreen(false)
-            .init()
-        setStatusBarFontColor(resources.configuration)
-
-        prefs = AppUtils.getPrefs(this)
-
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.settings_container, MySettingsFragment())
-            .commit()
+        currentUiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        setContent {
+            Theme {
+                SettingsScreen()
+            }
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        setStatusBarFontColor(newConfig)
+        val newUiMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        if (newUiMode != currentUiMode) {
+            recreate()
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen() {
+    val context = LocalContext.current
+    val prefs = remember { AppUtils.getPrefs(context) }
+
+    var enableRemoveExif by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_REMOVE_EXIF,
+                Settings.DEFAULT_ENABLE_REMOVE_EXIF
+            )
+        )
+    }
+    var enableFallbackToFile by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FALLBACK_TO_FILE,
+                Settings.DEFAULT_ENABLE_FALLBACK_TO_FILE
+            )
+        )
+    }
+    var exifTagsToKeep by remember {
+        mutableStateOf(
+            prefs.getString(
+                Settings.PREF_EXIF_TAGS_TO_KEEP,
+                Settings.DEFAULT_EXIF_TAGS_TO_KEEP.joinToString(", ")
+            ) ?: ""
+        )
     }
 
-    private fun setStatusBarFontColor(conf: Configuration) {
-        val darkMode =
-            conf.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
-        ImmersionBar.with(this)
-            .statusBarDarkFont(!darkMode, 0.2f)
-            .init()
+    var enableFileTypeSniff by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FILE_TYPE_SNIFF,
+                Settings.DEFAULT_ENABLE_FILE_TYPE_SNIFF
+            )
+        )
+    }
+    var enableArchiveTypeSniff by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF,
+                Settings.DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF
+            )
+        )
+    }
+    var enableImageRename by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_IMAGE_RENAME,
+                Settings.DEFAULT_ENABLE_IMAGE_RENAME
+            )
+        )
+    }
+    var enableFileRename by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FILE_RENAME,
+                Settings.DEFAULT_ENABLE_FILE_RENAME
+            )
+        )
     }
 
-    class MySettingsFragment : PreferenceFragmentCompat() {
+    var enableHook by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_HOOK,
+                Settings.DEFAULT_ENABLE_HOOK
+            )
+        )
+    }
+    var enableForceForwardHook by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FORCE_FORWARD_HOOK,
+                Settings.DEFAULT_ENABLE_FORCE_FORWARD_HOOK
+            )
+        )
+    }
+    var enableForcePickerHook by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FORCE_PICKER_HOOK,
+                Settings.DEFAULT_ENABLE_FORCE_PICKER_HOOK
+            )
+        )
+    }
+    var enableForceContentHook by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FORCE_CONTENT_HOOK,
+                Settings.DEFAULT_ENABLE_FORCE_CONTENT_HOOK
+            )
+        )
+    }
+    var enableForceDocumentHook by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_ENABLE_FORCE_DOCUMENT_HOOK,
+                Settings.DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK
+            )
+        )
+    }
 
-        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-            preferenceScreen = preferenceManager.createPreferenceScreen(requireContext())
+    var toastTime by remember {
+        mutableStateOf(
+            prefs.getInt(
+                Settings.PREF_TOAST_TIME,
+                Settings.DEFAULT_TOAST_TIME
+            ).toString()
+        )
+    }
 
-            // Metadata category
-            PreferenceCategory(requireContext()).apply {
-                title = getString(R.string.title_metadata)
-                isIconSpaceReserved = false
-            }.also {
-                preferenceScreen.addPreference(it)
+    LazyColumn(modifier = Modifier.padding(16.dp, 0.dp)) {
 
-                // enable remove exif
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_REMOVE_EXIF
-                        title = getString(R.string.title_enable_remove_exif)
-                        summary = getString(R.string.desc_enable_remove_exif)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_REMOVE_EXIF)
-                        isIconSpaceReserved = false
+        item {
+            PreferenceCategory(title = R.string.title_metadata) {
+                PreferenceItem(
+                    title = R.string.title_enable_remove_exif,
+                    summary = R.string.desc_enable_remove_exif,
+                    checked = enableRemoveExif,
+                    onCheckedChange = {
+                        enableRemoveExif = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_REMOVE_EXIF, it) }
                     }
                 )
-
-                // enable fallback to file
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FALLBACK_TO_FILE
-                        title = getString(R.string.title_enable_fallback_to_file)
-                        summary = getString(R.string.desc_enable_fallback_to_file)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FALLBACK_TO_FILE)
-                        isIconSpaceReserved = false
+                PreferenceItem(
+                    title = R.string.title_enable_fallback_to_file,
+                    summary = R.string.desc_enable_fallback_to_file,
+                    checked = enableFallbackToFile,
+                    onCheckedChange = {
+                        enableFallbackToFile = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FALLBACK_TO_FILE, it) }
                     }
                 )
-
-                // exif tags to remove
-                it.addPreference(
-                    EditTextPreference(requireContext()).apply {
-                        key = Settings.PREF_EXIF_TAGS_TO_KEEP
-                        title = getString(R.string.title_exif_tags_to_keep)
-                        summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
-                        setDefaultValue(Settings.DEFAULT_EXIF_TAGS_TO_KEEP.joinToString(separator = ", "))
-                        isIconSpaceReserved = false
-                    }
-                )
-            }
-
-            // Rename category
-            PreferenceCategory(requireContext()).apply {
-                title = getString(R.string.title_rename)
-                isIconSpaceReserved = false
-            }.also {
-                preferenceScreen.addPreference(it)
-
-                // sniff extension
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FILE_TYPE_SNIFF
-                        title = getString(R.string.title_enable_file_type_sniff)
-                        summary = getString(R.string.desc_enable_file_type_sniff)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FILE_TYPE_SNIFF)
-                        isIconSpaceReserved = false
-                    }
-                )
-
-                // sniff archive extension
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF
-                        title = getString(R.string.title_enable_archive_type_sniff)
-                        summary = getString(R.string.desc_enable_archive_type_sniff)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF)
-                        isIconSpaceReserved = false
-                    }
-                )
-
-                // auto rename images
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_IMAGE_RENAME
-                        title = getString(R.string.title_enable_image_rename)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_IMAGE_RENAME)
-                        isIconSpaceReserved = false
-                    }
-                )
-
-                // auto rename other files
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FILE_RENAME
-                        title = getString(R.string.title_enable_file_rename)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FILE_RENAME)
-                        isIconSpaceReserved = false
-                    }
-                )
-
-                it.findPreference<SwitchPreferenceCompat>(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF)?.dependency =
-                    Settings.PREF_ENABLE_FILE_TYPE_SNIFF
-            }
-
-            // hook category
-            PreferenceCategory(requireContext()).apply {
-                title = getString(R.string.title_hook)
-                isIconSpaceReserved = false
-            }.also {
-                preferenceScreen.addPreference(it)
-
-                // enable hook
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_HOOK
-                        title = getString(R.string.title_enable_hook)
-                        summary = getString(R.string.desc_enable_hook)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_HOOK)
-                        isIconSpaceReserved = false
-                    }
-                )
-
-                val otherPreference = mutableListOf<SwitchPreferenceCompat>()
-                // forward
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FORCE_FORWARD_HOOK
-                        title = getString(R.string.title_enable_force_forward_hook)
-                        summary = getString(R.string.desc_enable_force_forward_hook)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FORCE_FORWARD_HOOK)
-                        isIconSpaceReserved = false
-                    }.also { sp -> otherPreference.add(sp) }
-                )
-
-                // pick
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FORCE_PICKER_HOOK
-                        title = getString(R.string.title_enable_force_picker_hook)
-                        summary = getString(R.string.desc_enable_force_picker_hook)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FORCE_PICKER_HOOK)
-                        isIconSpaceReserved = false
-                    }.also { sp -> otherPreference.add(sp) }
-                )
-
-                // get_content
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FORCE_CONTENT_HOOK
-                        title = getString(R.string.title_enable_force_content_hook)
-                        summary = getString(R.string.desc_enable_force_content_hook)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FORCE_CONTENT_HOOK)
-                        isIconSpaceReserved = false
-                    }.also { sp -> otherPreference.add(sp) }
-                )
-
-                // open_document
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        key = Settings.PREF_ENABLE_FORCE_DOCUMENT_HOOK
-                        title = getString(R.string.title_enable_force_document_hook)
-                        summary = getString(R.string.desc_enable_force_document_hook)
-                        setDefaultValue(Settings.DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK)
-                        isIconSpaceReserved = false
-                    }.also { sp -> otherPreference.add(sp) }
-                )
-
-                otherPreference.forEach { sp -> sp.dependency = Settings.PREF_ENABLE_HOOK }
-            }
-
-            // others category
-            PreferenceCategory(requireContext()).apply {
-                title = getString(R.string.title_others)
-                isIconSpaceReserved = false
-            }.also {
-                preferenceScreen.addPreference(it)
-
-                // toast time
-                it.addPreference(
-                    EditTextPreference(requireContext()).apply {
-                        key = Settings.PREF_TOAST_TIME
-                        title = getString(R.string.title_toast_time)
-                        summaryProvider = EditTextPreference.SimpleSummaryProvider.getInstance()
-
-                        setDefaultValue(Settings.DEFAULT_TOAST_TIME.toString())
-                        isIconSpaceReserved = false
-
-                        setOnBindEditTextListener { editText ->
-                            editText.inputType = InputType.TYPE_CLASS_NUMBER
-                        }
-                    }
-                )
-
-                // viewer
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        title = getString(R.string.title_enable_viewer)
-                        summary = getString(R.string.desc_enable_viewer)
-                        isIconSpaceReserved = false
-
-                        isChecked = AppUtils.getActivityStatus(
-                            requireContext(),
-                            VIEWER_ACTIVITY_NAME
-                        )
-
-                        onPreferenceChangeListener =
-                            Preference.OnPreferenceChangeListener { _, newValue: Any ->
-                                AppUtils.setActivityStatus(
-                                    requireContext(),
-                                    VIEWER_ACTIVITY_NAME,
-                                    newValue as Boolean
-                                )
-                                isChecked = AppUtils.getActivityStatus(
-                                    requireContext(),
-                                    VIEWER_ACTIVITY_NAME
-                                )
-                                true
-                            }
-                    }
-                )
-
-                // launcher icon
-                it.addPreference(
-                    SwitchPreferenceCompat(requireContext()).apply {
-                        title = getString(R.string.title_keep_launcher_icon)
-                        isIconSpaceReserved = false
-
-                        isChecked = AppUtils.getActivityStatus(
-                            requireContext(),
-                            LAUNCHER_ACTIVITY_NAME
-                        )
-
-                        onPreferenceChangeListener =
-                            Preference.OnPreferenceChangeListener { _, newValue: Any ->
-                                AppUtils.setActivityStatus(
-                                    requireContext(),
-                                    LAUNCHER_ACTIVITY_NAME,
-                                    newValue as Boolean
-                                )
-                                isChecked = AppUtils.getActivityStatus(
-                                    requireContext(),
-                                    LAUNCHER_ACTIVITY_NAME
-                                )
-                                true
-                            }
+                TextFieldPreference(
+                    title = R.string.title_exif_tags_to_keep,
+                    summary = R.string.desc_exif_tags_to_keep,
+                    value = exifTagsToKeep,
+                    onValueChange = {
+                        exifTagsToKeep = it
+                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, it) }
                     }
                 )
             }
         }
-
-        companion object {
-            private const val LAUNCHER_ACTIVITY_NAME =
-                BuildConfig.APPLICATION_ID + ".LauncherActivity"
-            private const val VIEWER_ACTIVITY_NAME =
-                BuildConfig.APPLICATION_ID + ".ViewerActivity"
+        item {
+            PreferenceCategory(title = R.string.title_rename) {
+                PreferenceItem(
+                    title = R.string.title_enable_file_type_sniff,
+                    summary = R.string.desc_enable_file_type_sniff,
+                    checked = enableFileTypeSniff,
+                    onCheckedChange = {
+                        enableFileTypeSniff = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_TYPE_SNIFF, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_archive_type_sniff,
+                    summary = R.string.desc_enable_archive_type_sniff,
+                    checked = enableArchiveTypeSniff,
+                    onCheckedChange = {
+                        enableArchiveTypeSniff = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_image_rename,
+                    summary = null,
+                    checked = enableImageRename,
+                    onCheckedChange = {
+                        enableImageRename = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_IMAGE_RENAME, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_file_rename,
+                    summary = null,
+                    checked = enableFileRename,
+                    onCheckedChange = {
+                        enableFileRename = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
+                    }
+                )
+            }
+        }
+        item {
+            PreferenceCategory(title = R.string.title_hook) {
+                PreferenceItem(
+                    title = R.string.title_enable_hook,
+                    summary = R.string.desc_enable_hook,
+                    checked = enableHook,
+                    onCheckedChange = {
+                        enableHook = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_HOOK, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_force_forward_hook,
+                    summary = R.string.desc_enable_force_forward_hook,
+                    checked = enableForceForwardHook,
+                    onCheckedChange = {
+                        enableForceForwardHook = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_FORWARD_HOOK, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_force_picker_hook,
+                    summary = R.string.desc_enable_force_picker_hook,
+                    checked = enableForcePickerHook,
+                    onCheckedChange = {
+                        enableForcePickerHook = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_PICKER_HOOK, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_force_content_hook,
+                    summary = R.string.desc_enable_force_content_hook,
+                    checked = enableForceContentHook,
+                    onCheckedChange = {
+                        enableForceContentHook = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_CONTENT_HOOK, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_force_document_hook,
+                    summary = R.string.desc_enable_force_document_hook,
+                    checked = enableForceDocumentHook,
+                    onCheckedChange = {
+                        enableForceDocumentHook = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_DOCUMENT_HOOK, it) }
+                    }
+                )
+            }
+        }
+        item {
+            PreferenceCategory(title = R.string.title_miscellaneous) {
+                TextFieldPreference(
+                    title = R.string.title_toast_time,
+                    summary = R.string.desc_toast_time,
+                    value = toastTime,
+                    onValueChange = {
+                        toastTime = it
+                        prefs.edit { putInt(Settings.PREF_TOAST_TIME, it.toInt()) }
+                    },
+                    keyboardType = KeyboardType.Number
+                )
+            }
         }
     }
+}
 
-    companion object {
-        private lateinit var prefs: SharedPreferences
+@Composable
+fun PreferenceCategory(
+    @StringRes title: Int,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+    ) {
+        Text(
+            text = stringResource(id = title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(vertical = 4.dp),
+            color = MaterialTheme.colorScheme.primary
+        )
+        content()
+    }
+}
+
+@Composable
+fun PreferenceItem(
+    @StringRes title: Int,
+    @StringRes summary: Int? = null,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(id = title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            if (summary != null) {
+                Text(
+                    text = stringResource(id = summary),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+
+@Composable
+fun TextFieldPreference(
+    @StringRes title: Int,
+    @StringRes summary: Int? = null,
+    value: String,
+    onValueChange: (String) -> Unit,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = stringResource(id = title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        if (summary != null) {
+            Text(
+                text = stringResource(id = summary),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = false,
+            maxLines = 3,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            textStyle = MaterialTheme.typography.bodyMedium
+        )
     }
 }
