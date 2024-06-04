@@ -1,9 +1,10 @@
 package org.baiyu.fuckshare
 
 import android.content.res.Configuration
+import android.graphics.Rect
 import android.os.Bundle
+import android.view.ViewTreeObserver
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -12,9 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
@@ -24,25 +23,24 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import org.baiyu.fuckshare.utils.AppUtils
@@ -58,7 +56,6 @@ class SettingsActivity : ComponentActivity() {
             view.updatePadding(bottom = bottom)
             insets
         }
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         currentUiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         setContent {
             Theme {
@@ -88,10 +85,6 @@ fun SettingsScreen() {
         if (!isKeyboardOpen) {
             focusManager.clearFocus()
         }
-    }
-
-    BackHandler {
-        focusManager.clearFocus()
     }
 
     var enableRemoveExif by remember {
@@ -191,15 +184,15 @@ fun SettingsScreen() {
                     summary = R.string.desc_exif_tags_to_keep,
                     value = exifTagsToKeep,
                     onValueChange = {
-                        exifTagsToKeep = if (it.endsWith("\n")) {
+                        if (it.contains('\n')) {
                             focusManager.clearFocus()
-                            it.trim()
-                        } else {
-                            it
                         }
+                        exifTagsToKeep = it
+                            //.filter { c -> c in ('0'..'9') + ('a'..'z') + ('A'..'Z') + ' ' + ',' }
+                            .filterNot { c -> c != '\n' }
                         prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
                     },
-                    keyboardType = KeyboardType.Ascii
+                    // keyboardType = KeyboardType.Ascii
                 )
             }
         }
@@ -320,8 +313,27 @@ fun SettingsScreen() {
 
 @Composable
 fun keyboardAsState(): State<Boolean> {
-    val isImeVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
-    return rememberUpdatedState(isImeVisible)
+    val keyboardState = remember { mutableStateOf(false) }
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val onGlobalListener = ViewTreeObserver.OnGlobalLayoutListener {
+            val rect = Rect()
+            view.getWindowVisibleDisplayFrame(rect)
+            val screenHeight = view.rootView.height
+            val keypadHeight = screenHeight - rect.bottom
+            keyboardState.value = if (keypadHeight > screenHeight * 0.15) {
+                true
+            } else {
+                false
+            }
+        }
+        view.viewTreeObserver.addOnGlobalLayoutListener(onGlobalListener)
+
+        onDispose {
+            view.viewTreeObserver.removeOnGlobalLayoutListener(onGlobalListener)
+        }
+    }
+    return keyboardState
 }
 
 @Composable

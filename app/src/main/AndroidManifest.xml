@@ -38,7 +38,7 @@
             android:name=".SettingsActivity"
             android:configChanges="uiMode"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:theme="@style/Theme.Material3.DynamicColors.DayNight.NoActionBar"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
