@@ -4,7 +4,8 @@ enum class OtherType(
     override val extension: String?,
     override val signatures: Set<Map<Int, ByteArray>>?
 ) : FileType {
-    UNKNOWN(null, null), PDF(
+    UNKNOWN(null, null),
+    PDF(
         "pdf", setOf(
             mapOf(
                 0 to
@@ -34,5 +35,4 @@ enum class OtherType(
             )
         )
     )
-
 }

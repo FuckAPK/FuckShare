@@ -14,7 +14,7 @@
     <string name="title_metadata">Metadata</string>
     <string name="title_enable_fallback_to_file">Fallback to file</string>
     <string name="desc_enable_fallback_to_file">Fallback to file when failed</string>
-    <string name="desc_enable_file_type_sniff">likely to go wrong!</string>
+    <string name="desc_enable_file_type_sniff">may cause error</string>
     <string name="clear_cache_success">Cache cleared!</string>
     <string name="clear_cache_failed">Failed to clear cache!</string>
     <string name="compose_shortcut_short_clear">Clear cache</string>
@@ -34,8 +34,8 @@
     <string name="desc_enable_viewer">show in \"open with\" menu</string>
     <string name="title_enable_viewer">Enable viewer</string>
     <string name="fail_to_process">%1$d of %2$d failed!</string>
-    <string name="title_enable_archive_type_sniff">sniff extension for archive</string>
-    <string name="desc_enable_archive_type_sniff">very likely to go wrong!</string>
+    <string name="title_enable_archive_type_sniff">Sniff extension for archive</string>
+    <string name="desc_enable_archive_type_sniff">likely to cause error!</string>
     <string name="desc_exif_tags_to_keep">separate by comma or space</string>
     <string name="desc_toast_time">ms, 0 to disable</string>
 </resources>

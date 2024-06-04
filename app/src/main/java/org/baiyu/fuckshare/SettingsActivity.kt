@@ -3,9 +3,12 @@ package org.baiyu.fuckshare
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -33,6 +36,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import org.baiyu.fuckshare.utils.AppUtils
@@ -68,8 +72,13 @@ class SettingsActivity : ComponentActivity() {
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
     val prefs = remember { AppUtils.getPrefs(context) }
     val settings = remember { Settings.getInstance(prefs) }
+
+    BackHandler {
+        focusManager.clearFocus()
+    }
 
     var enableRemoveExif by remember {
         mutableStateOf(
@@ -140,7 +149,7 @@ fun SettingsScreen() {
         )
     }
 
-    LazyColumn(modifier = Modifier.padding(16.dp, 0.dp)) {
+    LazyColumn {
 
         item {
             PreferenceCategory(title = R.string.title_metadata) {
@@ -157,6 +166,7 @@ fun SettingsScreen() {
                     title = R.string.title_enable_fallback_to_file,
                     summary = R.string.desc_enable_fallback_to_file,
                     checked = enableFallbackToFile,
+                    enabled = enableRemoveExif,
                     onCheckedChange = {
                         enableFallbackToFile = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FALLBACK_TO_FILE, it) }
@@ -167,9 +177,15 @@ fun SettingsScreen() {
                     summary = R.string.desc_exif_tags_to_keep,
                     value = exifTagsToKeep,
                     onValueChange = {
-                        exifTagsToKeep = it
-                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, it) }
-                    }
+                        exifTagsToKeep = if (it.endsWith("\n")) {
+                            focusManager.clearFocus()
+                            it.trim()
+                        } else {
+                            it
+                        }
+                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
+                    },
+                    keyboardType = KeyboardType.Ascii
                 )
             }
         }
@@ -188,6 +204,7 @@ fun SettingsScreen() {
                     title = R.string.title_enable_archive_type_sniff,
                     summary = R.string.desc_enable_archive_type_sniff,
                     checked = enableArchiveTypeSniff,
+                    enabled = enableFileTypeSniff,
                     onCheckedChange = {
                         enableArchiveTypeSniff = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF, it) }
@@ -228,6 +245,7 @@ fun SettingsScreen() {
                     title = R.string.title_enable_force_forward_hook,
                     summary = R.string.desc_enable_force_forward_hook,
                     checked = enableForceForwardHook,
+                    enabled = enableHook,
                     onCheckedChange = {
                         enableForceForwardHook = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_FORWARD_HOOK, it) }
@@ -237,6 +255,7 @@ fun SettingsScreen() {
                     title = R.string.title_enable_force_picker_hook,
                     summary = R.string.desc_enable_force_picker_hook,
                     checked = enableForcePickerHook,
+                    enabled = enableHook,
                     onCheckedChange = {
                         enableForcePickerHook = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_PICKER_HOOK, it) }
@@ -246,6 +265,7 @@ fun SettingsScreen() {
                     title = R.string.title_enable_force_content_hook,
                     summary = R.string.desc_enable_force_content_hook,
                     checked = enableForceContentHook,
+                    enabled = enableHook,
                     onCheckedChange = {
                         enableForceContentHook = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_CONTENT_HOOK, it) }
@@ -255,6 +275,7 @@ fun SettingsScreen() {
                     title = R.string.title_enable_force_document_hook,
                     summary = R.string.desc_enable_force_document_hook,
                     checked = enableForceDocumentHook,
+                    enabled = enableHook,
                     onCheckedChange = {
                         enableForceDocumentHook = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_DOCUMENT_HOOK, it) }
@@ -269,8 +290,12 @@ fun SettingsScreen() {
                     summary = R.string.desc_toast_time,
                     value = toastTime,
                     onValueChange = {
+                        val intValue = it.toIntOrNull() ?: return@TextFieldPreference
+                        if (intValue < 0) {
+                            return@TextFieldPreference
+                        }
                         toastTime = it
-                        prefs.edit { putInt(Settings.PREF_TOAST_TIME, it.toInt()) }
+                        prefs.edit { putInt(Settings.PREF_TOAST_TIME, intValue) }
                     },
                     keyboardType = KeyboardType.Number
                 )
@@ -292,7 +317,7 @@ fun PreferenceCategory(
         Text(
             text = stringResource(id = title),
             style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = 4.dp),
+            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
             color = MaterialTheme.colorScheme.primary
         )
         content()
@@ -304,30 +329,37 @@ fun PreferenceItem(
     @StringRes title: Int,
     @StringRes summary: Int? = null,
     checked: Boolean,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalAlignment = Alignment.CenterVertically
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(id = title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            if (summary != null) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(id = summary),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text = stringResource(id = title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
                 )
+                if (summary != null) {
+                    Text(
+                        text = stringResource(id = summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
+                    )
+                }
             }
+            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 
@@ -338,12 +370,12 @@ fun TextFieldPreference(
     @StringRes summary: Int? = null,
     value: String,
     onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text
+    keyboardType: KeyboardType = KeyboardType.Text,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 16.dp)
     ) {
         Text(
             text = stringResource(id = title),
@@ -353,8 +385,8 @@ fun TextFieldPreference(
         if (summary != null) {
             Text(
                 text = stringResource(id = summary),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(0.6f)
             )
         }
         val focusManager = LocalFocusManager.current
@@ -363,7 +395,7 @@ fun TextFieldPreference(
             onValueChange = onValueChange,
             singleLine = false,
             maxLines = 3,
-            keyboardOptions = KeyboardOptions(
+            keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = keyboardType,
                 imeAction = ImeAction.Done
             ),
