@@ -177,7 +177,11 @@ object FileUtils {
         fileType: FileType,
         originName: String
     ): File {
-        val newNameNoExt = getNewNameNoExt(settings, fileType, originName)
+        val newNameNoExt =
+            if (enableRandomName(settings, fileType))
+                AppUtils.randomString
+            else
+                getFileNameNoExt(originName)
         val ext = getExt(settings, fileType, originName)
         val newFullName = if (ext == null) newNameNoExt else "${newNameNoExt}.${ext}"
         var renamed = File(context.cacheDir, newFullName)
@@ -190,21 +194,16 @@ object FileUtils {
     }
 
     /**
-     * Gets the new name (excluding extension) for a file based on settings and file type.
+     * Whether to enable random name for a file based on settings and file type.
      */
-    private fun getNewNameNoExt(
+    private fun enableRandomName(
         settings: Settings,
-        fileType: FileType?,
-        originName: String?
-    ): String {
+        fileType: FileType?
+    ): Boolean {
         return when (fileType) {
-            is ImageType -> if (settings.enableImageRename()) AppUtils.randomString else getFileNameNoExt(
-                originName!!
-            )
-
-            else -> if (settings.enableFileRename()) AppUtils.randomString else getFileNameNoExt(
-                originName!!
-            )
+            is ImageType -> settings.enableImageRename()
+            is VideoType -> settings.enableVideoRename()
+            else -> settings.enableFileRename()
         }
     }
 

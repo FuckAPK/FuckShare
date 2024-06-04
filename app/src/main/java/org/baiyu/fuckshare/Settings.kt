@@ -43,6 +43,10 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         return prefs.getBoolean(PREF_ENABLE_IMAGE_RENAME, DEFAULT_ENABLE_IMAGE_RENAME)
     }
 
+    fun enableVideoRename(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_VIDEO_RENAME, DEFAULT_ENABLE_VIDEO_RENAME)
+    }
+
     fun enableFileRename(): Boolean {
         return prefs.getBoolean(PREF_ENABLE_FILE_RENAME, DEFAULT_ENABLE_FILE_RENAME)
     }
@@ -73,6 +77,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_REMOVE_EXIF = "enable_remove_exif"
         const val PREF_EXIF_TAGS_TO_KEEP = "exif_tags_to_keep"
         const val PREF_ENABLE_IMAGE_RENAME = "enable_image_rename"
+        const val PREF_ENABLE_VIDEO_RENAME = "enable_video_rename"
         const val PREF_ENABLE_FILE_RENAME = "enable_file_rename"
         const val PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff"
         const val PREF_ENABLE_ARCHIVE_TYPE_SNIFF = "enable_archive_type_sniff"
@@ -94,6 +99,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             "ResolutionUnit"
         )
         const val DEFAULT_ENABLE_IMAGE_RENAME = true
+        const val DEFAULT_ENABLE_VIDEO_RENAME = true
         const val DEFAULT_ENABLE_FILE_RENAME = false
         const val DEFAULT_ENABLE_FILE_TYPE_SNIFF = true
         const val DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF = false

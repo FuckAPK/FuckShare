@@ -38,4 +38,5 @@
     <string name="desc_enable_archive_type_sniff">likely to cause error!</string>
     <string name="desc_exif_tags_to_keep">separate by comma or space</string>
     <string name="desc_toast_time">ms, 0 to disable</string>
+    <string name="title_enable_video_rename">Auto rename videos</string>
 </resources>

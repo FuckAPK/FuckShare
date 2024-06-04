@@ -26,4 +26,5 @@
     <string name="desc_enable_archive_type_sniff">非常可能出现错误</string>
     <string name="desc_exif_tags_to_keep">用逗号或空格分隔</string>
     <string name="desc_toast_time">毫秒，设为 0 关闭</string>
+    <string name="title_enable_video_rename">视频重命名</string>
 </resources>

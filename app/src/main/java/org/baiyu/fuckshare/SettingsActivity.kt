@@ -118,6 +118,11 @@ fun SettingsScreen() {
             settings.enableImageRename()
         )
     }
+    var enableVideoRename by remember {
+        mutableStateOf(
+            settings.enableVideoRename()
+        )
+    }
     var enableFileRename by remember {
         mutableStateOf(
             settings.enableFileRename()
@@ -224,6 +229,15 @@ fun SettingsScreen() {
                     onCheckedChange = {
                         enableImageRename = it
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_IMAGE_RENAME, it) }
+                    }
+                )
+                PreferenceItem(
+                    title = R.string.title_enable_video_rename,
+                    summary = null,
+                    checked = enableVideoRename,
+                    onCheckedChange = {
+                        enableVideoRename = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
                     }
                 )
                 PreferenceItem(
