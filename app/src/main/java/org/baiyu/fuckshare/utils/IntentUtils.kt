@@ -1,9 +1,16 @@
 package org.baiyu.fuckshare.utils
 
+import android.app.ActivityOptions
+import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
 import android.os.Parcelable
+import android.service.chooser.ChooserAction
+import androidx.annotation.RequiresApi
+import org.baiyu.fuckshare.R
 
 /**
  * Utility class for working with Intents and extracting URIs from them.
@@ -144,6 +151,28 @@ object IntentUtils {
         getParcelableArrayExtra<T>(from, "$key$EXTRAS_KEY_SUFFIX")?.let {
             to.putExtra(key, it)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    fun createOpenLinkAction(context: Context, uris: List<String>): Array<ChooserAction> {
+        val options = ActivityOptions
+            .makeBasic()
+            .setPendingIntentCreatorBackgroundActivityStartMode(
+                ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+            ).toBundle()
+        return uris.map {
+            ChooserAction.Builder(
+                Icon.createWithResource(context, R.drawable.baseline_open_in_browser),
+                it,
+                PendingIntent.getActivity(
+                    context.applicationContext,
+                    123,
+                    Intent(Intent.ACTION_VIEW, Uri.parse(it)),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_CANCEL_CURRENT,
+                    options
+                )
+            ).build()
+        }.toTypedArray()
     }
 
     const val EXTRAS_KEY_SUFFIX = "_FS"

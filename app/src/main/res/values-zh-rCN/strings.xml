@@ -34,4 +34,7 @@
     <string name="title_reset_settings">重置设置</string>
     <string name="toast_settings_reset">已重置！</string>
     <string name="compose_shortcut_reset_settings">重置设置</string>
+    <string name="title_overlay_permission">获取在其他应用上显示权限</string>
+    <string name="desc_overlay_permission">用于后台启动自定义动作</string>
+    <string name="toast_permission_granted">permission granted!</string>
 </resources>

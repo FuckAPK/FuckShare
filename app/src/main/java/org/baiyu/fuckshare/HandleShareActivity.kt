@@ -12,16 +12,13 @@ import org.baiyu.fuckshare.utils.AppUtils
 import org.baiyu.fuckshare.utils.FileUtils
 import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
-import timber.log.Timber.DebugTree
 import java.util.concurrent.atomic.AtomicInteger
 
 class HandleShareActivity : Activity() {
     @SuppressLint("WorldReadableFiles")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (BuildConfig.DEBUG && Timber.treeCount == 0) {
-            Timber.plant(DebugTree())
-        }
+        AppUtils.timberPlantTree(this)
         val prefs = AppUtils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
@@ -41,9 +38,10 @@ class HandleShareActivity : Activity() {
 
     private fun handleIntent() {
         val uris = IntentUtils.getUrisFromIntent(intent)
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         val ib = IntentBuilder(this).apply {
             setType(this@HandleShareActivity.intent.type)
-            this@HandleShareActivity.intent.getStringExtra(Intent.EXTRA_TEXT)?.let { setText(it) }
+            text?.let { setText(it) }
         }
 
         val nullCount = AtomicInteger(0)
@@ -83,9 +81,40 @@ class HandleShareActivity : Activity() {
                 chooserIntent,
                 Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
             )
+            if (!AppUtils.needOverlayPermission(this)) {
+                val exists = IntentUtils.getParcelableArrayExtra<ChooserAction>(
+                    chooserIntent,
+                    Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
+                )?.toMutableList() ?: mutableListOf()
+                text?.let {
+                    extractUrls(text)
+                        .takeIf {
+                            it.isNotEmpty()
+                        }?.let {
+                            IntentUtils.createOpenLinkAction(this, it)
+                        }?.let {
+                            exists.addAll(it)
+                            exists
+                        }?.let {
+                            chooserIntent.putExtra(
+                                Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
+                                it.toTypedArray()
+                            )
+                        }
+                }
+            }
         }
         Timber.d("chooser intent: $chooserIntent")
         startActivity(chooserIntent)
+    }
+
+    /**
+     * extract urls from text
+     */
+    private fun extractUrls(text: String): List<String> {
+        val urlPattern = """https?://[^\s，,）)]+""".toRegex()
+        val urls = urlPattern.findAll(text).map { it.value }.toList()
+        return urls
     }
 
     companion object {

@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <application
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"
@@ -102,7 +104,8 @@
             android:icon="@mipmap/ic_shortcut_clear"
             android:theme="@android:style/Theme.NoDisplay" />
 
-        <activity android:name=".shortcut.ResetSettingsActivity"
+        <activity
+            android:name=".shortcut.ResetSettingsActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:icon="@mipmap/ic_reset"

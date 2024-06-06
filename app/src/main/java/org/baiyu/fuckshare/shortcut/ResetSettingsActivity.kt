@@ -7,7 +7,7 @@ import androidx.core.content.edit
 import org.baiyu.fuckshare.R
 import org.baiyu.fuckshare.utils.AppUtils
 
-class ResetSettingsActivity: Activity() {
+class ResetSettingsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = AppUtils.getPrefs(this)

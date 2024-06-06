@@ -23,9 +23,7 @@ class ContentProxyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (BuildConfig.DEBUG && Timber.treeCount == 0) {
-            Timber.plant(Timber.DebugTree())
-        }
+        AppUtils.timberPlantTree(this)
 
         (window.decorView.background as? ColorDrawable)?.let {
             window.statusBarColor = it.color

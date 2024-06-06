@@ -5,14 +5,16 @@ import android.app.Activity
 import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import org.baiyu.fuckshare.BuildConfig
 import org.baiyu.fuckshare.ClearCacheWorker
+import timber.log.Timber
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -36,7 +38,7 @@ object AppUtils {
      */
     @SuppressLint("WorldReadableFiles")
     fun getPrefs(context: Context): SharedPreferences {
-        val prefsName = "${BuildConfig.APPLICATION_ID}_preferences"
+        val prefsName = "${context.packageName}_preferences"
         return try {
             @Suppress("DEPRECATION")
             context.getSharedPreferences(
@@ -118,13 +120,13 @@ object AppUtils {
      */
     fun getActivityStatus(context: Context, activityName: String): Boolean {
         val pm = context.applicationContext.packageManager
-        val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
+        val cn = ComponentName(context.packageName, activityName)
         return when (pm.getComponentEnabledSetting(cn)) {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
             else -> {
                 val packageInfo = pm.getPackageInfo(
-                    BuildConfig.APPLICATION_ID,
+                    context.packageName,
                     PackageManager.GET_ACTIVITIES
                             or PackageManager.MATCH_DISABLED_COMPONENTS
                 )
@@ -145,10 +147,44 @@ object AppUtils {
      */
     fun setActivityStatus(context: Context, activityName: String, enable: Boolean) {
         val pm = context.applicationContext.packageManager
-        val cn = ComponentName(BuildConfig.APPLICATION_ID, activityName)
+        val cn = ComponentName(context.packageName, activityName)
         val status =
             if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
+    }
+
+    /**
+     * Checks if the overlay permission is granted.
+     *
+     * @param context The context used to access the package manager.
+     * @return `true` if the overlay permission is granted, otherwise `false`.
+     */
+    fun needOverlayPermission(context: Context): Boolean {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                && !android.provider.Settings.canDrawOverlays(context)
+    }
+
+    /**
+     * Checks if the app is in debug mode.
+     *
+     * @param context The context used to access the application info.
+     * @return `true` if the app is in debug mode, otherwise `false`.
+     */
+    fun isDebugMode(context: Context): Boolean {
+        return context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+    }
+
+    /**
+     * Plants a [Timber.DebugTree] if the app is in debug mode.
+     *
+     * @param context The context used to access the application info.
+     */
+    fun timberPlantTree(context: Context) {
+        if (Timber.treeCount == 0) {
+            if (isDebugMode(context)) {
+                Timber.plant(Timber.DebugTree())
+            }
+        }
     }
 }

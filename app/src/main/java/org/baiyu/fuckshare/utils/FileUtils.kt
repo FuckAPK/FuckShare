@@ -9,7 +9,6 @@ import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import com.bumptech.glide.gifencoder.AnimatedGifEncoder
-import org.baiyu.fuckshare.BuildConfig
 import org.baiyu.fuckshare.Settings
 import org.baiyu.fuckshare.exifhelper.ExifHelper
 import org.baiyu.fuckshare.exifhelper.ImageFormatException
@@ -85,7 +84,7 @@ object FileUtils {
             }
             FileProvider.getUriForFile(
                 context,
-                "${BuildConfig.APPLICATION_ID}.fileprovider",
+                "${context.packageName}.fileprovider",
                 tempFile
             )
         } catch (e: IOException) {

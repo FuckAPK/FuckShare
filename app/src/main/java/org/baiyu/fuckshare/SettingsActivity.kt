@@ -1,12 +1,16 @@
 package org.baiyu.fuckshare
 
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Rect
+import android.net.Uri
 import android.os.Bundle
 import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +57,7 @@ class SettingsActivity : ComponentActivity() {
     private var currentUiMode: Int? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppUtils.timberPlantTree(this)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { view, insets ->
             val bottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             view.updatePadding(bottom = bottom)
@@ -90,6 +95,15 @@ fun SettingsScreen() {
     val prefs = remember { AppUtils.getPrefs(context) }
     val settings = remember { Settings.getInstance(prefs) }
     val isKeyboardOpen by keyboardAsState()
+    val launcherActivityName = "${context.packageName}.LauncherActivity"
+    val needOverlayPermission = remember {
+        AppUtils.needOverlayPermission(context)
+    }
+    val permissionRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        (context as ComponentActivity).recreate()
+    }
 
     LaunchedEffect(isKeyboardOpen) {
         if (!isKeyboardOpen) {
@@ -178,6 +192,11 @@ fun SettingsScreen() {
     var convertGIFDelayMS by remember {
         mutableStateOf(
             settings.convertGIFDelayMS.toString()
+        )
+    }
+    var enableLauncherIcon by remember {
+        mutableStateOf(
+            AppUtils.getActivityStatus(context, launcherActivityName)
         )
     }
 
@@ -370,13 +389,40 @@ fun SettingsScreen() {
                     keyboardType = KeyboardType.Number
                 )
                 SwitchPreferenceItem(
+                    title = R.string.title_keep_launcher_icon,
+                    summary = null,
+                    checked = enableLauncherIcon,
+                    onCheckedChange = {
+                        AppUtils.setActivityStatus(context, launcherActivityName, it)
+                        enableLauncherIcon =
+                            AppUtils.getActivityStatus(context, launcherActivityName)
+                    }
+                )
+                if (needOverlayPermission) {
+                    SwitchPreferenceItem(
+                        title = R.string.title_overlay_permission,
+                        summary = R.string.desc_overlay_permission,
+                        checked = true,
+                        noSwitch = true,
+                        onCheckedChange = {
+                            permissionRequestLauncher.launch(
+                                Intent(
+                                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:${context.packageName}")
+                                )
+                            )
+                        }
+                    )
+                }
+                SwitchPreferenceItem(
                     title = R.string.title_reset_settings,
                     summary = null,
                     checked = true,
                     noSwitch = true,
                     onCheckedChange = {
                         prefs.edit { clear() }
-                        Toast.makeText(context, R.string.toast_settings_reset, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, R.string.toast_settings_reset, Toast.LENGTH_SHORT)
+                            .show()
                         (context as ComponentActivity).recreate()
                     }
                 )
