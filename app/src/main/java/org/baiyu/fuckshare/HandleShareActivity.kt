@@ -25,9 +25,9 @@ class HandleShareActivity : Activity() {
         val prefs = AppUtils.getPrefs(this)
         settings = Settings.getInstance(prefs)
 
-        if (settings.toastTime > 0) {
+        if (settings.toastTimeMS > 0) {
             val applicationName = applicationInfo.loadLabel(packageManager).toString()
-            AppUtils.showToast(this, applicationName, settings.toastTime)
+            AppUtils.showToast(this, applicationName, settings.toastTimeMS)
         }
 
         handleIntent()
@@ -60,7 +60,7 @@ class HandleShareActivity : Activity() {
                 AppUtils.showToast(
                     this,
                     resources.getString(R.string.fail_to_process).format(it, uris.size),
-                    settings.toastTime
+                    settings.toastTimeMS
                 )
             }
         }

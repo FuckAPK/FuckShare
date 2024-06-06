@@ -37,6 +37,12 @@
     <string name="title_enable_archive_type_sniff">Sniff extension for archive</string>
     <string name="desc_enable_archive_type_sniff">likely to cause error!</string>
     <string name="desc_exif_tags_to_keep">separate by comma or space</string>
-    <string name="desc_toast_time">ms, 0 to disable</string>
+    <string name="desc_toast_time">set to 0 to disable</string>
     <string name="title_enable_video_rename">Auto rename videos</string>
+    <string name="title_video_to_gif_size_KB">Video to GIF size</string>
+    <string name="desc_video_to_gif_size_KB">set to 0 to disable, only video without audio track</string>
+    <string name="title_convert_gif_delay_MS">Delay when convert to GIF</string>
+    <string name="desc_convert_gif_delay_MS">at least 1</string>
+    <string name="unit_ms" translatable="false">ms</string>
+    <string name="unit_kB" translatable="false">kB</string>
 </resources>

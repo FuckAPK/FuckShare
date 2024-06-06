@@ -12,9 +12,9 @@ android {
         applicationId = "org.baiyu.fuckshare"
         minSdk = 30
         targetSdk = 34
-        versionCode = 73
+        versionCode = 74
 
-        versionName = "10.3"
+        versionName = "10.4"
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
@@ -71,6 +71,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("com.google.android.material:material:1.12.0")
+    implementation("com.github.bumptech.glide:gifencoder-integration:4.16.0")
     compileOnly("de.robv.android.xposed:api:82")
 
     // compose

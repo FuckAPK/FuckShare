@@ -25,6 +25,10 @@
     <string name="title_enable_archive_type_sniff">嗅探压缩文件格式</string>
     <string name="desc_enable_archive_type_sniff">非常可能出现错误</string>
     <string name="desc_exif_tags_to_keep">用逗号或空格分隔</string>
-    <string name="desc_toast_time">毫秒，设为 0 关闭</string>
+    <string name="desc_toast_time">设为 0 关闭</string>
     <string name="title_enable_video_rename">视频重命名</string>
+    <string name="title_video_to_gif_size_KB">视频转GIF大小</string>
+    <string name="desc_video_to_gif_size_KB">设为 0 关闭，仅限声音的视频</string>
+    <string name="title_convert_gif_delay_MS">转为 GIF 时的帧间隔</string>
+    <string name="desc_convert_gif_delay_MS">至少为 1</string>
 </resources>

@@ -2,10 +2,13 @@ package org.baiyu.fuckshare.utils
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
+import com.bumptech.glide.gifencoder.AnimatedGifEncoder
 import org.baiyu.fuckshare.BuildConfig
 import org.baiyu.fuckshare.Settings
 import org.baiyu.fuckshare.exifhelper.ExifHelper
@@ -25,6 +28,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.RandomAccessFile
+
 
 /**
  * Utility class for handling file-related operations, such as copying, renaming, and processing image metadata.
@@ -47,7 +51,7 @@ object FileUtils {
             context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
                 ByteUtils.readNBytes(uin, magickBytes)
             }
-            val fileType = getFileType(magickBytes)
+            var fileType = getFileType(magickBytes)
             if (fileType is ImageType
                 && fileType.supportMetadata
                 && settings.enableRemoveExif()
@@ -55,6 +59,23 @@ object FileUtils {
                 processImage(context, settings, tempFile, fileType, uri)
             } else {
                 copyFileFromUri(context, uri, tempFile)
+            }
+            if (fileType is VideoType && enableVideo2GIF(settings, tempFile)) {
+                val gifFile = File(tempFile.parent, "${tempFile.nameWithoutExtension}.gif")
+                gifFile.outputStream().buffered().use {
+                    val success = frames2gif(
+                        extractFrames(tempFile.path, settings),
+                        gifFile.outputStream().buffered(),
+                        settings
+                    )
+                    if (success) {
+                        tempFile = gifFile
+                        fileType = ImageType.GIF
+                    } else {
+                        gifFile.delete()
+                        Timber.e("Failed to convert video to gif: $uri")
+                    }
+                }
             }
             // rename
             createNewName(context, settings, fileType, originName).let {
@@ -208,6 +229,14 @@ object FileUtils {
     }
 
     /**
+     * Whether to enable video to GIF conversion based on settings and file size.
+     */
+    private fun enableVideo2GIF(settings: Settings, file: File): Boolean {
+        return file.length() <= settings.videoToGifSizeKB * 1024L
+                && !videoHasAudio(file.path)
+    }
+
+    /**
      * Gets the file extension based on user settings, file type, and original name.
      */
     private fun getExt(settings: Settings, fileType: FileType, originName: String): String? {
@@ -221,14 +250,9 @@ object FileUtils {
             null
         }
         if (extension == null) {
-            val lastIndex = originName.lastIndexOf('.')
-            extension = if (lastIndex > 0 && lastIndex < originName.length - 1) {
-                originName.substring(lastIndex + 1)
-            } else {
-                null
-            }
+            extension = originName.substringAfterLast('.', "")
         }
-        return extension
+        return extension.takeIf { it.isNotBlank() }
     }
 
     /**
@@ -254,12 +278,7 @@ object FileUtils {
      * Gets the file name without extension from the full filename.
      */
     private fun getFileNameNoExt(fullFilename: String): String {
-        val lastIndex = fullFilename.lastIndexOf('.')
-        return if (lastIndex > 0 && lastIndex < fullFilename.length - 1) {
-            fullFilename.substring(0, lastIndex)
-        } else {
-            fullFilename
-        }
+        return fullFilename.substringBeforeLast('.')
     }
 
     /**
@@ -277,5 +296,52 @@ object FileUtils {
             .filter { it.signatureMatch(bytes) }
             .findAny()
             .orElse(OtherType.UNKNOWN)
+    }
+
+    /**
+     * Extracts frames from a video.
+     */
+    fun extractFrames(videoPath: String?, settings: Settings): List<Bitmap> {
+        val frames: MutableList<Bitmap> = ArrayList()
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(videoPath)
+
+        val durationMS =
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toLong()
+        (0..durationMS step settings.convertGIFDelayMS.toLong())
+            .toList()
+            .parallelStream()
+            .map {
+                it * 1000L
+            }.map {
+                retriever.getFrameAtTime(it, MediaMetadataRetriever.OPTION_CLOSEST)
+            }.forEachOrdered {
+                it?.let { frames.add(it) }
+            }
+        retriever.release()
+        return frames
+    }
+
+    /**
+     * Converts a list of frames into a GIF.
+     */
+    fun frames2gif(frames: List<Bitmap>, out: OutputStream, settings: Settings): Boolean {
+        val gifEncoder = AnimatedGifEncoder().apply {
+            start(out)
+            setRepeat(0)
+            setDelay(settings.convertGIFDelayMS)
+            setQuality(1)
+            frames.forEach { addFrame(it) }
+        }
+        return gifEncoder.finish()
+    }
+
+    /**
+     * Checks if the video has audio.
+     */
+    fun videoHasAudio(videoPath: String): Boolean {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(videoPath)
+        return retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
     }
 }

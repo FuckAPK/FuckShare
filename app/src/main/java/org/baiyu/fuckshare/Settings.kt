@@ -63,9 +63,19 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, DEFAULT_ENABLE_FALLBACK_TO_FILE)
     }
 
-    val toastTime: Int
+    val toastTimeMS: Int
         get() {
-            return prefs.getInt(PREF_TOAST_TIME, DEFAULT_TOAST_TIME)
+            return prefs.getInt(PREF_TOAST_TIME_MS, DEFAULT_TOAST_TIME_MS)
+        }
+
+    val videoToGifSizeKB: Int
+        get() {
+            return prefs.getInt(PREF_VIDEO_TO_GIF_SIZE_KB, DEFAULT_VIDEO_TO_GIF_SIZE_KB)
+        }
+
+    val convertGIFDelayMS: Int
+        get() {
+            return prefs.getInt(PREF_CONVERT_GIF_DELAY_MS, DEFAULT_CONVERT_GIF_DELAY_MS)
         }
 
     companion object {
@@ -82,7 +92,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_FILE_TYPE_SNIFF = "enable_file_type_sniff"
         const val PREF_ENABLE_ARCHIVE_TYPE_SNIFF = "enable_archive_type_sniff"
         const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
-        const val PREF_TOAST_TIME = "toast_time"
+        const val PREF_TOAST_TIME_MS = "toast_time"
+        const val PREF_VIDEO_TO_GIF_SIZE_KB = "video_to_gif_size_kB"
+        const val PREF_CONVERT_GIF_DELAY_MS = "convert_gif_delay"
 
         const val DEFAULT_ENABLE_HOOK = false
         const val DEFAULT_ENABLE_FORCE_FORWARD_HOOK = false
@@ -104,8 +116,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_FILE_TYPE_SNIFF = true
         const val DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF = false
         const val DEFAULT_ENABLE_FALLBACK_TO_FILE = true
-        const val DEFAULT_TOAST_TIME = 500
-
+        const val DEFAULT_TOAST_TIME_MS = 500
+        const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
+        const val DEFAULT_CONVERT_GIF_DELAY_MS = 100
 
         @Volatile
         private var INSTANCE: Settings? = null

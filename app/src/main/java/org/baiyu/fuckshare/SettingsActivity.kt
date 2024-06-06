@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
@@ -70,6 +71,14 @@ class SettingsActivity : ComponentActivity() {
         if (newUiMode != currentUiMode) {
             recreate()
         }
+    }
+}
+
+@Preview
+@Composable
+fun SettingsScreenPreview() {
+    Theme {
+        SettingsScreen()
     }
 }
 
@@ -155,9 +164,21 @@ fun SettingsScreen() {
         )
     }
 
-    var toastTime by remember {
+    var toastTimeMS by remember {
         mutableStateOf(
-            settings.toastTime.toString()
+            settings.toastTimeMS.toString()
+        )
+    }
+
+    var video2gifSizeKB by remember {
+        mutableStateOf(
+            settings.videoToGifSizeKB.toString()
+        )
+    }
+
+    var convertGIFDelayMS by remember {
+        mutableStateOf(
+            settings.convertGIFDelayMS.toString()
         )
     }
 
@@ -193,11 +214,9 @@ fun SettingsScreen() {
                             focusManager.clearFocus()
                         }
                         exifTagsToKeep = it
-                            //.filter { c -> c in ('0'..'9') + ('a'..'z') + ('A'..'Z') + ' ' + ',' }
-                            .filterNot { c -> c != '\n' }
+                            .filter { c -> c != '\n' }
                         prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
-                    },
-                    // keyboardType = KeyboardType.Ascii
+                    }
                 )
             }
         }
@@ -309,14 +328,45 @@ fun SettingsScreen() {
                 TextFieldPreference(
                     title = R.string.title_toast_time,
                     summary = R.string.desc_toast_time,
-                    value = toastTime,
+                    value = toastTimeMS,
+                    unit = R.string.unit_ms,
                     onValueChange = {
                         val intValue = it.toIntOrNull() ?: return@TextFieldPreference
                         if (intValue < 0) {
                             return@TextFieldPreference
                         }
-                        toastTime = it
-                        prefs.edit { putInt(Settings.PREF_TOAST_TIME, intValue) }
+                        toastTimeMS = it
+                        prefs.edit { putInt(Settings.PREF_TOAST_TIME_MS, intValue) }
+                    },
+                    keyboardType = KeyboardType.Number
+                )
+                TextFieldPreference(
+                    title = R.string.title_video_to_gif_size_KB,
+                    summary = R.string.desc_video_to_gif_size_KB,
+                    value = video2gifSizeKB,
+                    unit = R.string.unit_kB,
+                    onValueChange = {
+                        val intValue = it.toIntOrNull() ?: return@TextFieldPreference
+                        if (intValue < 0) {
+                            return@TextFieldPreference
+                        }
+                        video2gifSizeKB = it
+                        prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
+                    },
+                    keyboardType = KeyboardType.Number
+                )
+                TextFieldPreference(
+                    title = R.string.title_convert_gif_delay_MS,
+                    summary = R.string.desc_convert_gif_delay_MS,
+                    value = convertGIFDelayMS,
+                    unit = R.string.unit_ms,
+                    onValueChange = {
+                        val intValue = it.toIntOrNull() ?: return@TextFieldPreference
+                        if (intValue <= 1) {
+                            return@TextFieldPreference
+                        }
+                        convertGIFDelayMS = it
+                        prefs.edit { putInt(Settings.PREF_CONVERT_GIF_DELAY_MS, intValue) }
                     },
                     keyboardType = KeyboardType.Number
                 )
@@ -409,11 +459,11 @@ fun PreferenceItem(
     }
 }
 
-
 @Composable
 fun TextFieldPreference(
     @StringRes title: Int,
     @StringRes summary: Int? = null,
+    @StringRes unit: Int? = null,
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
@@ -431,7 +481,7 @@ fun TextFieldPreference(
         if (summary != null) {
             Text(
                 text = stringResource(id = summary),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(0.6f)
             )
         }
@@ -445,6 +495,15 @@ fun TextFieldPreference(
                 keyboardType = keyboardType,
                 imeAction = ImeAction.Done
             ),
+            suffix = unit?.let {
+                @Composable {
+                    Text(
+                        text = stringResource(id = it),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier = Modifier
                 .fillMaxWidth()
