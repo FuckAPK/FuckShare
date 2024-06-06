@@ -330,7 +330,7 @@ object FileUtils {
             start(out)
             setRepeat(0)
             setDelay(settings.convertGIFDelayMS)
-            setQuality(1)
+            setQuality(10)
             frames.forEach { addFrame(it) }
         }
         return gifEncoder.finish()
