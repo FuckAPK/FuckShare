@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import android.graphics.Rect
 import android.os.Bundle
 import android.view.ViewTreeObserver
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
@@ -169,13 +170,11 @@ fun SettingsScreen() {
             settings.toastTimeMS.toString()
         )
     }
-
     var video2gifSizeKB by remember {
         mutableStateOf(
             settings.videoToGifSizeKB.toString()
         )
     }
-
     var convertGIFDelayMS by remember {
         mutableStateOf(
             settings.convertGIFDelayMS.toString()
@@ -186,7 +185,7 @@ fun SettingsScreen() {
 
         item {
             PreferenceCategory(title = R.string.title_metadata) {
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_remove_exif,
                     summary = R.string.desc_enable_remove_exif,
                     checked = enableRemoveExif,
@@ -195,7 +194,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_REMOVE_EXIF, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_fallback_to_file,
                     summary = R.string.desc_enable_fallback_to_file,
                     checked = enableFallbackToFile,
@@ -222,7 +221,7 @@ fun SettingsScreen() {
         }
         item {
             PreferenceCategory(title = R.string.title_rename) {
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_file_type_sniff,
                     summary = R.string.desc_enable_file_type_sniff,
                     checked = enableFileTypeSniff,
@@ -231,7 +230,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_TYPE_SNIFF, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_archive_type_sniff,
                     summary = R.string.desc_enable_archive_type_sniff,
                     checked = enableArchiveTypeSniff,
@@ -241,7 +240,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_image_rename,
                     summary = null,
                     checked = enableImageRename,
@@ -250,7 +249,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_IMAGE_RENAME, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_video_rename,
                     summary = null,
                     checked = enableVideoRename,
@@ -259,7 +258,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_file_rename,
                     summary = null,
                     checked = enableFileRename,
@@ -272,7 +271,7 @@ fun SettingsScreen() {
         }
         item {
             PreferenceCategory(title = R.string.title_hook) {
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_hook,
                     summary = R.string.desc_enable_hook,
                     checked = enableHook,
@@ -281,7 +280,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_HOOK, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_force_forward_hook,
                     summary = R.string.desc_enable_force_forward_hook,
                     checked = enableForceForwardHook,
@@ -291,7 +290,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_FORWARD_HOOK, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_force_picker_hook,
                     summary = R.string.desc_enable_force_picker_hook,
                     checked = enableForcePickerHook,
@@ -301,7 +300,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_PICKER_HOOK, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_force_content_hook,
                     summary = R.string.desc_enable_force_content_hook,
                     checked = enableForceContentHook,
@@ -311,7 +310,7 @@ fun SettingsScreen() {
                         prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_CONTENT_HOOK, it) }
                     }
                 )
-                PreferenceItem(
+                SwitchPreferenceItem(
                     title = R.string.title_enable_force_document_hook,
                     summary = R.string.desc_enable_force_document_hook,
                     checked = enableForceDocumentHook,
@@ -370,6 +369,17 @@ fun SettingsScreen() {
                     },
                     keyboardType = KeyboardType.Number
                 )
+                SwitchPreferenceItem(
+                    title = R.string.title_reset_settings,
+                    summary = null,
+                    checked = true,
+                    noSwitch = true,
+                    onCheckedChange = {
+                        prefs.edit { clear() }
+                        Toast.makeText(context, R.string.toast_settings_reset, Toast.LENGTH_SHORT).show()
+                        (context as ComponentActivity).recreate()
+                    }
+                )
             }
         }
     }
@@ -421,12 +431,13 @@ fun PreferenceCategory(
 }
 
 @Composable
-fun PreferenceItem(
+fun SwitchPreferenceItem(
     @StringRes title: Int,
     @StringRes summary: Int? = null,
     checked: Boolean,
     enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    noSwitch: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -454,7 +465,9 @@ fun PreferenceItem(
                     )
                 }
             }
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            if (!noSwitch) {
+                Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            }
         }
     }
 }

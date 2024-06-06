@@ -1,8 +1,9 @@
-package org.baiyu.fuckshare
+package org.baiyu.fuckshare.shortcut
 
 import android.app.Activity
 import android.os.Bundle
 import android.widget.Toast
+import org.baiyu.fuckshare.R
 import org.baiyu.fuckshare.utils.AppUtils
 import timber.log.Timber
 

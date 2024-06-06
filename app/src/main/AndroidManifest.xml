@@ -96,10 +96,16 @@
         </activity-alias>
 
         <activity
-            android:name=".ClearCacheActivity"
+            android:name=".shortcut.ClearCacheActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:icon="@mipmap/ic_shortcut_clear"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <activity android:name=".shortcut.ResetSettingsActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_reset"
             android:theme="@android:style/Theme.NoDisplay" />
 
         <activity

@@ -45,4 +45,7 @@
     <string name="desc_convert_gif_delay_MS">at least 1</string>
     <string name="unit_ms" translatable="false">ms</string>
     <string name="unit_kB" translatable="false">kB</string>
+    <string name="title_reset_settings">Reset settings</string>
+    <string name="toast_settings_reset">RESET!</string>
+    <string name="compose_shortcut_reset_settings">Reset settings</string>
 </resources>
