@@ -160,7 +160,7 @@ object IntentUtils {
             .setPendingIntentCreatorBackgroundActivityStartMode(
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
             ).toBundle()
-        return uris.map {
+        return uris.filterIndexed { index, _ -> index < 5 }.map {
             ChooserAction.Builder(
                 Icon.createWithResource(context, R.drawable.baseline_open_in_browser),
                 it,
