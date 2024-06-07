@@ -83,7 +83,7 @@ class MainHook : IXposedHookLoadPackage {
             }
 
             prefs.reload()
-            if (!settings.enableHook()) {
+            if (!settings.enableHook) {
                 return
             }
             val extraIntent = if (intent.action == Intent.ACTION_CHOOSER) {
@@ -124,28 +124,28 @@ class MainHook : IXposedHookLoadPackage {
         private fun handleExtraIntent(extraIntent: Intent): Intent? {
             val className = when (extraIntent.action) {
                 Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE ->
-                    if (settings.enableForceForwardHook()) {
+                    if (settings.enableForceForwardHook) {
                         HandleShareActivity::class.java.name
                     } else {
                         null
                     }
 
                 Intent.ACTION_PICK ->
-                    if (settings.enableForcePickerHook()) {
+                    if (settings.enableForcePickerHook) {
                         ContentProxyActivity::class.java.name
                     } else {
                         null
                     }
 
                 Intent.ACTION_GET_CONTENT ->
-                    if (settings.enableForceContentHook()) {
+                    if (settings.enableForceContentHook) {
                         ContentProxyActivity::class.java.name
                     } else {
                         null
                     }
 
                 Intent.ACTION_OPEN_DOCUMENT ->
-                    if (settings.enableForceDocumentHook()) {
+                    if (settings.enableForceDocumentHook) {
                         ContentProxyActivity::class.java.name
                     } else {
                         null

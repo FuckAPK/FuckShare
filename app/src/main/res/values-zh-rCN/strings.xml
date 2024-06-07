@@ -37,4 +37,8 @@
     <string name="toast_permission_granted">权限已获取！</string>
     <string name="title_enable_text_to_link_action">选择界面显示打开链接</string>
     <string name="desc_enable_text_to_link_action">需要在其他应用上显示权限</string>
+    <string name="title_video_to_gif_options">视频转GIF ffmpeg选项</string>
+    <string name="desc_video_to_gif_options">使用 $input $output 作为输入输出路径</string>
+    <string name="video_to_gif_failed">视频转换GIF失败！</string>
+    <string name="toast_permission_denied">权限获取失败！</string>
 </resources>

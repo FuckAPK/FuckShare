@@ -35,10 +35,9 @@ object IntentUtils {
             }
 
             Intent.ACTION_SEND_MULTIPLE -> {
-                getParcelableArrayListExtra(
+                getParcelableArrayListExtra<Uri>(
                     intent,
-                    Intent.EXTRA_STREAM,
-                    Uri::class.java
+                    Intent.EXTRA_STREAM
                 )?.toList() ?: listOf()
             }
 
@@ -76,16 +75,14 @@ object IntentUtils {
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
-     * @param clazz The class type of the Parcelable.
      * @return The Parcelable ArrayList extra or null if not found.
      */
-    fun <T : Parcelable?> getParcelableArrayListExtra(
+    inline fun <reified T : Parcelable?> getParcelableArrayListExtra(
         intent: Intent,
-        name: String?,
-        clazz: Class<T>
+        name: String?
     ): ArrayList<T>? {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableArrayListExtra(name, clazz)
+            intent.getParcelableArrayListExtra(name, T::class.java)
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableArrayListExtra(name)

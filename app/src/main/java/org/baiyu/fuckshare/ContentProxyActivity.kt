@@ -46,7 +46,7 @@ class ContentProxyActivity : ComponentActivity() {
     }
 
     fun pickerResult(resultCode: Int, data: Intent?) {
-        Timber.i("data: $data")
+        Timber.d("data: $data")
         if (resultCode != RESULT_OK || data == null) {
             Timber.i("Result Code: $resultCode, data: $data")
             setResult(resultCode)
@@ -58,9 +58,11 @@ class ContentProxyActivity : ComponentActivity() {
         data.data?.let { originUri ->
             FileUtils.refreshUri(this, settings, originUri)?.let {
                 resultIntent.data = it
-            } ?: {
+            } ?: run {
                 Timber.e("Failed to process $originUri")
             }
+        } ?: run {
+            Timber.i("data empty")
         }
         data.clipData?.let { clipData ->
             val uris = (0 until clipData.itemCount)
@@ -91,11 +93,13 @@ class ContentProxyActivity : ComponentActivity() {
             } else {
                 Timber.w("result uris is empty")
             }
+        } ?: run {
+            Timber.i("clipdata empty")
         }
 
         if (resultIntent.data == null && resultIntent.clipData == null) {
             setResult(RESULT_CANCELED)
-            Timber.e("result empty, cancelled")
+            Timber.w("result empty, cancelled")
         } else {
             resultIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             setResult(RESULT_OK, resultIntent)

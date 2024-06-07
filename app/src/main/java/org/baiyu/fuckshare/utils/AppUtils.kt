@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.CountDownTimer
+import android.util.Log
 import android.widget.Toast
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
@@ -102,6 +103,7 @@ object AppUtils {
      * @return `true` if the operation is successful, otherwise `false`.
      */
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
+        Timber.d("Clearing cache with time duration: $timeDurationMillis")
         val timeBefore = System.currentTimeMillis() - timeDurationMillis
         return context.cacheDir.listFiles()?.asSequence()
             ?.filter { it.lastModified() < timeBefore }
@@ -120,7 +122,7 @@ object AppUtils {
     fun getActivityStatus(context: Context, activityName: String): Boolean {
         val pm = context.applicationContext.packageManager
         val cn = ComponentName(context.packageName, activityName)
-        return when (pm.getComponentEnabledSetting(cn)) {
+        val status = when (pm.getComponentEnabledSetting(cn)) {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
             else -> {
@@ -135,6 +137,8 @@ object AppUtils {
                     ?: false
             }
         }
+        Timber.d("Activity status: $activityName: $status")
+        return status
     }
 
     /**
@@ -151,6 +155,7 @@ object AppUtils {
             if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             else PackageManager.COMPONENT_ENABLED_STATE_DISABLED
         pm.setComponentEnabledSetting(cn, status, PackageManager.DONT_KILL_APP)
+        Timber.d("set activity status: $activityName: $enable")
     }
 
     /**
@@ -180,9 +185,25 @@ object AppUtils {
      */
     fun timberPlantTree(context: Context) {
         if (Timber.treeCount == 0) {
-            if (isDebugMode(context)) {
-                Timber.plant(Timber.DebugTree())
-            }
+            Timber.plant(
+                if (isDebugMode(context)) {
+                    object : Timber.DebugTree() {
+                        override fun createStackElementTag(element: StackTraceElement): String {
+                            return "${element.className}:${element.lineNumber}#${element.methodName}"
+                        }
+                    }
+                } else {
+                    object : Timber.DebugTree() {
+                        override fun createStackElementTag(element: StackTraceElement): String {
+                            return "${element.className}#${element.methodName}"
+                        }
+
+                        override fun isLoggable(tag: String?, priority: Int): Boolean {
+                            return priority >= Log.WARN
+                        }
+                    }
+                }
+            )
         }
     }
 }

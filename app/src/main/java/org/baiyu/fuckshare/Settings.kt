@@ -3,29 +3,44 @@ package org.baiyu.fuckshare
 import android.content.SharedPreferences
 
 class Settings private constructor(private val prefs: SharedPreferences) {
-    fun enableHook(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_HOOK, DEFAULT_ENABLE_HOOK)
-    }
+    val enableHook: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_HOOK, DEFAULT_ENABLE_HOOK)
+        }
 
-    fun enableForceForwardHook(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FORCE_FORWARD_HOOK, DEFAULT_ENABLE_FORCE_FORWARD_HOOK)
-    }
+    val enableForceForwardHook: Boolean
+        get() {
+            return prefs.getBoolean(
+                PREF_ENABLE_FORCE_FORWARD_HOOK,
+                DEFAULT_ENABLE_FORCE_FORWARD_HOOK
+            )
+        }
 
-    fun enableForceContentHook(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FORCE_CONTENT_HOOK, DEFAULT_ENABLE_FORCE_CONTENT_HOOK)
-    }
+    val enableForceContentHook: Boolean
+        get() {
+            return prefs.getBoolean(
+                PREF_ENABLE_FORCE_CONTENT_HOOK,
+                DEFAULT_ENABLE_FORCE_CONTENT_HOOK
+            )
+        }
 
-    fun enableForceDocumentHook(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FORCE_DOCUMENT_HOOK, DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK)
-    }
+    val enableForceDocumentHook: Boolean
+        get() {
+            return prefs.getBoolean(
+                PREF_ENABLE_FORCE_DOCUMENT_HOOK,
+                DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK
+            )
+        }
 
-    fun enableForcePickerHook(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FORCE_PICKER_HOOK, DEFAULT_ENABLE_FORCE_PICKER_HOOK)
-    }
+    val enableForcePickerHook: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_FORCE_PICKER_HOOK, DEFAULT_ENABLE_FORCE_PICKER_HOOK)
+        }
 
-    fun enableRemoveExif(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, DEFAULT_ENABLE_REMOVE_EXIF)
-    }
+    val enableRemoveExif: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, DEFAULT_ENABLE_REMOVE_EXIF)
+        }
 
     val exifTagsToKeep: Set<String>
         get() {
@@ -39,29 +54,38 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             } ?: DEFAULT_EXIF_TAGS_TO_KEEP
         }
 
-    fun enableImageRename(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_IMAGE_RENAME, DEFAULT_ENABLE_IMAGE_RENAME)
-    }
+    val enableImageRename: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_IMAGE_RENAME, DEFAULT_ENABLE_IMAGE_RENAME)
+        }
 
-    fun enableVideoRename(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_VIDEO_RENAME, DEFAULT_ENABLE_VIDEO_RENAME)
-    }
+    val enableVideoRename: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_VIDEO_RENAME, DEFAULT_ENABLE_VIDEO_RENAME)
+        }
 
-    fun enableFileRename(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FILE_RENAME, DEFAULT_ENABLE_FILE_RENAME)
-    }
+    val enableFileRename: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_FILE_RENAME, DEFAULT_ENABLE_FILE_RENAME)
+        }
 
-    fun enableFileTypeSniff(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, DEFAULT_ENABLE_FILE_TYPE_SNIFF)
-    }
+    val enableFileTypeSniff: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_FILE_TYPE_SNIFF, DEFAULT_ENABLE_FILE_TYPE_SNIFF)
+        }
 
-    fun enableArchiveTypeSniff(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_ARCHIVE_TYPE_SNIFF, DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF)
-    }
+    val enableArchiveTypeSniff: Boolean
+        get() {
+            return prefs.getBoolean(
+                PREF_ENABLE_ARCHIVE_TYPE_SNIFF,
+                DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF
+            )
+        }
 
-    fun enableFallbackToFile(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, DEFAULT_ENABLE_FALLBACK_TO_FILE)
-    }
+    val enableFallbackToFile: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_FALLBACK_TO_FILE, DEFAULT_ENABLE_FALLBACK_TO_FILE)
+        }
 
     val toastTimeMS: Int
         get() {
@@ -73,14 +97,20 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             return prefs.getInt(PREF_VIDEO_TO_GIF_SIZE_KB, DEFAULT_VIDEO_TO_GIF_SIZE_KB)
         }
 
-    val convertGIFDelayMS: Int
+    val videoToGIFOptions: String
         get() {
-            return prefs.getInt(PREF_CONVERT_GIF_DELAY_MS, DEFAULT_CONVERT_GIF_DELAY_MS)
+            return prefs.getString(PREF_VIDEO_TO_GIF_OPTIONS, DEFAULT_VIDEO_TO_GIF_OPTIONS)
+                ?: DEFAULT_VIDEO_TO_GIF_OPTIONS
         }
 
-    fun enableTextToLinkAction(): Boolean {
-        return prefs.getBoolean(PREF_ENABLE_TEXT_TO_LINK_ACTION, DEFAULT_ENABLE_TEXT_TO_LINK_ACTION)
-    }
+    val enableTextToLinkAction: Boolean
+        get() {
+            return prefs.getBoolean(
+                PREF_ENABLE_TEXT_TO_LINK_ACTION,
+                DEFAULT_ENABLE_TEXT_TO_LINK_ACTION
+            )
+        }
+
 
     companion object {
         const val PREF_ENABLE_HOOK = "enable_hook"
@@ -98,7 +128,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
         const val PREF_TOAST_TIME_MS = "toast_time"
         const val PREF_VIDEO_TO_GIF_SIZE_KB = "video_to_gif_size_kB"
-        const val PREF_CONVERT_GIF_DELAY_MS = "convert_gif_delay"
+        const val PREF_VIDEO_TO_GIF_OPTIONS = "video_to_gif_options"
         const val PREF_ENABLE_TEXT_TO_LINK_ACTION = "enable_text_to_link_action"
 
         const val DEFAULT_ENABLE_HOOK = false
@@ -123,7 +153,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_FALLBACK_TO_FILE = true
         const val DEFAULT_TOAST_TIME_MS = 500
         const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
-        const val DEFAULT_CONVERT_GIF_DELAY_MS = 100
+        const val DEFAULT_VIDEO_TO_GIF_OPTIONS = "-i \$input \$output"
         const val DEFAULT_ENABLE_TEXT_TO_LINK_ACTION = false
 
         @Volatile

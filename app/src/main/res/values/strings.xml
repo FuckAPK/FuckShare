@@ -48,7 +48,11 @@
     <string name="title_reset_settings">Reset settings</string>
     <string name="toast_settings_reset">RESET!</string>
     <string name="compose_shortcut_reset_settings">Reset settings</string>
-    <string name="toast_permission_granted">permission granted!</string>
+    <string name="toast_permission_granted">Permission granted!</string>
     <string name="title_enable_text_to_link_action">Enable text to link chooser action</string>
     <string name="desc_enable_text_to_link_action">need display over other app permission</string>
+    <string name="title_video_to_gif_options">Video to GIF ffmpeg options</string>
+    <string name="desc_video_to_gif_options">$input and $output are used as input and output path</string>
+    <string name="video_to_gif_failed">Failed to convert video to GIF！</string>
+    <string name="toast_permission_denied">Failed to grant permission!</string>
 </resources>

@@ -81,7 +81,7 @@ class HandleShareActivity : Activity() {
                 chooserIntent,
                 Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
             )
-            if (settings.enableTextToLinkAction() && AppUtils.hasOverlayPermission(this)) {
+            if (settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(this)) {
                 val exists = IntentUtils.getParcelableArrayExtra<ChooserAction>(
                     chooserIntent,
                     Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
@@ -96,6 +96,7 @@ class HandleShareActivity : Activity() {
                             exists.addAll(it)
                             exists
                         }?.let {
+                            Timber.d("custom actions: $it")
                             chooserIntent.putExtra(
                                 Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
                                 it.toTypedArray()
@@ -114,6 +115,7 @@ class HandleShareActivity : Activity() {
     private fun extractUrls(text: String): List<String> {
         val urlPattern = """https?://[^\s，,“”"()（）【】\[\]]+(?<!\.)""".toRegex()
         val urls = urlPattern.findAll(text).map { it.value }.toList()
+        Timber.i("extracted urls: $urls")
         return urls
     }
 

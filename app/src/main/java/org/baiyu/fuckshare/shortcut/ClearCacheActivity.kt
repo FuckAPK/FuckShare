@@ -10,6 +10,7 @@ import timber.log.Timber
 class ClearCacheActivity : Activity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppUtils.timberPlantTree(this)
         val files = cacheDir.listFiles()
         val message = if (files?.isEmpty() == true) {
             Timber.d("No cache")

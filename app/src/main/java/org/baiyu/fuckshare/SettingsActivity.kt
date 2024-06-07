@@ -51,6 +51,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import org.baiyu.fuckshare.utils.AppUtils
+import timber.log.Timber
 import org.baiyu.fuckshare.ui.AppTheme as Theme
 
 class SettingsActivity : ComponentActivity() {
@@ -76,6 +77,7 @@ class SettingsActivity : ComponentActivity() {
         super.onConfigurationChanged(newConfig)
         val newUiMode = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
         if (newUiMode != currentUiMode) {
+            Timber.i("Night mode changed from $currentUiMode to $newUiMode")
             recreate()
         }
     }
@@ -103,24 +105,28 @@ fun SettingsScreen() {
         if (AppUtils.hasOverlayPermission(context)) {
             prefs.edit { putBoolean(Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION, true) }
             Toast.makeText(context, R.string.toast_permission_granted, Toast.LENGTH_SHORT).show()
+            Timber.i("Permission granted")
         }
+        Toast.makeText(context, R.string.toast_permission_denied, Toast.LENGTH_SHORT).show()
+        Timber.w("Permission denied")
         (context as ComponentActivity).recreate()
     }
 
     LaunchedEffect(isKeyboardOpen) {
         if (!isKeyboardOpen) {
             focusManager.clearFocus()
+            Timber.d("clear focus as keyboard closed")
         }
     }
 
     var enableRemoveExif by remember {
         mutableStateOf(
-            settings.enableRemoveExif()
+            settings.enableRemoveExif
         )
     }
     var enableFallbackToFile by remember {
         mutableStateOf(
-            settings.enableFallbackToFile()
+            settings.enableFallbackToFile
         )
     }
     var exifTagsToKeep by remember {
@@ -131,53 +137,53 @@ fun SettingsScreen() {
 
     var enableFileTypeSniff by remember {
         mutableStateOf(
-            settings.enableFileTypeSniff()
+            settings.enableFileTypeSniff
         )
     }
     var enableArchiveTypeSniff by remember {
         mutableStateOf(
-            settings.enableArchiveTypeSniff()
+            settings.enableArchiveTypeSniff
         )
     }
     var enableImageRename by remember {
         mutableStateOf(
-            settings.enableImageRename()
+            settings.enableImageRename
         )
     }
     var enableVideoRename by remember {
         mutableStateOf(
-            settings.enableVideoRename()
+            settings.enableVideoRename
         )
     }
     var enableFileRename by remember {
         mutableStateOf(
-            settings.enableFileRename()
+            settings.enableFileRename
         )
     }
 
     var enableHook by remember {
         mutableStateOf(
-            settings.enableHook()
+            settings.enableHook
         )
     }
     var enableForceForwardHook by remember {
         mutableStateOf(
-            settings.enableForceForwardHook()
+            settings.enableForceForwardHook
         )
     }
     var enableForcePickerHook by remember {
         mutableStateOf(
-            settings.enableForcePickerHook()
+            settings.enableForcePickerHook
         )
     }
     var enableForceContentHook by remember {
         mutableStateOf(
-            settings.enableForceContentHook()
+            settings.enableForceContentHook
         )
     }
     var enableForceDocumentHook by remember {
         mutableStateOf(
-            settings.enableForceDocumentHook()
+            settings.enableForceDocumentHook
         )
     }
 
@@ -191,14 +197,14 @@ fun SettingsScreen() {
             settings.videoToGifSizeKB.toString()
         )
     }
-    var convertGIFDelayMS by remember {
+    var videoToGIFOptions by remember {
         mutableStateOf(
-            settings.convertGIFDelayMS.toString()
+            settings.videoToGIFOptions
         )
     }
     var enableTextToLinkAction by remember {
         mutableStateOf(
-            settings.enableTextToLinkAction() && AppUtils.hasOverlayPermission(context)
+            settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(context)
         )
     }
     var enableLauncherIcon by remember {
@@ -384,20 +390,23 @@ fun SettingsScreen() {
                     keyboardType = KeyboardType.Number
                 )
                 TextFieldPreference(
-                    title = R.string.title_convert_gif_delay_MS,
-                    summary = R.string.desc_convert_gif_delay_MS,
-                    value = convertGIFDelayMS,
-                    unit = R.string.unit_ms,
+                    title = R.string.title_video_to_gif_options,
+                    summary = R.string.desc_video_to_gif_options,
+                    value = videoToGIFOptions,
                     onValueChange = {
-                        val intValue =
-                            it.ifBlank { "1" }.toIntOrNull() ?: return@TextFieldPreference
-                        if (intValue < 1) {
-                            return@TextFieldPreference
+                        if (it.contains('\n')) {
+                            focusManager.clearFocus()
                         }
-                        convertGIFDelayMS = intValue.toString()
-                        prefs.edit { putInt(Settings.PREF_CONVERT_GIF_DELAY_MS, intValue) }
-                    },
-                    keyboardType = KeyboardType.Number
+                        // filter ascii chars
+                        videoToGIFOptions = it
+                            .filter { c -> c != '\n' }
+                        prefs.edit {
+                            putString(
+                                Settings.PREF_VIDEO_TO_GIF_OPTIONS,
+                                videoToGIFOptions
+                            )
+                        }
+                    }
                 )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     SwitchPreferenceItem(

@@ -2,13 +2,15 @@ package org.baiyu.fuckshare.utils
 
 import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
-import com.bumptech.glide.gifencoder.AnimatedGifEncoder
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.ReturnCode
+import org.baiyu.fuckshare.R
 import org.baiyu.fuckshare.Settings
 import org.baiyu.fuckshare.exifhelper.ExifHelper
 import org.baiyu.fuckshare.exifhelper.ImageFormatException
@@ -51,9 +53,10 @@ object FileUtils {
                 ByteUtils.readNBytes(uin, magickBytes)
             }
             var fileType = getFileType(magickBytes)
+            Timber.d("File type: $fileType")
             if (fileType is ImageType
                 && fileType.supportMetadata
-                && settings.enableRemoveExif()
+                && settings.enableRemoveExif
             ) {
                 processImage(context, settings, tempFile, fileType, uri)
             } else {
@@ -64,12 +67,21 @@ object FileUtils {
                 video2gif(tempFile, settings)?.let {
                     tempFile = it
                     fileType = ImageType.GIF
+                } ?: run {
+                    Toast.makeText(
+                        context,
+                        R.string.video_to_gif_failed,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             // rename
             createNewName(context, settings, fileType, originName).let {
                 if (tempFile.renameTo(it)) {
                     tempFile = it
+                    Timber.d("Renamed: $tempFile -> $it")
+                } else {
+                    Timber.e("Failed to rename: $tempFile -> $it")
                 }
             }
             FileProvider.getUriForFile(
@@ -113,6 +125,7 @@ object FileUtils {
      */
     @Throws(IOException::class)
     private fun copyFileFromUri(context: Context, uri: Uri, file: File) {
+        Timber.d("copyFileFromUri: $uri -> $file")
         context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
             file.outputStream().buffered().use { fout ->
                 uin.copyTo(fout)
@@ -133,7 +146,7 @@ object FileUtils {
         } catch (e: ImageFormatException) {
             file.delete()
             Timber.e("Format error: $uri Type: $imageType")
-            if (settings.enableFallbackToFile()) {
+            if (settings.enableFallbackToFile) {
                 Timber.d("fallback to file: $uri")
                 copyFileFromUri(context, uri, file)
             }
@@ -167,6 +180,7 @@ object FileUtils {
             if (exifHelper is WebpExifHelper) {
                 RandomAccessFile(file, "rw").use {
                     exifHelper.fixHeaderSize(it)
+                    Timber.d("fixed webp header size: $file")
                 }
             }
             if (imageType.supportMetadata) {
@@ -176,9 +190,12 @@ object FileUtils {
                         ExifInterface(file),
                         settings.exifTagsToKeep
                     )
+                    Timber.d("rewrite metadata: $file, tags: ${settings.exifTagsToKeep}")
                 }
             }
-        } ?: Timber.e("unsupported image type: $imageType")
+        } ?: run {
+            Timber.e("unsupported image type: $imageType")
+        }
     }
 
     private fun createNewName(
@@ -200,6 +217,7 @@ object FileUtils {
             oneTimeCacheDir.mkdirs()
             renamed = File(oneTimeCacheDir, newFullName)
         }
+        Timber.d("new name: $renamed")
         return renamed
     }
 
@@ -211,9 +229,9 @@ object FileUtils {
         fileType: FileType?
     ): Boolean {
         return when (fileType) {
-            is ImageType -> settings.enableImageRename()
-            is VideoType -> settings.enableVideoRename()
-            else -> settings.enableFileRename()
+            is ImageType -> settings.enableImageRename
+            is VideoType -> settings.enableVideoRename
+            else -> settings.enableFileRename
         }
     }
 
@@ -229,8 +247,8 @@ object FileUtils {
      * Gets the file extension based on user settings, file type, and original name.
      */
     private fun getExt(settings: Settings, fileType: FileType, originName: String): String? {
-        var extension: String? = if (settings.enableFileTypeSniff()) {
-            if (fileType is ArchiveType && !settings.enableArchiveTypeSniff()) {
+        var extension: String? = if (settings.enableFileTypeSniff) {
+            if (fileType is ArchiveType && !settings.enableArchiveTypeSniff) {
                 null
             } else {
                 fileType.extension
@@ -291,68 +309,30 @@ object FileUtils {
      * Converts a video to GIF.
      *
      * @param video The video file.
-     * @param settings The application settings.
      * @return The GIF file or null if the operation fails.
      */
     fun video2gif(video: File, settings: Settings): File? {
         val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
         try {
-            gifFile.outputStream().buffered().use {
-                val success = frames2gif(
-                    extractFrames(video.path, settings),
-                    gifFile.outputStream().buffered(),
-                    settings
-                )
-                if (success) {
-                    return gifFile
-                } else {
-                    gifFile.delete()
-                    Timber.e("Failed to convert video to gif: $video")
-                }
+            val command = settings.videoToGIFOptions
+                .replace("\$input", video.path)
+                .replace("\$output", gifFile.path)
+                .trim()
+            Timber.d("ffmpeg command: $command")
+            val session = FFmpegKit
+                .execute(command)
+            if (ReturnCode.isSuccess(session.returnCode)) {
+                Timber.i("ffmpeg convert success")
+                return gifFile
+            } else {
+                Timber.e("Failed to convert video to gif: $video")
+                gifFile.delete()
             }
         } catch (e: Exception) {
             Timber.e(e)
             gifFile.delete()
         }
         return null
-    }
-
-    /**
-     * Extracts frames from a video.
-     */
-    fun extractFrames(videoPath: String?, settings: Settings): List<Bitmap> {
-        val frames: MutableList<Bitmap> = ArrayList()
-        val retriever = MediaMetadataRetriever()
-        retriever.setDataSource(videoPath)
-
-        val durationMS =
-            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)!!.toLong()
-        (0..durationMS step settings.convertGIFDelayMS.toLong())
-            .toList()
-            .parallelStream()
-            .map {
-                it * 1000L
-            }.map {
-                retriever.getFrameAtTime(it, MediaMetadataRetriever.OPTION_CLOSEST)
-            }.forEachOrdered {
-                it?.let { frames.add(it) }
-            }
-        retriever.release()
-        return frames
-    }
-
-    /**
-     * Converts a list of frames into a GIF.
-     */
-    fun frames2gif(frames: List<Bitmap>, out: OutputStream, settings: Settings): Boolean {
-        val gifEncoder = AnimatedGifEncoder().apply {
-            start(out)
-            setRepeat(0)
-            setDelay(settings.convertGIFDelayMS)
-            setQuality(20)
-            frames.forEach { addFrame(it) }
-        }
-        return gifEncoder.finish()
     }
 
     /**
