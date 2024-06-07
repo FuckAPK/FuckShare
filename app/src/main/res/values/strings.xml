@@ -36,7 +36,7 @@
     <string name="fail_to_process">%1$d of %2$d failed!</string>
     <string name="title_enable_archive_type_sniff">Sniff extension for archive</string>
     <string name="desc_enable_archive_type_sniff">likely to cause error!</string>
-    <string name="desc_exif_tags_to_keep">separate by comma or space</string>
+    <string name="desc_exif_tags_to_keep">separate by comma or space, blank to disable</string>
     <string name="desc_toast_time">set to 0 to disable</string>
     <string name="title_enable_video_rename">Auto rename videos</string>
     <string name="title_video_to_gif_size_KB">Video to GIF size</string>

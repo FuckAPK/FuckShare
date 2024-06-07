@@ -238,8 +238,9 @@ fun SettingsScreen() {
                         if (it.contains('\n')) {
                             focusManager.clearFocus()
                         }
+                        // filter ascii chars
                         exifTagsToKeep = it
-                            .filter { c -> c != '\n' }
+                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
                         prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
                     }
                 )
@@ -356,11 +357,12 @@ fun SettingsScreen() {
                     value = toastTimeMS,
                     unit = R.string.unit_ms,
                     onValueChange = {
-                        val intValue = it.toIntOrNull() ?: return@TextFieldPreference
+                        val intValue =
+                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
                         if (intValue < 0) {
                             return@TextFieldPreference
                         }
-                        toastTimeMS = it
+                        toastTimeMS = intValue.toString()
                         prefs.edit { putInt(Settings.PREF_TOAST_TIME_MS, intValue) }
                     },
                     keyboardType = KeyboardType.Number
@@ -371,11 +373,12 @@ fun SettingsScreen() {
                     value = video2gifSizeKB,
                     unit = R.string.unit_kB,
                     onValueChange = {
-                        val intValue = it.toIntOrNull() ?: return@TextFieldPreference
+                        val intValue =
+                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
                         if (intValue < 0) {
                             return@TextFieldPreference
                         }
-                        video2gifSizeKB = it
+                        video2gifSizeKB = intValue.toString()
                         prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
                     },
                     keyboardType = KeyboardType.Number
@@ -386,24 +389,15 @@ fun SettingsScreen() {
                     value = convertGIFDelayMS,
                     unit = R.string.unit_ms,
                     onValueChange = {
-                        val intValue = it.toIntOrNull() ?: return@TextFieldPreference
-                        if (intValue <= 1) {
+                        val intValue =
+                            it.ifBlank { "1" }.toIntOrNull() ?: return@TextFieldPreference
+                        if (intValue < 1) {
                             return@TextFieldPreference
                         }
-                        convertGIFDelayMS = it
+                        convertGIFDelayMS = intValue.toString()
                         prefs.edit { putInt(Settings.PREF_CONVERT_GIF_DELAY_MS, intValue) }
                     },
                     keyboardType = KeyboardType.Number
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_keep_launcher_icon,
-                    summary = null,
-                    checked = enableLauncherIcon,
-                    onCheckedChange = {
-                        AppUtils.setActivityStatus(context, launcherActivityName, it)
-                        enableLauncherIcon =
-                            AppUtils.getActivityStatus(context, launcherActivityName)
-                    }
                 )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     SwitchPreferenceItem(
@@ -441,6 +435,16 @@ fun SettingsScreen() {
                         }
                     )
                 }
+                SwitchPreferenceItem(
+                    title = R.string.title_keep_launcher_icon,
+                    summary = null,
+                    checked = enableLauncherIcon,
+                    onCheckedChange = {
+                        AppUtils.setActivityStatus(context, launcherActivityName, it)
+                        enableLauncherIcon =
+                            AppUtils.getActivityStatus(context, launcherActivityName)
+                    }
+                )
                 SwitchPreferenceItem(
                     title = R.string.title_reset_settings,
                     summary = null,
