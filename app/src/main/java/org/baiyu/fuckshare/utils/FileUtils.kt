@@ -59,21 +59,11 @@ object FileUtils {
             } else {
                 copyFileFromUri(context, uri, tempFile)
             }
+            // video to gif
             if (fileType is VideoType && enableVideo2GIF(settings, tempFile)) {
-                val gifFile = File(tempFile.parent, "${tempFile.nameWithoutExtension}.gif")
-                gifFile.outputStream().buffered().use {
-                    val success = frames2gif(
-                        extractFrames(tempFile.path, settings),
-                        gifFile.outputStream().buffered(),
-                        settings
-                    )
-                    if (success) {
-                        tempFile = gifFile
-                        fileType = ImageType.GIF
-                    } else {
-                        gifFile.delete()
-                        Timber.e("Failed to convert video to gif: $uri")
-                    }
+                video2gif(tempFile, settings)?.let {
+                    tempFile = it
+                    fileType = ImageType.GIF
                 }
             }
             // rename
@@ -298,6 +288,36 @@ object FileUtils {
     }
 
     /**
+     * Converts a video to GIF.
+     *
+     * @param video The video file.
+     * @param settings The application settings.
+     * @return The GIF file or null if the operation fails.
+     */
+    fun video2gif(video: File, settings: Settings): File? {
+        val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
+        try {
+            gifFile.outputStream().buffered().use {
+                val success = frames2gif(
+                    extractFrames(video.path, settings),
+                    gifFile.outputStream().buffered(),
+                    settings
+                )
+                if (success) {
+                    return gifFile
+                } else {
+                    gifFile.delete()
+                    Timber.e("Failed to convert video to gif: $video")
+                }
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+            gifFile.delete()
+        }
+        return null
+    }
+
+    /**
      * Extracts frames from a video.
      */
     fun extractFrames(videoPath: String?, settings: Settings): List<Bitmap> {
@@ -329,7 +349,7 @@ object FileUtils {
             start(out)
             setRepeat(0)
             setDelay(settings.convertGIFDelayMS)
-            setQuality(10)
+            setQuality(20)
             frames.forEach { addFrame(it) }
         }
         return gifEncoder.finish()
