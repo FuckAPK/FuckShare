@@ -92,9 +92,19 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             return prefs.getInt(PREF_TOAST_TIME_MS, DEFAULT_TOAST_TIME_MS)
         }
 
+    val enableVideoToGIF: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_VIDEO_TO_GIF, DEFAULT_ENABLE_VIDEO_TO_GIF)
+        }
+
     val videoToGifSizeKB: Int
         get() {
             return prefs.getInt(PREF_VIDEO_TO_GIF_SIZE_KB, DEFAULT_VIDEO_TO_GIF_SIZE_KB)
+        }
+
+    val videoToGIFQuality: Int
+        get() {
+            return prefs.getInt(PREF_VIDEO_TO_GIF_QUALITY, DEFAULT_VIDEO_TO_GIF_QUALITY.value)
         }
 
     val videoToGIFOptions: String
@@ -111,6 +121,16 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             )
         }
 
+    enum class VideoToGIFQualityOptions(val value: Int) {
+        LOW(0),
+        HIGH(1),
+        CUSTOM(2);
+
+        companion object {
+            private val map = entries.associateBy { it.value }
+            fun fromValue(value: Int) = map[value] ?: DEFAULT_VIDEO_TO_GIF_QUALITY
+        }
+    }
 
     companion object {
         const val PREF_ENABLE_HOOK = "enable_hook"
@@ -127,7 +147,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_ARCHIVE_TYPE_SNIFF = "enable_archive_type_sniff"
         const val PREF_ENABLE_FALLBACK_TO_FILE = "enable_fallback_to_file"
         const val PREF_TOAST_TIME_MS = "toast_time"
+        const val PREF_ENABLE_VIDEO_TO_GIF = "enable_video_to_gif"
         const val PREF_VIDEO_TO_GIF_SIZE_KB = "video_to_gif_size_kB"
+        const val PREF_VIDEO_TO_GIF_QUALITY = "video_to_gif_quality"
         const val PREF_VIDEO_TO_GIF_OPTIONS = "video_to_gif_options"
         const val PREF_ENABLE_TEXT_TO_LINK_ACTION = "enable_text_to_link_action"
 
@@ -152,7 +174,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_ARCHIVE_TYPE_SNIFF = false
         const val DEFAULT_ENABLE_FALLBACK_TO_FILE = true
         const val DEFAULT_TOAST_TIME_MS = 500
+        const val DEFAULT_ENABLE_VIDEO_TO_GIF = false
         const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
+        val DEFAULT_VIDEO_TO_GIF_QUALITY = VideoToGIFQualityOptions.LOW
         const val DEFAULT_VIDEO_TO_GIF_OPTIONS = "-i \$input \$output"
         const val DEFAULT_ENABLE_TEXT_TO_LINK_ACTION = false
 

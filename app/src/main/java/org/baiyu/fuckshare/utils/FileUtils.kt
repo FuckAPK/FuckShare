@@ -239,7 +239,8 @@ object FileUtils {
      * Whether to enable video to GIF conversion based on settings and file size.
      */
     private fun enableVideo2GIF(settings: Settings, file: File): Boolean {
-        return file.length() <= settings.videoToGifSizeKB * 1024L
+        return settings.enableVideoToGIF
+                && file.length() <= settings.videoToGifSizeKB * 1024L
                 && !videoHasAudio(file.path)
     }
 
@@ -314,10 +315,20 @@ object FileUtils {
     fun video2gif(video: File, settings: Settings): File? {
         val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
         try {
-            val command = settings.videoToGIFOptions
-                .replace("\$input", video.path)
-                .replace("\$output", gifFile.path)
-                .trim()
+            val command =
+                when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
+                    Settings.VideoToGIFQualityOptions.LOW ->
+                        "-i ${video.path} ${gifFile.path}"
+
+                    Settings.VideoToGIFQualityOptions.HIGH ->
+                        """-i ${video.path} -lavfi "split[a][b];[a]palettegen[p];[b][p]paletteuse=dither=floyd_steinberg" ${gifFile.path}"""
+
+                    Settings.VideoToGIFQualityOptions.CUSTOM ->
+                        settings.videoToGIFOptions
+                            .replace("\$input", video.path)
+                            .replace("\$output", gifFile.path)
+                            .trim()
+                }
             Timber.d("ffmpeg command: $command")
             val session = FFmpegKit
                 .execute(command)

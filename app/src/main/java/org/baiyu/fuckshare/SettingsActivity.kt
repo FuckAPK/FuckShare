@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -187,9 +191,9 @@ fun SettingsScreen() {
         )
     }
 
-    var toastTimeMS by remember {
+    var enableVideoToGIF by remember {
         mutableStateOf(
-            settings.toastTimeMS.toString()
+            settings.enableVideoToGIF
         )
     }
     var video2gifSizeKB by remember {
@@ -197,9 +201,22 @@ fun SettingsScreen() {
             settings.videoToGifSizeKB.toString()
         )
     }
+    var videoToGIFQuality by remember {
+        mutableStateOf(
+            Settings.VideoToGIFQualityOptions.fromValue(
+                settings.videoToGIFQuality
+            )
+        )
+    }
     var videoToGIFOptions by remember {
         mutableStateOf(
             settings.videoToGIFOptions
+        )
+    }
+
+    var toastTimeMS by remember {
+        mutableStateOf(
+            settings.toastTimeMS.toString()
         )
     }
     var enableTextToLinkAction by remember {
@@ -356,6 +373,84 @@ fun SettingsScreen() {
             }
         }
         item {
+            PreferenceCategory(title = R.string.title_video_to_gif) {
+                SwitchPreferenceItem(
+                    title = R.string.title_enable_video_to_gif,
+                    summary = R.string.desc_enable_video_to_gif,
+                    checked = enableVideoToGIF,
+                    onCheckedChange = {
+                        enableVideoToGIF = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_VIDEO_TO_GIF, it) }
+                    }
+                )
+                TextFieldPreference(
+                    title = R.string.title_video_to_gif_size_KB,
+                    summary = null,
+                    enabled = enableVideoToGIF,
+                    value = video2gifSizeKB,
+                    unit = R.string.unit_kB,
+                    onValueChange = {
+                        val intValue =
+                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
+                        if (intValue < 0) {
+                            return@TextFieldPreference
+                        }
+                        video2gifSizeKB = intValue.toString()
+                        prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
+                    },
+                    keyboardType = KeyboardType.Number
+                )
+                val qualityResMap = mapOf(
+                    Settings.VideoToGIFQualityOptions.LOW to R.string.option_low,
+                    Settings.VideoToGIFQualityOptions.HIGH to R.string.option_high,
+                    Settings.VideoToGIFQualityOptions.CUSTOM to R.string.option_custom
+                )
+                DropDownPreference(
+                    title = R.string.title_video_to_gif_quality,
+                    summary = null,
+                    enabled = enableVideoToGIF,
+                    selected = qualityResMap[videoToGIFQuality] ?: R.string.option_low,
+                    content = { onItemSelected ->
+                        qualityResMap.forEach { (quality, resId) ->
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = resId)) },
+                                onClick = {
+                                    videoToGIFQuality = quality
+                                    prefs.edit {
+                                        putInt(
+                                            Settings.PREF_VIDEO_TO_GIF_QUALITY,
+                                            quality.value
+                                        )
+                                    }
+                                    onItemSelected()
+                                }
+                            )
+                        }
+                    }
+                )
+                TextFieldPreference(
+                    title = R.string.title_video_to_gif_options,
+                    summary = R.string.desc_video_to_gif_options,
+                    enabled = enableVideoToGIF && videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
+                    value = videoToGIFOptions,
+                    onValueChange = {
+                        if (it.contains('\n')) {
+                            focusManager.clearFocus()
+                        }
+                        // filter ascii chars
+                        videoToGIFOptions = it
+                            .filter { c -> c != '\n' }
+                        prefs.edit {
+                            putString(
+                                Settings.PREF_VIDEO_TO_GIF_OPTIONS,
+                                videoToGIFOptions
+                            )
+                        }
+                    }
+                )
+            }
+        }
+        item {
             PreferenceCategory(title = R.string.title_miscellaneous) {
                 TextFieldPreference(
                     title = R.string.title_toast_time,
@@ -372,41 +467,6 @@ fun SettingsScreen() {
                         prefs.edit { putInt(Settings.PREF_TOAST_TIME_MS, intValue) }
                     },
                     keyboardType = KeyboardType.Number
-                )
-                TextFieldPreference(
-                    title = R.string.title_video_to_gif_size_KB,
-                    summary = R.string.desc_video_to_gif_size_KB,
-                    value = video2gifSizeKB,
-                    unit = R.string.unit_kB,
-                    onValueChange = {
-                        val intValue =
-                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
-                        if (intValue < 0) {
-                            return@TextFieldPreference
-                        }
-                        video2gifSizeKB = intValue.toString()
-                        prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
-                    },
-                    keyboardType = KeyboardType.Number
-                )
-                TextFieldPreference(
-                    title = R.string.title_video_to_gif_options,
-                    summary = R.string.desc_video_to_gif_options,
-                    value = videoToGIFOptions,
-                    onValueChange = {
-                        if (it.contains('\n')) {
-                            focusManager.clearFocus()
-                        }
-                        // filter ascii chars
-                        videoToGIFOptions = it
-                            .filter { c -> c != '\n' }
-                        prefs.edit {
-                            putString(
-                                Settings.PREF_VIDEO_TO_GIF_OPTIONS,
-                                videoToGIFOptions
-                            )
-                        }
-                    }
                 )
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     SwitchPreferenceItem(
@@ -440,7 +500,6 @@ fun SettingsScreen() {
                                     )
                                 }
                             }
-
                         }
                     )
                 }
@@ -563,6 +622,7 @@ fun TextFieldPreference(
     @StringRes title: Int,
     @StringRes summary: Int? = null,
     @StringRes unit: Int? = null,
+    enabled: Boolean = true,
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
@@ -575,17 +635,18 @@ fun TextFieldPreference(
         Text(
             text = stringResource(id = title),
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
         )
         if (summary != null) {
             Text(
                 text = stringResource(id = summary),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(0.6f)
+                color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 0.6f else 0.4f)
             )
         }
         val focusManager = LocalFocusManager.current
         OutlinedTextField(
+            enabled = enabled,
             value = value,
             onValueChange = onValueChange,
             singleLine = false,
@@ -599,7 +660,7 @@ fun TextFieldPreference(
                     Text(
                         text = stringResource(id = it),
                         style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.primary.copy(if (enabled) 1.0f else 0.6f)
                     )
                 }
             },
@@ -609,5 +670,57 @@ fun TextFieldPreference(
                 .padding(vertical = 4.dp),
             textStyle = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+fun DropDownPreference(
+    @StringRes title: Int,
+    @StringRes summary: Int? = null,
+    enabled: Boolean = true,
+    @StringRes selected: Int,
+    content: @Composable ColumnScope.(onItemSelected: () -> Unit) -> Unit
+) {
+    var expended by remember { mutableStateOf(false) }
+    Box(
+        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp).height(50.dp)
+            .clickable { expended = true }) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = stringResource(id = title),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
+                )
+                if (summary != null) {
+                    Text(
+                        text = stringResource(id = summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
+                    )
+                }
+            }
+            Box(
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Text(
+                    text = stringResource(selected),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary.copy(if (enabled) 1.0f else 0.6f)
+                )
+                DropdownMenu(
+                    expanded = expended,
+                    onDismissRequest = { expended = false },
+                ) {
+                    if (enabled) {
+                        content { expended = false }
+                    }
+                }
+            }
+        }
     }
 }

@@ -39,8 +39,7 @@
     <string name="desc_exif_tags_to_keep">separate by comma or space, blank to disable</string>
     <string name="desc_toast_time">set to 0 to disable</string>
     <string name="title_enable_video_rename">Auto rename videos</string>
-    <string name="title_video_to_gif_size_KB">Video to GIF size</string>
-    <string name="desc_video_to_gif_size_KB">set to 0 to disable, only video without audio track</string>
+    <string name="title_video_to_gif_size_KB">Max size of video to GIF</string>
     <string name="title_convert_gif_delay_MS">Delay when convert to GIF</string>
     <string name="desc_convert_gif_delay_MS">at least 1</string>
     <string name="unit_ms" translatable="false">ms</string>
@@ -55,4 +54,11 @@
     <string name="desc_video_to_gif_options">$input and $output are used as input and output path</string>
     <string name="video_to_gif_failed">Failed to convert video to GIF！</string>
     <string name="toast_permission_denied">Failed to grant permission!</string>
+    <string name="option_low">Low</string>
+    <string name="option_high">High</string>
+    <string name="option_custom">Custom</string>
+    <string name="title_video_to_gif_quality">Video to GIF quality</string>
+    <string name="title_video_to_gif">Video To GIF</string>
+    <string name="title_enable_video_to_gif">Enable video to gif</string>
+    <string name="desc_enable_video_to_gif">only video without audio track will be conveted</string>
 </resources>

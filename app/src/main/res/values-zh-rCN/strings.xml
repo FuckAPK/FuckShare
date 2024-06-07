@@ -27,8 +27,7 @@
     <string name="desc_exif_tags_to_keep">用逗号或空格分隔，留空禁用</string>
     <string name="desc_toast_time">设为 0 关闭</string>
     <string name="title_enable_video_rename">视频重命名</string>
-    <string name="title_video_to_gif_size_KB">视频转GIF大小</string>
-    <string name="desc_video_to_gif_size_KB">设为 0 关闭，仅限声音的视频</string>
+    <string name="title_video_to_gif_size_KB">视频最大文件大小</string>
     <string name="title_convert_gif_delay_MS">转为 GIF 时的帧间隔</string>
     <string name="desc_convert_gif_delay_MS">至少为 1</string>
     <string name="title_reset_settings">重置设置</string>
@@ -41,4 +40,11 @@
     <string name="desc_video_to_gif_options">使用 $input $output 作为输入输出路径</string>
     <string name="video_to_gif_failed">视频转换GIF失败！</string>
     <string name="toast_permission_denied">权限获取失败！</string>
+    <string name="option_low">低</string>
+    <string name="option_high">高</string>
+    <string name="option_custom">自定义</string>
+    <string name="title_video_to_gif_quality">视频转GIF质量</string>
+    <string name="title_video_to_gif">视频转GIF</string>
+    <string name="title_enable_video_to_gif">启用视频转GIF</string>
+    <string name="desc_enable_video_to_gif">仅限无音轨的视频</string>
 </resources>
