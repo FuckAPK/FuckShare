@@ -112,7 +112,7 @@ class HandleShareActivity : Activity() {
      * extract urls from text
      */
     private fun extractUrls(text: String): List<String> {
-        val urlPattern = """https?://[^\s，,）)]+""".toRegex()
+        val urlPattern = """https?://[^\s，,“”"()（）【】\[\]]+(?<!\.)""".toRegex()
         val urls = urlPattern.findAll(text).map { it.value }.toList()
         return urls
     }
