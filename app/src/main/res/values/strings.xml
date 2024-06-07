@@ -48,7 +48,7 @@
     <string name="title_reset_settings">Reset settings</string>
     <string name="toast_settings_reset">RESET!</string>
     <string name="compose_shortcut_reset_settings">Reset settings</string>
-    <string name="title_overlay_permission">Grant display over other apps permission</string>
-    <string name="desc_overlay_permission">used for start custom chooser action on android 14</string>
     <string name="toast_permission_granted">permission granted!</string>
+    <string name="title_enable_text_to_link_action">Enable text to link chooser action</string>
+    <string name="desc_enable_text_to_link_action">need display over other app permission</string>
 </resources>

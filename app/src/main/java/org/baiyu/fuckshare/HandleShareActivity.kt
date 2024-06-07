@@ -81,7 +81,7 @@ class HandleShareActivity : Activity() {
                 chooserIntent,
                 Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
             )
-            if (!AppUtils.needOverlayPermission(this)) {
+            if (settings.enableTextToLinkAction() && AppUtils.hasOverlayPermission(this)) {
                 val exists = IntentUtils.getParcelableArrayExtra<ChooserAction>(
                     chooserIntent,
                     Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS

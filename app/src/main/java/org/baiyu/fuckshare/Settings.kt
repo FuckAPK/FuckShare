@@ -78,6 +78,10 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             return prefs.getInt(PREF_CONVERT_GIF_DELAY_MS, DEFAULT_CONVERT_GIF_DELAY_MS)
         }
 
+    fun enableTextToLinkAction(): Boolean {
+        return prefs.getBoolean(PREF_ENABLE_TEXT_TO_LINK_ACTION, DEFAULT_ENABLE_TEXT_TO_LINK_ACTION)
+    }
+
     companion object {
         const val PREF_ENABLE_HOOK = "enable_hook"
         const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
@@ -95,6 +99,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_TOAST_TIME_MS = "toast_time"
         const val PREF_VIDEO_TO_GIF_SIZE_KB = "video_to_gif_size_kB"
         const val PREF_CONVERT_GIF_DELAY_MS = "convert_gif_delay"
+        const val PREF_ENABLE_TEXT_TO_LINK_ACTION = "enable_text_to_link_action"
 
         const val DEFAULT_ENABLE_HOOK = false
         const val DEFAULT_ENABLE_FORCE_FORWARD_HOOK = false
@@ -119,6 +124,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_TOAST_TIME_MS = 500
         const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
         const val DEFAULT_CONVERT_GIF_DELAY_MS = 100
+        const val DEFAULT_ENABLE_TEXT_TO_LINK_ACTION = false
 
         @Volatile
         private var INSTANCE: Settings? = null

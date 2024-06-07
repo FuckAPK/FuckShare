@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.CountDownTimer
 import android.widget.Toast
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -155,14 +154,13 @@ object AppUtils {
     }
 
     /**
-     * Checks if the overlay permission is granted.
+     * Checks if the app has overlay permission.
      *
-     * @param context The context used to access the package manager.
-     * @return `true` if the overlay permission is granted, otherwise `false`.
+     * @param context The context used to access the application info.
+     * @return `true` if the app has overlay permission, otherwise `false`.
      */
-    fun needOverlayPermission(context: Context): Boolean {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                && !android.provider.Settings.canDrawOverlays(context)
+    fun hasOverlayPermission(context: Context): Boolean {
+        return android.provider.Settings.canDrawOverlays(context)
     }
 
     /**

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.ViewTreeObserver
 import android.widget.Toast
@@ -96,12 +97,13 @@ fun SettingsScreen() {
     val settings = remember { Settings.getInstance(prefs) }
     val isKeyboardOpen by keyboardAsState()
     val launcherActivityName = "${context.packageName}.LauncherActivity"
-    val needOverlayPermission = remember {
-        AppUtils.needOverlayPermission(context)
-    }
     val permissionRequestLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
+        if (AppUtils.hasOverlayPermission(context)) {
+            prefs.edit { putBoolean(Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION, true) }
+            Toast.makeText(context, R.string.toast_permission_granted, Toast.LENGTH_SHORT).show()
+        }
         (context as ComponentActivity).recreate()
     }
 
@@ -192,6 +194,11 @@ fun SettingsScreen() {
     var convertGIFDelayMS by remember {
         mutableStateOf(
             settings.convertGIFDelayMS.toString()
+        )
+    }
+    var enableTextToLinkAction by remember {
+        mutableStateOf(
+            settings.enableTextToLinkAction() && AppUtils.hasOverlayPermission(context)
         )
     }
     var enableLauncherIcon by remember {
@@ -398,19 +405,39 @@ fun SettingsScreen() {
                             AppUtils.getActivityStatus(context, launcherActivityName)
                     }
                 )
-                if (needOverlayPermission) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                     SwitchPreferenceItem(
-                        title = R.string.title_overlay_permission,
-                        summary = R.string.desc_overlay_permission,
-                        checked = true,
-                        noSwitch = true,
+                        title = R.string.title_enable_text_to_link_action,
+                        summary = R.string.desc_enable_text_to_link_action,
+                        checked = enableTextToLinkAction,
                         onCheckedChange = {
-                            permissionRequestLauncher.launch(
-                                Intent(
-                                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                    Uri.parse("package:${context.packageName}")
-                                )
-                            )
+                            if (it) {
+                                if (AppUtils.hasOverlayPermission(context)) {
+                                    enableTextToLinkAction = true
+                                    prefs.edit {
+                                        putBoolean(
+                                            Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION,
+                                            true
+                                        )
+                                    }
+                                } else {
+                                    permissionRequestLauncher.launch(
+                                        Intent(
+                                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                            Uri.parse("package:${context.packageName}")
+                                        )
+                                    )
+                                }
+                            } else {
+                                enableTextToLinkAction = false
+                                prefs.edit {
+                                    putBoolean(
+                                        Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION,
+                                        false
+                                    )
+                                }
+                            }
+
                         }
                     )
                 }
