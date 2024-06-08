@@ -32,34 +32,18 @@ enum class ImageType(
     WEBP(
         true, "webp", setOf(
             mapOf(
-                0 to byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte()),
-                8 to byteArrayOf(0x57.toByte(), 0x45.toByte(), 0x42.toByte(), 0x50.toByte())
+                0 to "RIFF".toByteArray(Charsets.US_ASCII),
+                8 to "WEBP".toByteArray(Charsets.US_ASCII)
             )
         )
     ),
     GIF(
         false, "gif", setOf(
             mapOf(
-                0 to
-                        byteArrayOf(
-                            0x47.toByte(),
-                            0x49.toByte(),
-                            0x46.toByte(),
-                            0x38.toByte(),
-                            0x37.toByte(),
-                            0x61.toByte()
-                        )
+                0 to "GIF87a".toByteArray(Charsets.US_ASCII)
             ),
             mapOf(
-                0 to
-                        byteArrayOf(
-                            0x47.toByte(),
-                            0x49.toByte(),
-                            0x46.toByte(),
-                            0x38.toByte(),
-                            0x39.toByte(),
-                            0x61.toByte()
-                        )
+                0 to "GIF89a".toByteArray(Charsets.US_ASCII)
             )
         )
     ),
@@ -78,22 +62,14 @@ enum class ImageType(
     PSD(
         false, "psd", setOf(
             mapOf(
-                0 to
-                        byteArrayOf(0x38.toByte(), 0x42.toByte(), 0x50.toByte(), 0x53.toByte())
+                0 to "8BPS".toByteArray(Charsets.US_ASCII)
             )
         )
     ),
     SVG(
         false, "svg", setOf(
             mapOf(
-                0 to
-                        byteArrayOf(
-                            0x3c.toByte(),
-                            0x73.toByte(),
-                            0x76.toByte(),
-                            0x67.toByte(),
-                            0x20.toByte()
-                        )
+                0 to "<svg ".toByteArray(Charsets.US_ASCII)
             )
         )
     );

@@ -7,8 +7,7 @@ enum class ArchiveType(
     LZIP(
         "lz", setOf(
             mapOf(
-                0 to
-                        byteArrayOf(0x4C.toByte(), 0x5A.toByte(), 0x49.toByte(), 0x50.toByte())
+                0 to "LZIP".toByteArray(Charsets.US_ASCII)
             )
         )
     ),
@@ -33,11 +32,7 @@ enum class ArchiveType(
             mapOf(
                 0 to
                         byteArrayOf(
-                            0x75.toByte(),
-                            0x73.toByte(),
-                            0x74.toByte(),
-                            0x61.toByte(),
-                            0x72.toByte(),
+                            *"ustar".toByteArray(Charsets.US_ASCII),
                             0x00.toByte(),
                             0x30.toByte(),
                             0x30.toByte()
@@ -46,11 +41,7 @@ enum class ArchiveType(
             mapOf(
                 0 to
                         byteArrayOf(
-                            0x75.toByte(),
-                            0x73.toByte(),
-                            0x74.toByte(),
-                            0x61.toByte(),
-                            0x72.toByte(),
+                            *"ustar".toByteArray(Charsets.US_ASCII),
                             0x20.toByte(),
                             0x20.toByte(),
                             0x00.toByte()
@@ -81,16 +72,9 @@ enum class ArchiveType(
     XZ(
         "xz", setOf(
             mapOf(
-                0 to
-                        byteArrayOf(
-                            0xFD.toByte(),
-                            0x37.toByte(),
-                            0x7A.toByte(),
-                            0x58.toByte(),
-                            0x5A.toByte(),
-                            0x00.toByte()
-                        )
+                0 to byteArrayOf(0xFD.toByte()),
+                1 to "7zXZ".toByteArray(Charsets.US_ASCII)
             )
         )
-    )
+    );
 }

@@ -1,5 +1,6 @@
 package org.baiyu.fuckshare.filetype
 
+@Suppress("SpellCheckingInspection")
 enum class VideoType(
     override val extension: String,
     override val signatures: Set<Map<Int, ByteArray>>
@@ -8,63 +9,39 @@ enum class VideoType(
         "mp4", setOf(
             mapOf(
                 4 to
-                        byteArrayOf(
-                            0x66.toByte(),
-                            0x74.toByte(),
-                            0x79.toByte(),
-                            0x70.toByte(),
-                            0x69.toByte(), // isom
-                            0x73.toByte(),
-                            0x6F.toByte(),
-                            0x6D.toByte()
-                        )
+                        "ftypisom".toByteArray(Charsets.US_ASCII)
             ),
             mapOf(
                 4 to
-                        byteArrayOf(
-                            0x66.toByte(),
-                            0x74.toByte(),
-                            0x79.toByte(),
-                            0x70.toByte(),
-                            0x69.toByte(), // iso2
-                            0x73.toByte(),
-                            0x6F.toByte(),
-                            0x32.toByte()
-                        )
+                        "ftypiso2".toByteArray(Charsets.US_ASCII)
             ),
             mapOf(
                 4 to
-                        byteArrayOf(
-                            0x66.toByte(),
-                            0x74.toByte(),
-                            0x79.toByte(),
-                            0x70.toByte(),
-                            0x6D.toByte(), // mp41
-                            0x70.toByte(),
-                            0x34.toByte(),
-                            0x31.toByte()
-                        )
+                        "ftypiso5".toByteArray(Charsets.US_ASCII)
             ),
             mapOf(
                 4 to
-                        byteArrayOf(
-                            0x66.toByte(),
-                            0x74.toByte(),
-                            0x79.toByte(),
-                            0x70.toByte(),
-                            0x6D.toByte(), // mp42
-                            0x70.toByte(),
-                            0x34.toByte(),
-                            0x32.toByte()
-                        )
+                        "ftypmmp4".toByteArray(Charsets.US_ASCII)
+            ),
+            mapOf(
+                4 to
+                        "ftypmp41".toByteArray(Charsets.US_ASCII)
+            ),
+            mapOf(
+                4 to
+                        "ftypmp42".toByteArray(Charsets.US_ASCII)
+            ),
+            mapOf(
+                4 to
+                        "ftypavc1".toByteArray(Charsets.US_ASCII)
             )
         )
     ),
     AVI(
         "avi", setOf(
             mapOf(
-                0 to byteArrayOf(0x52.toByte(), 0x49.toByte(), 0x46.toByte(), 0x46.toByte()),
-                8 to byteArrayOf(0x41.toByte(), 0x56.toByte(), 0x49.toByte(), 0x20.toByte())
+                0 to "RIFF".toByteArray(Charsets.US_ASCII),
+                8 to "AVI ".toByteArray(Charsets.US_ASCII)
             )
         )
     ),
