@@ -250,7 +250,7 @@ object FileUtils {
      */
     private fun enableVideo2GIF(settings: Settings, file: File): Boolean {
         return settings.enableVideoToGIF
-                && file.length() > settings.videoToGifSizeKB * 1024L
+                && file.length() <= settings.videoToGifSizeKB * 1024L
                 && (settings.videoToGIFForceWithAudio || !videoHasAudio(file.path))
     }
 
