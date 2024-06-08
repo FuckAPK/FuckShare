@@ -262,7 +262,12 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
             settings.enableVideoToGIF
         )
     }
-    var video2gifSizeKB by remember {
+    var videoToGIFForceWithAudio by remember {
+        mutableStateOf(
+            settings.videoToGIFForceWithAudio
+        )
+    }
+    var videoToGIFSizeKB by remember {
         mutableStateOf(
             settings.videoToGifSizeKB.toString()
         )
@@ -289,11 +294,21 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                 prefs.edit { putBoolean(Settings.PREF_ENABLE_VIDEO_TO_GIF, it) }
             }
         )
+        SwitchPreferenceItem(
+            title = R.string.title_video_to_gif_force_with_audio,
+            summary = null,
+            enabled = enableVideoToGIF,
+            checked = videoToGIFForceWithAudio,
+            onCheckedChange = {
+                videoToGIFForceWithAudio = it
+                prefs.edit { putBoolean(Settings.PREF_VIDEO_TO_GIF_FORCE_WITH_AUDIO, it) }
+            }
+        )
         TextFieldPreference(
             title = R.string.title_video_to_gif_size_KB,
             summary = null,
             enabled = enableVideoToGIF,
-            value = video2gifSizeKB,
+            value = videoToGIFSizeKB,
             unit = R.string.unit_kB,
             onValueChange = {
                 val intValue =
@@ -301,7 +316,7 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                 if (intValue < 0) {
                     return@TextFieldPreference
                 }
-                video2gifSizeKB = intValue.toString()
+                videoToGIFSizeKB = intValue.toString()
                 prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
             },
             keyboardType = KeyboardType.Number

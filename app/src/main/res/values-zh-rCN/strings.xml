@@ -45,4 +45,5 @@
     <string name="title_video_to_gif">视频转GIF</string>
     <string name="title_enable_video_to_gif">启用视频转GIF</string>
     <string name="desc_enable_video_to_gif">仅限无音轨的视频</string>
+    <string name="title_video_to_gif_force_with_audio">转换有声音的视频</string>
 </resources>

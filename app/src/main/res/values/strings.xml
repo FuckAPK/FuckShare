@@ -59,4 +59,5 @@
     <string name="title_video_to_gif">Video To GIF</string>
     <string name="title_enable_video_to_gif">Enable video to gif</string>
     <string name="desc_enable_video_to_gif">only video without audio track will be conveted</string>
+    <string name="title_video_to_gif_force_with_audio">Convert video with audio</string>
 </resources>

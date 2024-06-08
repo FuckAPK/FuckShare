@@ -45,6 +45,13 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         get() {
             return prefs.getBoolean(PREF_ENABLE_VIDEO_TO_GIF, DEFAULT_ENABLE_VIDEO_TO_GIF)
         }
+    val videoToGIFForceWithAudio: Boolean
+        get() {
+            return prefs.getBoolean(
+                PREF_VIDEO_TO_GIF_FORCE_WITH_AUDIO,
+                DEFAULT_VIDEO_TO_GIF_FORCE_WITH_AUDIO
+            )
+        }
     val videoToGifSizeKB: Int
         get() {
             return prefs.getInt(PREF_VIDEO_TO_GIF_SIZE_KB, DEFAULT_VIDEO_TO_GIF_SIZE_KB)
@@ -127,6 +134,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_FILE_RENAME = "enable_file_rename"
 
         const val PREF_ENABLE_VIDEO_TO_GIF = "enable_video_to_gif"
+        const val PREF_VIDEO_TO_GIF_FORCE_WITH_AUDIO = "video_to_gif_ignore_audio"
         const val PREF_VIDEO_TO_GIF_SIZE_KB = "video_to_gif_size_kB"
         const val PREF_VIDEO_TO_GIF_QUALITY = "video_to_gif_quality"
         const val PREF_VIDEO_TO_GIF_CUSTOM_OPTION = "video_to_gif_custom_option"
@@ -157,6 +165,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_FILE_RENAME = false
 
         const val DEFAULT_ENABLE_VIDEO_TO_GIF = false
+        const val DEFAULT_VIDEO_TO_GIF_FORCE_WITH_AUDIO = false
         const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
         val DEFAULT_VIDEO_TO_GIF_QUALITY = VideoToGIFQualityOptions.LOW
         const val DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION = "-i \$input \$output"
