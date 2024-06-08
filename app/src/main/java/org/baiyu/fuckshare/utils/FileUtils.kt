@@ -44,6 +44,7 @@ object FileUtils {
      * @param uri The original URI to refresh.
      * @return The refreshed URI or null if the operation fails.
      */
+    @OptIn(ExperimentalStdlibApi::class)
     fun refreshUri(context: Context, settings: Settings, uri: Uri): Uri? {
         val originName = getRealFileName(context, uri) ?: AppUtils.randomString
         var tempFile = File(context.cacheDir, AppUtils.randomString)
@@ -53,7 +54,14 @@ object FileUtils {
                 ByteUtils.readNBytes(uin, magickBytes)
             }
             var fileType = getFileType(magickBytes)
-            Timber.d("File type: $fileType")
+            val magickByteStr = magickBytes.joinToString(separator = "") {
+                "%02X".format(it)
+            }
+            if (fileType == OtherType.UNKNOWN) {
+                Timber.w("Unknown file type: $uri, magick bytes: $magickByteStr")
+            } else {
+                Timber.i("File type: $fileType, magick bytes: $magickByteStr")
+            }
             if (fileType is ImageType
                 && fileType.supportMetadata
                 && settings.enableRemoveExif
