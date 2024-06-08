@@ -193,11 +193,6 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             settings.enableFileTypeSniff
         )
     }
-    var enableArchiveTypeSniff by remember {
-        mutableStateOf(
-            settings.enableArchiveTypeSniff
-        )
-    }
     var enableImageRename by remember {
         mutableStateOf(
             settings.enableImageRename
@@ -224,16 +219,6 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         SwitchPreferenceItem(
-            title = R.string.title_enable_archive_type_sniff,
-            summary = R.string.desc_enable_archive_type_sniff,
-            checked = enableArchiveTypeSniff,
-            enabled = enableFileTypeSniff,
-            onCheckedChange = {
-                enableArchiveTypeSniff = it
-                prefs.edit { putBoolean(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF, it) }
-            }
-        )
-        SwitchPreferenceItem(
             title = R.string.title_enable_image_rename,
             summary = null,
             checked = enableImageRename,
@@ -252,7 +237,7 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         SwitchPreferenceItem(
-            title = R.string.title_enable_file_rename,
+            title = R.string.title_enable_others_rename,
             summary = null,
             checked = enableFileRename,
             onCheckedChange = {
@@ -289,9 +274,9 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
             )
         )
     }
-    var videoToGIFOptions by remember {
+    var videoToGIFCustomOption by remember {
         mutableStateOf(
-            settings.videoToGIFOptions
+            settings.videoToGIFCustomOption
         )
     }
     PreferenceCategory(title = R.string.title_video_to_gif) {
@@ -345,21 +330,21 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         TextFieldPreference(
-            title = R.string.title_video_to_gif_options,
-            summary = R.string.desc_video_to_gif_options,
+            title = R.string.title_video_to_gif_custom_option,
+            summary = R.string.desc_video_to_gif_custom_option,
             enabled = enableVideoToGIF && videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
-            value = videoToGIFOptions,
+            value = videoToGIFCustomOption,
             onValueChange = {
                 if (it.contains('\n')) {
                     focusManager.clearFocus()
                 }
                 // filter ascii chars
-                videoToGIFOptions = it
+                videoToGIFCustomOption = it
                     .filter { c -> c != '\n' }
                 prefs.edit {
                     putString(
-                        Settings.PREF_VIDEO_TO_GIF_OPTIONS,
-                        videoToGIFOptions
+                        Settings.PREF_VIDEO_TO_GIF_CUSTOM_OPTION,
+                        videoToGIFCustomOption
                     )
                 }
             }

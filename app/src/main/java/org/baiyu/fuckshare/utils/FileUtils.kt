@@ -17,7 +17,6 @@ import org.baiyu.fuckshare.exifhelper.ImageFormatException
 import org.baiyu.fuckshare.exifhelper.JpegExifHelper
 import org.baiyu.fuckshare.exifhelper.PngExifHelper
 import org.baiyu.fuckshare.exifhelper.WebpExifHelper
-import org.baiyu.fuckshare.filetype.ArchiveType
 import org.baiyu.fuckshare.filetype.AudioType
 import org.baiyu.fuckshare.filetype.FileType
 import org.baiyu.fuckshare.filetype.ImageType
@@ -260,11 +259,7 @@ object FileUtils {
      */
     private fun getExt(settings: Settings, fileType: FileType, originName: String): String? {
         var extension: String? = if (settings.enableFileTypeSniff) {
-            if (fileType is ArchiveType && !settings.enableArchiveTypeSniff) {
-                null
-            } else {
-                fileType.extension
-            }
+            fileType.extension
         } else {
             null
         }
@@ -308,7 +303,6 @@ object FileUtils {
             *ImageType.entries.toTypedArray(),
             *VideoType.entries.toTypedArray(),
             *AudioType.entries.toTypedArray(),
-            *ArchiveType.entries.toTypedArray(),
             *OtherType.entries.toTypedArray()
         )
         return fileTypes.parallelStream()
@@ -335,7 +329,7 @@ object FileUtils {
                         """-i ${video.path} -lavfi "split[a][b];[a]palettegen[p];[b][p]paletteuse=dither=floyd_steinberg" ${gifFile.path}"""
 
                     Settings.VideoToGIFQualityOptions.CUSTOM ->
-                        settings.videoToGIFOptions
+                        settings.videoToGIFCustomOption
                             .replace("\$input", video.path)
                             .replace("\$output", gifFile.path)
                             .trim()

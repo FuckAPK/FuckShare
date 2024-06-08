@@ -2,7 +2,7 @@
 <resources>
     <string name="title_enable_remove_exif">移除元数据</string>
     <string name="title_enable_image_rename">图片重命名</string>
-    <string name="title_enable_file_rename">文件重命名</string>
+    <string name="title_enable_others_rename">其他文件重命名</string>
     <string name="title_exif_tags_to_keep">保留的元数据</string>
     <string name="title_enable_file_type_sniff">嗅探扩展名</string>
     <string name="desc_enable_remove_exif">当前支持 jpeg、png 和 webp</string>
@@ -22,8 +22,6 @@
     <string name="desc_enable_viewer">在打开方式中显示</string>
     <string name="title_enable_viewer">开启查看器</string>
     <string name="fail_to_process">%1$d/%2$d 处理失败</string>
-    <string name="title_enable_archive_type_sniff">嗅探压缩文件格式</string>
-    <string name="desc_enable_archive_type_sniff">非常可能出现错误</string>
     <string name="desc_exif_tags_to_keep">用逗号或空格分隔，留空禁用</string>
     <string name="desc_toast_time">设为 0 关闭</string>
     <string name="title_enable_video_rename">视频重命名</string>
@@ -36,8 +34,8 @@
     <string name="toast_permission_granted">权限已获取！</string>
     <string name="title_enable_text_to_link_action">选择界面显示打开链接</string>
     <string name="desc_enable_text_to_link_action">需要在其他应用上显示权限</string>
-    <string name="title_video_to_gif_options">视频转GIF ffmpeg选项</string>
-    <string name="desc_video_to_gif_options">使用 $input $output 作为输入输出路径</string>
+    <string name="title_video_to_gif_custom_option">视频转GIF ffmpeg自定义选项</string>
+    <string name="desc_video_to_gif_custom_option">使用 $input $output 作为输入输出路径</string>
     <string name="video_to_gif_failed">视频转换GIF失败！</string>
     <string name="toast_permission_denied">权限获取失败！</string>
     <string name="option_low">低</string>
