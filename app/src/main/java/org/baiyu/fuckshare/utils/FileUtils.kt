@@ -44,7 +44,7 @@ object FileUtils {
      * @param uri The original URI to refresh.
      * @return The refreshed URI or null if the operation fails.
      */
-    fun refreshUri(context: Context, settings: Settings, uri: Uri): Uri? {
+    fun refreshUri(context: Context, settings: Settings, uri: Uri): Pair<Uri, FileType>? {
         val originName = getRealFileName(context, uri) ?: AppUtils.randomString
         var tempFile = File(context.cacheDir, AppUtils.randomString)
         return try {
@@ -91,11 +91,15 @@ object FileUtils {
                     Timber.e("Failed to rename: $tempFile -> $it")
                 }
             }
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                tempFile
-            )
+            (
+                    FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        tempFile
+                    )
+                            to fileType
+                    )
+
         } catch (e: IOException) {
             Timber.e(e)
             null

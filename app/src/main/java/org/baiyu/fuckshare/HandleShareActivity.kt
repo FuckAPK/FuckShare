@@ -4,15 +4,20 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.service.chooser.ChooserAction
 import androidx.core.app.ShareCompat.IntentBuilder
+import org.baiyu.fuckshare.filetype.AudioType
+import org.baiyu.fuckshare.filetype.FileType
+import org.baiyu.fuckshare.filetype.ImageType
+import org.baiyu.fuckshare.filetype.VideoType
 import org.baiyu.fuckshare.utils.AppUtils
 import org.baiyu.fuckshare.utils.FileUtils
 import org.baiyu.fuckshare.utils.IntentUtils
 import timber.log.Timber
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
 
 class HandleShareActivity : Activity() {
     @SuppressLint("WorldReadableFiles")
@@ -44,26 +49,57 @@ class HandleShareActivity : Activity() {
             text?.let { setText(it) }
         }
 
-        val nullCount = AtomicInteger(0)
         uris.parallelStream()
             .map { FileUtils.refreshUri(this, settings, it) }
-            .forEachOrdered {
-                it?.let { ib.addStream(it) }
-                    ?: nullCount.incrementAndGet()
+            .collect(Collectors.toList())
+            .also {
+                val failedCount = it.count { p -> p == null }
+                if (failedCount > 0) {
+                    Timber.e("Failed to process $failedCount of ${uris.size}")
+                    AppUtils.showToast(
+                        this,
+                        resources.getString(R.string.fail_to_process)
+                            .format(failedCount, uris.size),
+                        settings.toastTimeMS
+                    )
+                }
+            }
+            .filterNotNull()
+            .also {
+                retrieveType(it)?.let { type ->
+                    Timber.i("type retrieved: $type")
+                    ib.setType(type)
+                }
+            }
+            .forEach {
+                ib.addStream(it.first)
             }
 
-        nullCount.get().let {
-            if (it > 0) {
-                Timber.e("Failed to process $it of ${uris.size}")
-                AppUtils.showToast(
-                    this,
-                    resources.getString(R.string.fail_to_process).format(it, uris.size),
-                    settings.toastTimeMS
-                )
+        val chooserIntent = setupChooser(ib)
+        Timber.d("chooser intent: $chooserIntent")
+        startActivity(chooserIntent)
+    }
+
+    fun retrieveType(pairs: List<Pair<Uri, FileType>>): String? {
+        if (pairs.isEmpty()) {
+            return null
+        }
+        val allSameType = pairs.map { it.second.javaClass }
+            .all { it == pairs[0].second.javaClass }
+        if (allSameType) {
+            return when (pairs[0].second) {
+                is ImageType -> "image/*"
+                is VideoType -> "video/*"
+                is AudioType -> "audio/*"
+                else -> null
             }
         }
+        return null
+    }
 
+    fun setupChooser(ib: IntentBuilder): Intent {
         val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
+        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()
@@ -105,8 +141,7 @@ class HandleShareActivity : Activity() {
                 }
             }
         }
-        Timber.d("chooser intent: $chooserIntent")
-        startActivity(chooserIntent)
+        return chooserIntent
     }
 
     /**

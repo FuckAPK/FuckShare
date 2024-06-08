@@ -57,7 +57,7 @@ class ContentProxyActivity : ComponentActivity() {
         val resultIntent = Intent()
         data.data?.let { originUri ->
             FileUtils.refreshUri(this, settings, originUri)?.let {
-                resultIntent.data = it
+                resultIntent.data = it.first
             } ?: run {
                 Timber.e("Failed to process $originUri")
             }
@@ -71,24 +71,24 @@ class ContentProxyActivity : ComponentActivity() {
             val resultUris = uris
                 .parallelStream()
                 .map { FileUtils.refreshUri(this, settings, it) }
-                .filter { it != null }
-                .map { ClipData.Item(it) }
                 .collect(Collectors.toList())
-
-            (uris.count() - resultUris.size).let {
-                if (it > 0) {
-                    Timber.e("Failed to process $it of ${uris.count()}")
-                    AppUtils.showToast(
-                        this,
-                        resources.getString(R.string.fail_to_process).format(it, uris.count()),
-                        settings.toastTimeMS
-                    )
+                .also {
+                    val failedCount = it.count { p -> p == null }
+                    if (failedCount > 0) {
+                        Timber.e("Failed to process $it of ${uris.count()}")
+                        AppUtils.showToast(
+                            this,
+                            resources.getString(R.string.fail_to_process).format(it, uris.count()),
+                            settings.toastTimeMS
+                        )
+                    }
                 }
-            }
+                .filterNotNull()
+                .map { ClipData.Item(it.first) }
 
             if (resultUris.isNotEmpty()) {
-                val resultClipData = ClipData(clipData.description, resultUris.removeAt(0))
-                resultUris.forEach { resultClipData.addItem(it) }
+                val resultClipData = ClipData(clipData.description, resultUris[0])
+                resultUris.drop(1).forEach { resultClipData.addItem(it) }
                 resultIntent.clipData = resultClipData
             } else {
                 Timber.w("result uris is empty")
