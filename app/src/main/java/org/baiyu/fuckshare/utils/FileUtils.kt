@@ -44,7 +44,6 @@ object FileUtils {
      * @param uri The original URI to refresh.
      * @return The refreshed URI or null if the operation fails.
      */
-    @OptIn(ExperimentalStdlibApi::class)
     fun refreshUri(context: Context, settings: Settings, uri: Uri): Uri? {
         val originName = getRealFileName(context, uri) ?: AppUtils.randomString
         var tempFile = File(context.cacheDir, AppUtils.randomString)

@@ -1,6 +1,7 @@
 package org.baiyu.fuckshare
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Rect
 import android.net.Uri
@@ -13,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -102,19 +104,6 @@ fun SettingsScreen() {
     val prefs = remember { AppUtils.getPrefs(context) }
     val settings = remember { Settings.getInstance(prefs) }
     val isKeyboardOpen by keyboardAsState()
-    val launcherActivityName = "${context.packageName}.LauncherActivity"
-    val permissionRequestLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (AppUtils.hasOverlayPermission(context)) {
-            prefs.edit { putBoolean(Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION, true) }
-            Toast.makeText(context, R.string.toast_permission_granted, Toast.LENGTH_SHORT).show()
-            Timber.i("Permission granted")
-        }
-        Toast.makeText(context, R.string.toast_permission_denied, Toast.LENGTH_SHORT).show()
-        Timber.w("Permission denied")
-        (context as ComponentActivity).recreate()
-    }
 
     LaunchedEffect(isKeyboardOpen) {
         if (!isKeyboardOpen) {
@@ -123,6 +112,28 @@ fun SettingsScreen() {
         }
     }
 
+    LazyColumn {
+        item {
+            MetadataCategory(settings, prefs)
+        }
+        item {
+            RenameCategory(settings, prefs)
+        }
+        item {
+            VideoToGIFCategory(settings, prefs)
+        }
+        item {
+            HookCategory(settings, prefs)
+        }
+        item {
+            MiscellaneousCategory(settings, prefs)
+        }
+    }
+}
+
+@Composable
+fun MetadataCategory(settings: Settings, prefs: SharedPreferences) {
+    val focusManager = LocalFocusManager.current
     var enableRemoveExif by remember {
         mutableStateOf(
             settings.enableRemoveExif
@@ -138,7 +149,45 @@ fun SettingsScreen() {
             settings.exifTagsToKeep.joinToString(", ")
         )
     }
+    return PreferenceCategory(title = R.string.title_metadata) {
+        SwitchPreferenceItem(
+            title = R.string.title_enable_remove_exif,
+            summary = R.string.desc_enable_remove_exif,
+            checked = enableRemoveExif,
+            onCheckedChange = {
+                enableRemoveExif = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_REMOVE_EXIF, it) }
+            }
+        )
+        SwitchPreferenceItem(
+            title = R.string.title_enable_fallback_to_file,
+            summary = R.string.desc_enable_fallback_to_file,
+            checked = enableFallbackToFile,
+            enabled = enableRemoveExif,
+            onCheckedChange = {
+                enableFallbackToFile = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_FALLBACK_TO_FILE, it) }
+            }
+        )
+        TextFieldPreference(
+            title = R.string.title_exif_tags_to_keep,
+            summary = R.string.desc_exif_tags_to_keep,
+            value = exifTagsToKeep,
+            onValueChange = {
+                if (it.contains('\n')) {
+                    focusManager.clearFocus()
+                }
+                // filter ascii chars
+                exifTagsToKeep = it
+                    .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
+                prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
+            }
+        )
+    }
+}
 
+@Composable
+fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
     var enableFileTypeSniff by remember {
         mutableStateOf(
             settings.enableFileTypeSniff
@@ -164,7 +213,162 @@ fun SettingsScreen() {
             settings.enableFileRename
         )
     }
+    PreferenceCategory(title = R.string.title_rename) {
+        SwitchPreferenceItem(
+            title = R.string.title_enable_file_type_sniff,
+            summary = R.string.desc_enable_file_type_sniff,
+            checked = enableFileTypeSniff,
+            onCheckedChange = {
+                enableFileTypeSniff = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_TYPE_SNIFF, it) }
+            }
+        )
+        SwitchPreferenceItem(
+            title = R.string.title_enable_archive_type_sniff,
+            summary = R.string.desc_enable_archive_type_sniff,
+            checked = enableArchiveTypeSniff,
+            enabled = enableFileTypeSniff,
+            onCheckedChange = {
+                enableArchiveTypeSniff = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF, it) }
+            }
+        )
+        SwitchPreferenceItem(
+            title = R.string.title_enable_image_rename,
+            summary = null,
+            checked = enableImageRename,
+            onCheckedChange = {
+                enableImageRename = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_IMAGE_RENAME, it) }
+            }
+        )
+        SwitchPreferenceItem(
+            title = R.string.title_enable_video_rename,
+            summary = null,
+            checked = enableVideoRename,
+            onCheckedChange = {
+                enableVideoRename = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
+            }
+        )
+        SwitchPreferenceItem(
+            title = R.string.title_enable_file_rename,
+            summary = null,
+            checked = enableFileRename,
+            onCheckedChange = {
+                enableFileRename = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
+            }
+        )
+    }
+}
 
+@Composable
+fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
+    val focusManager = LocalFocusManager.current
+    val qualityResMap = mapOf(
+        Settings.VideoToGIFQualityOptions.LOW to R.string.option_low,
+        Settings.VideoToGIFQualityOptions.HIGH to R.string.option_high,
+        Settings.VideoToGIFQualityOptions.CUSTOM to R.string.option_custom
+    )
+
+    var enableVideoToGIF by remember {
+        mutableStateOf(
+            settings.enableVideoToGIF
+        )
+    }
+    var video2gifSizeKB by remember {
+        mutableStateOf(
+            settings.videoToGifSizeKB.toString()
+        )
+    }
+    var videoToGIFQuality by remember {
+        mutableStateOf(
+            Settings.VideoToGIFQualityOptions.fromValue(
+                settings.videoToGIFQuality
+            )
+        )
+    }
+    var videoToGIFOptions by remember {
+        mutableStateOf(
+            settings.videoToGIFOptions
+        )
+    }
+    PreferenceCategory(title = R.string.title_video_to_gif) {
+        SwitchPreferenceItem(
+            title = R.string.title_enable_video_to_gif,
+            summary = R.string.desc_enable_video_to_gif,
+            checked = enableVideoToGIF,
+            onCheckedChange = {
+                enableVideoToGIF = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_VIDEO_TO_GIF, it) }
+            }
+        )
+        TextFieldPreference(
+            title = R.string.title_video_to_gif_size_KB,
+            summary = null,
+            enabled = enableVideoToGIF,
+            value = video2gifSizeKB,
+            unit = R.string.unit_kB,
+            onValueChange = {
+                val intValue =
+                    it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
+                if (intValue < 0) {
+                    return@TextFieldPreference
+                }
+                video2gifSizeKB = intValue.toString()
+                prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
+            },
+            keyboardType = KeyboardType.Number
+        )
+        DropDownPreference(
+            title = R.string.title_video_to_gif_quality,
+            summary = null,
+            enabled = enableVideoToGIF,
+            selected = qualityResMap[videoToGIFQuality] ?: R.string.option_low,
+            content = { onItemSelected ->
+                qualityResMap.forEach { (quality, resId) ->
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = resId)) },
+                        onClick = {
+                            videoToGIFQuality = quality
+                            prefs.edit {
+                                putInt(
+                                    Settings.PREF_VIDEO_TO_GIF_QUALITY,
+                                    quality.value
+                                )
+                            }
+                            onItemSelected()
+                        }
+                    )
+                }
+            }
+        )
+        TextFieldPreference(
+            title = R.string.title_video_to_gif_options,
+            summary = R.string.desc_video_to_gif_options,
+            enabled = enableVideoToGIF && videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
+            value = videoToGIFOptions,
+            onValueChange = {
+                if (it.contains('\n')) {
+                    focusManager.clearFocus()
+                }
+                // filter ascii chars
+                videoToGIFOptions = it
+                    .filter { c -> c != '\n' }
+                prefs.edit {
+                    putString(
+                        Settings.PREF_VIDEO_TO_GIF_OPTIONS,
+                        videoToGIFOptions
+                    )
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun HookCategory(settings: Settings, prefs: SharedPreferences) {
     var enableHook by remember {
         mutableStateOf(
             settings.enableHook
@@ -190,146 +394,20 @@ fun SettingsScreen() {
             settings.enableForceDocumentHook
         )
     }
-
-    var enableVideoToGIF by remember {
-        mutableStateOf(
-            settings.enableVideoToGIF
-        )
-    }
-    var video2gifSizeKB by remember {
-        mutableStateOf(
-            settings.videoToGifSizeKB.toString()
-        )
-    }
-    var videoToGIFQuality by remember {
-        mutableStateOf(
-            Settings.VideoToGIFQualityOptions.fromValue(
-                settings.videoToGIFQuality
-            )
-        )
-    }
-    var videoToGIFOptions by remember {
-        mutableStateOf(
-            settings.videoToGIFOptions
-        )
-    }
-
-    var toastTimeMS by remember {
-        mutableStateOf(
-            settings.toastTimeMS.toString()
-        )
-    }
-    var enableTextToLinkAction by remember {
-        mutableStateOf(
-            settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(context)
-        )
-    }
-    var enableLauncherIcon by remember {
-        mutableStateOf(
-            AppUtils.getActivityStatus(context, launcherActivityName)
-        )
-    }
-
-    LazyColumn {
-
-        item {
-            PreferenceCategory(title = R.string.title_metadata) {
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_remove_exif,
-                    summary = R.string.desc_enable_remove_exif,
-                    checked = enableRemoveExif,
-                    onCheckedChange = {
-                        enableRemoveExif = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_REMOVE_EXIF, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_fallback_to_file,
-                    summary = R.string.desc_enable_fallback_to_file,
-                    checked = enableFallbackToFile,
-                    enabled = enableRemoveExif,
-                    onCheckedChange = {
-                        enableFallbackToFile = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FALLBACK_TO_FILE, it) }
-                    }
-                )
-                TextFieldPreference(
-                    title = R.string.title_exif_tags_to_keep,
-                    summary = R.string.desc_exif_tags_to_keep,
-                    value = exifTagsToKeep,
-                    onValueChange = {
-                        if (it.contains('\n')) {
-                            focusManager.clearFocus()
-                        }
-                        // filter ascii chars
-                        exifTagsToKeep = it
-                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
-                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
-                    }
-                )
+    PreferenceCategory(title = R.string.title_hook) {
+        SwitchPreferenceItem(
+            title = R.string.title_enable_hook,
+            summary = R.string.desc_enable_hook,
+            checked = enableHook,
+            onCheckedChange = {
+                enableHook = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_HOOK, it) }
             }
-        }
-        item {
-            PreferenceCategory(title = R.string.title_rename) {
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_file_type_sniff,
-                    summary = R.string.desc_enable_file_type_sniff,
-                    checked = enableFileTypeSniff,
-                    onCheckedChange = {
-                        enableFileTypeSniff = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_TYPE_SNIFF, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_archive_type_sniff,
-                    summary = R.string.desc_enable_archive_type_sniff,
-                    checked = enableArchiveTypeSniff,
-                    enabled = enableFileTypeSniff,
-                    onCheckedChange = {
-                        enableArchiveTypeSniff = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_ARCHIVE_TYPE_SNIFF, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_image_rename,
-                    summary = null,
-                    checked = enableImageRename,
-                    onCheckedChange = {
-                        enableImageRename = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_IMAGE_RENAME, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_video_rename,
-                    summary = null,
-                    checked = enableVideoRename,
-                    onCheckedChange = {
-                        enableVideoRename = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_file_rename,
-                    summary = null,
-                    checked = enableFileRename,
-                    onCheckedChange = {
-                        enableFileRename = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
-                    }
-                )
-            }
-        }
-        item {
-            PreferenceCategory(title = R.string.title_hook) {
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_hook,
-                    summary = R.string.desc_enable_hook,
-                    checked = enableHook,
-                    onCheckedChange = {
-                        enableHook = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_HOOK, it) }
-                    }
-                )
+        )
+        AnimatedVisibility(
+            visible = enableHook
+        ) {
+            Column {
                 SwitchPreferenceItem(
                     title = R.string.title_enable_force_forward_hook,
                     summary = R.string.desc_enable_force_forward_hook,
@@ -372,161 +450,115 @@ fun SettingsScreen() {
                 )
             }
         }
-        item {
-            PreferenceCategory(title = R.string.title_video_to_gif) {
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_video_to_gif,
-                    summary = R.string.desc_enable_video_to_gif,
-                    checked = enableVideoToGIF,
-                    onCheckedChange = {
-                        enableVideoToGIF = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_VIDEO_TO_GIF, it) }
-                    }
-                )
-                TextFieldPreference(
-                    title = R.string.title_video_to_gif_size_KB,
-                    summary = null,
-                    enabled = enableVideoToGIF,
-                    value = video2gifSizeKB,
-                    unit = R.string.unit_kB,
-                    onValueChange = {
-                        val intValue =
-                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
-                        if (intValue < 0) {
-                            return@TextFieldPreference
-                        }
-                        video2gifSizeKB = intValue.toString()
-                        prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
-                    },
-                    keyboardType = KeyboardType.Number
-                )
-                val qualityResMap = mapOf(
-                    Settings.VideoToGIFQualityOptions.LOW to R.string.option_low,
-                    Settings.VideoToGIFQualityOptions.HIGH to R.string.option_high,
-                    Settings.VideoToGIFQualityOptions.CUSTOM to R.string.option_custom
-                )
-                DropDownPreference(
-                    title = R.string.title_video_to_gif_quality,
-                    summary = null,
-                    enabled = enableVideoToGIF,
-                    selected = qualityResMap[videoToGIFQuality] ?: R.string.option_low,
-                    content = { onItemSelected ->
-                        qualityResMap.forEach { (quality, resId) ->
-                            DropdownMenuItem(
-                                text = { Text(text = stringResource(id = resId)) },
-                                onClick = {
-                                    videoToGIFQuality = quality
-                                    prefs.edit {
-                                        putInt(
-                                            Settings.PREF_VIDEO_TO_GIF_QUALITY,
-                                            quality.value
-                                        )
-                                    }
-                                    onItemSelected()
-                                }
-                            )
-                        }
-                    }
-                )
-                TextFieldPreference(
-                    title = R.string.title_video_to_gif_options,
-                    summary = R.string.desc_video_to_gif_options,
-                    enabled = enableVideoToGIF && videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
-                    value = videoToGIFOptions,
-                    onValueChange = {
-                        if (it.contains('\n')) {
-                            focusManager.clearFocus()
-                        }
-                        // filter ascii chars
-                        videoToGIFOptions = it
-                            .filter { c -> c != '\n' }
-                        prefs.edit {
-                            putString(
-                                Settings.PREF_VIDEO_TO_GIF_OPTIONS,
-                                videoToGIFOptions
-                            )
-                        }
-                    }
-                )
-            }
+
+    }
+}
+
+@Composable
+fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
+    val context = LocalContext.current
+    val launcherActivityName = "${context.packageName}.LauncherActivity"
+    val permissionRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (AppUtils.hasOverlayPermission(context)) {
+            prefs.edit { putBoolean(Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION, true) }
+            Toast.makeText(context, R.string.toast_permission_granted, Toast.LENGTH_SHORT).show()
+            Timber.i("Permission granted")
         }
-        item {
-            PreferenceCategory(title = R.string.title_miscellaneous) {
-                TextFieldPreference(
-                    title = R.string.title_toast_time,
-                    summary = R.string.desc_toast_time,
-                    value = toastTimeMS,
-                    unit = R.string.unit_ms,
-                    onValueChange = {
-                        val intValue =
-                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
-                        if (intValue < 0) {
-                            return@TextFieldPreference
-                        }
-                        toastTimeMS = intValue.toString()
-                        prefs.edit { putInt(Settings.PREF_TOAST_TIME_MS, intValue) }
-                    },
-                    keyboardType = KeyboardType.Number
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    SwitchPreferenceItem(
-                        title = R.string.title_enable_text_to_link_action,
-                        summary = R.string.desc_enable_text_to_link_action,
-                        checked = enableTextToLinkAction,
-                        onCheckedChange = {
-                            if (it) {
-                                if (AppUtils.hasOverlayPermission(context)) {
-                                    enableTextToLinkAction = true
-                                    prefs.edit {
-                                        putBoolean(
-                                            Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION,
-                                            true
-                                        )
-                                    }
-                                } else {
-                                    permissionRequestLauncher.launch(
-                                        Intent(
-                                            android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                            Uri.parse("package:${context.packageName}")
-                                        )
-                                    )
-                                }
-                            } else {
-                                enableTextToLinkAction = false
-                                prefs.edit {
-                                    putBoolean(
-                                        Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION,
-                                        false
-                                    )
-                                }
-                            }
-                        }
-                    )
+        Toast.makeText(context, R.string.toast_permission_denied, Toast.LENGTH_SHORT).show()
+        Timber.w("Permission denied")
+        (context as ComponentActivity).recreate()
+    }
+    var toastTimeMS by remember {
+        mutableStateOf(
+            settings.toastTimeMS.toString()
+        )
+    }
+    var enableTextToLinkAction by remember {
+        mutableStateOf(
+            settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(context)
+        )
+    }
+    var enableLauncherIcon by remember {
+        mutableStateOf(
+            AppUtils.getActivityStatus(context, launcherActivityName)
+        )
+    }
+    PreferenceCategory(title = R.string.title_miscellaneous) {
+        TextFieldPreference(
+            title = R.string.title_toast_time,
+            summary = R.string.desc_toast_time,
+            value = toastTimeMS,
+            unit = R.string.unit_ms,
+            onValueChange = {
+                val intValue =
+                    it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
+                if (intValue < 0) {
+                    return@TextFieldPreference
                 }
-                SwitchPreferenceItem(
-                    title = R.string.title_keep_launcher_icon,
-                    summary = null,
-                    checked = enableLauncherIcon,
-                    onCheckedChange = {
-                        AppUtils.setActivityStatus(context, launcherActivityName, it)
-                        enableLauncherIcon =
-                            AppUtils.getActivityStatus(context, launcherActivityName)
+                toastTimeMS = intValue.toString()
+                prefs.edit { putInt(Settings.PREF_TOAST_TIME_MS, intValue) }
+            },
+            keyboardType = KeyboardType.Number
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            SwitchPreferenceItem(
+                title = R.string.title_enable_text_to_link_action,
+                summary = R.string.desc_enable_text_to_link_action,
+                checked = enableTextToLinkAction,
+                onCheckedChange = {
+                    if (it) {
+                        if (AppUtils.hasOverlayPermission(context)) {
+                            enableTextToLinkAction = true
+                            prefs.edit {
+                                putBoolean(
+                                    Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION,
+                                    true
+                                )
+                            }
+                        } else {
+                            permissionRequestLauncher.launch(
+                                Intent(
+                                    android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                    Uri.parse("package:${context.packageName}")
+                                )
+                            )
+                        }
+                    } else {
+                        enableTextToLinkAction = false
+                        prefs.edit {
+                            putBoolean(
+                                Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION,
+                                false
+                            )
+                        }
                     }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_reset_settings,
-                    summary = null,
-                    checked = true,
-                    noSwitch = true,
-                    onCheckedChange = {
-                        prefs.edit { clear() }
-                        Toast.makeText(context, R.string.toast_settings_reset, Toast.LENGTH_SHORT)
-                            .show()
-                        (context as ComponentActivity).recreate()
-                    }
-                )
-            }
+                }
+            )
         }
+        SwitchPreferenceItem(
+            title = R.string.title_keep_launcher_icon,
+            summary = null,
+            checked = enableLauncherIcon,
+            onCheckedChange = {
+                AppUtils.setActivityStatus(context, launcherActivityName, it)
+                enableLauncherIcon =
+                    AppUtils.getActivityStatus(context, launcherActivityName)
+            }
+        )
+        SwitchPreferenceItem(
+            title = R.string.title_reset_settings,
+            summary = null,
+            checked = true,
+            noSwitch = true,
+            onCheckedChange = {
+                prefs.edit { clear() }
+                Toast.makeText(context, R.string.toast_settings_reset, Toast.LENGTH_SHORT)
+                    .show()
+                (context as ComponentActivity).recreate()
+            }
+        )
     }
 }
 
