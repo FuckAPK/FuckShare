@@ -81,7 +81,7 @@ dependencies {
     compileOnly("de.robv.android.xposed:api:82")
 
     // compose
-    val composeBom = platform("androidx.compose:compose-bom:2024.05.00")
+    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom)
 
     implementation("androidx.compose.material3:material3")
