@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">Fuck Share</string>
+    <string name="app_desc" translatable="false">Fuck Share!</string>
+    <string name="title_enable_force_forward_hook" translatable="false">Hook SEND SEND_MULTIPLE</string>
+    <string name="title_enable_remove_exif">Remove Exif metadata</string>
+    <string name="title_enable_image_rename">Auto rename images</string>
+    <string name="title_enable_others_rename">Auto rename other files</string>
+    <string name="title_exif_tags_to_keep">Exif tags to keep</string>
+    <string name="title_enable_file_type_sniff">Sniff extension</string>
+    <string name="desc_enable_remove_exif">current support jpeg, png and webp</string>
+    <string name="title_keep_launcher_icon">Keep launcher icon</string>
+    <string name="title_rename">Rename</string>
+    <string name="title_metadata">Metadata</string>
+    <string name="title_enable_fallback_to_file">Fallback to file</string>
+    <string name="desc_enable_fallback_to_file">Fallback to file when failed</string>
+    <string name="desc_enable_file_type_sniff">may cause error</string>
+    <string name="clear_cache_success">Cache cleared!</string>
+    <string name="clear_cache_failed">Failed to clear cache!</string>
+    <string name="compose_shortcut_short_clear">Clear cache</string>
+    <string name="clear_cache_empty" translatable="false">ᕕ(◠ڼ◠)ᕗ</string>
+    <string name="title_miscellaneous">Miscellaneous</string>
+    <string name="desc_enable_force_picker_hook" translatable="false">android.intent.action.PICK</string>
+    <string name="title_enable_force_picker_hook" translatable="false">Hook PICK</string>
+    <string name="desc_enable_force_content_hook" translatable="false">android.intent.action.GET_CONTENT</string>
+    <string name="title_enable_force_content_hook" translatable="false">Hook GET_CONTENT</string>
+    <string name="desc_enable_hook">need xposed to work</string>
+    <string name="title_enable_hook">Enable hook</string>
+    <string name="desc_enable_force_forward_hook" translatable="false">android.intent.action.SEND android.intent.action.SEND_MULTIPLE</string>
+    <string name="title_hook" translatable="false">Hook</string>
+    <string name="desc_enable_force_document_hook" translatable="false">android.intent.action.OPEN_DOCUMENT</string>
+    <string name="title_enable_force_document_hook" translatable="false">Hook OPEN_DOCUMENT</string>
+    <string name="title_toast_time">Toast Time</string>
+    <string name="desc_enable_viewer">show in \"open with\" menu</string>
+    <string name="title_enable_viewer">Enable viewer</string>
+    <string name="fail_to_process">%1$d of %2$d failed!</string>
+    <string name="desc_exif_tags_to_keep">separate by comma or space, blank to disable</string>
+    <string name="desc_toast_time">set to 0 to disable</string>
+    <string name="title_enable_video_rename">Auto rename videos</string>
+    <string name="title_video_to_gif_size_KB">Max size of video to GIF</string>
+    <string name="title_convert_gif_delay_MS">Delay when convert to GIF</string>
+    <string name="desc_convert_gif_delay_MS">at least 1</string>
+    <string name="unit_ms" translatable="false">ms</string>
+    <string name="unit_kB" translatable="false">kB</string>
+    <string name="title_reset_settings">Reset settings</string>
+    <string name="toast_settings_reset">RESET!</string>
+    <string name="compose_shortcut_reset_settings">Reset settings</string>
+    <string name="toast_permission_granted">Permission granted!</string>
+    <string name="title_enable_text_to_link_action">Enable text to link chooser action</string>
+    <string name="desc_enable_text_to_link_action">need display over other app permission</string>
+    <string name="title_video_to_gif_custom_option">Video to GIF ffmpeg custom option</string>
+    <string name="desc_video_to_gif_custom_option">$input and $output are used as input and output path</string>
+    <string name="video_to_gif_failed">Failed to convert video to GIF！</string>
+    <string name="toast_permission_denied">Failed to grant permission!</string>
+    <string name="option_low">Low</string>
+    <string name="option_high">High</string>
+    <string name="option_custom">Custom</string>
+    <string name="title_video_to_gif_quality">Video to GIF quality</string>
+    <string name="title_video_to_gif">Video To GIF</string>
+    <string name="title_enable_video_to_gif">Enable video to gif</string>
+    <string name="desc_enable_video_to_gif">only video without audio track will be conveted</string>
+    <string name="title_video_to_gif_force_with_audio">Convert video with audio</string>
+</resources>
