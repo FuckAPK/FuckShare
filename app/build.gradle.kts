@@ -14,7 +14,7 @@ android {
         targetSdk = 34
         versionCode = 1
 
-        versionName = "1.0"
+        versionName = "1.1"
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
