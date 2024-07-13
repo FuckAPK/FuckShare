@@ -29,21 +29,19 @@ android {
             keyAlias = properties.getProperty("keyAlias")
         }
     }
-    applicationVariants.all {
-        outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-            .forEach {
-                it.outputFileName = "Fuck Share_${defaultConfig.versionName}.apk"
-            }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
+        }
     }
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             signingConfig = signingConfigs.getByName("release")
-            ndk {
-                abiFilters.add("arm64-v8a")
-            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -51,9 +49,6 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
-            ndk {
-                abiFilters.add("arm64-v8a")
-            }
             resValue("string", "app_name", "FS debug")
         }
     }
