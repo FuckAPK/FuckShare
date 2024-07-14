@@ -159,7 +159,7 @@ object IntentUtils {
             ).toBundle()
         return uris.filterIndexed { index, _ -> index < 5 }.map {
             ChooserAction.Builder(
-                Icon.createWithResource(context, R.drawable.baseline_open_in_browser),
+                Icon.createWithResource(context, R.drawable.open_in_browser),
                 it,
                 PendingIntent.getActivity(
                     context.applicationContext,
