@@ -158,14 +158,14 @@ object IntentUtils {
             .setPendingIntentCreatorBackgroundActivityStartMode(
                 ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
             ).toBundle()
-        return uris.filterIndexed { index, _ -> index < 5 }.map {
+        return uris.filterIndexed { index, _ -> index < 5 }.mapIndexed { index, str ->
             ChooserAction.Builder(
                 Icon.createWithResource(context, R.drawable.open_in_browser),
-                it,
+                str,
                 PendingIntent.getActivity(
                     context.applicationContext,
-                    123,
-                    Intent(Intent.ACTION_VIEW, Uri.parse(it)),
+                    123 + index,
+                    Intent(Intent.ACTION_VIEW, Uri.parse(str)),
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_CANCEL_CURRENT,
                     options
                 )
