@@ -12,9 +12,9 @@ android {
         applicationId = "org.lyaaz.fuckshare"
         minSdk = 30
         targetSdk = 34
-        versionCode = 1
+        versionCode = 2
 
-        versionName = "1.1"
+        versionName = "1.2"
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
