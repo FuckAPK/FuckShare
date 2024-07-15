@@ -162,6 +162,16 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/filepaths" />
         </provider>
+
+        <receiver
+            android:name=".CopyTextReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="${applicationId}.COPY_TEXT" />
+            </intent-filter>
+        </receiver>
+
     </application>
     <queries>
         <intent>

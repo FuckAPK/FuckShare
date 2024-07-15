@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Parcelable
 import android.service.chooser.ChooserAction
 import androidx.annotation.RequiresApi
+import org.lyaaz.fuckshare.CopyTextReceiver
 import org.lyaaz.fuckshare.R
 
 /**
@@ -170,6 +171,23 @@ object IntentUtils {
                 )
             ).build()
         }.toTypedArray()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    fun createCopyTextAction(context: Context, text: String): ChooserAction {
+        return ChooserAction.Builder(
+            Icon.createWithResource(context, R.drawable.qr_code_scanner),
+            text,
+            PendingIntent.getBroadcast(
+                context.applicationContext,
+                122,
+                Intent(context, CopyTextReceiver::class.java).apply {
+                    action = CopyTextReceiver.ACTION
+                    putExtra(CopyTextReceiver.EXTRA_TEXT, text)
+                },
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_CANCEL_CURRENT,
+            )
+        ).build()
     }
 
     const val EXTRAS_KEY_SUFFIX = "_FS"

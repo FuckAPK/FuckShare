@@ -2,6 +2,8 @@ package org.lyaaz.fuckshare.utils
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
@@ -205,5 +207,18 @@ object AppUtils {
                 }
             )
         }
+    }
+
+    /**
+     * Copies text to the clipboard.
+     *
+     * @param context The context used to access the clipboard.
+     * @param text The text to be copied.
+     */
+    fun copyToClipboard(context: Context, text: String) {
+        val clipboard =
+            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText(text, text)
+        clipboard.setPrimaryClip(clip)
     }
 }

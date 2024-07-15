@@ -475,6 +475,11 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             settings.toastTimeMS.toString()
         )
     }
+    var enableQRCodeToTextAction by remember {
+        mutableStateOf(
+            settings.enableQRCodeToTextAction
+        )
+    }
     var enableTextToLinkAction by remember {
         mutableStateOf(
             settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(context)
@@ -503,6 +508,14 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             keyboardType = KeyboardType.Number
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            SwitchPreferenceItem(
+                title = R.string.title_enable_qr_code_to_text_action,
+                checked = enableQRCodeToTextAction,
+                onCheckedChange = {
+                    enableQRCodeToTextAction = it
+                    prefs.edit { putBoolean(Settings.PREF_ENABLE_QR_CODE_TO_TEXT_ACTION, it) }
+                }
+            )
             SwitchPreferenceItem(
                 title = R.string.title_enable_text_to_link_action,
                 summary = R.string.desc_enable_text_to_link_action,
@@ -715,7 +728,9 @@ fun DropDownPreference(
 ) {
     var expended by remember { mutableStateOf(false) }
     Box(
-        modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp).height(50.dp)
+        modifier = Modifier
+            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .height(50.dp)
             .clickable { expended = true }) {
         Row(
             modifier = Modifier.fillMaxSize(),

@@ -97,7 +97,6 @@ class HandleShareActivity : Activity() {
 
     fun setupChooser(ib: IntentBuilder): Intent {
         val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
-        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
             listOf(ComponentName(this, this::class.java)).toTypedArray()
@@ -110,35 +109,53 @@ class HandleShareActivity : Activity() {
             )
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val chooserActions = mutableListOf<ChooserAction>()
             IntentUtils.restoreArrayExtras<ChooserAction>(
                 intent,
                 chooserIntent,
                 Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
             )
+            // restore original chooser action
+            IntentUtils.getParcelableArrayExtra<ChooserAction>(
+                chooserIntent,
+                Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
+            )?.let { chooserActions.addAll(it) }
+            // add qrcode to text action
+            if (settings.enableQRCodeToTextAction) {
+                val uris = IntentUtils.getUrisFromIntent(ib.intent)
+                if (ib.intent.type == "image/*" && uris.size == 1) {
+                    FileUtils.imageToBitmap(this@HandleShareActivity, uris[0])?.let {
+                        FileUtils.decodeQRCode(it)?.let { text ->
+                            Timber.i("decoded qrcode: $text")
+                            chooserActions.add(
+                                IntentUtils.createCopyTextAction(this@HandleShareActivity, text)
+                            )
+                        }
+                    }
+                }
+            }
+            // add text to link action
             if (settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(this)) {
-                val exists = IntentUtils.getParcelableArrayExtra<ChooserAction>(
-                    chooserIntent,
-                    Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
-                )?.toMutableList() ?: mutableListOf()
-                text?.let {
+                intent.getStringExtra(Intent.EXTRA_TEXT)?.let { text ->
                     extractUrls(text)
                         .takeIf {
                             it.isNotEmpty()
                         }?.let {
                             IntentUtils.createOpenLinkAction(this, it)
                         }?.let {
-                            exists.addAll(it)
-                            exists
-                        }?.let {
                             Timber.d("custom actions: $it")
-                            chooserIntent.putExtra(
-                                Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
-                                it.toTypedArray()
-                            )
+                            chooserActions.addAll(it)
                         }
                 }
             }
+            chooserActions.takeIf { it.isNotEmpty() }?.let {
+                chooserIntent.putExtra(
+                    Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
+                    chooserActions.toTypedArray()
+                )
+            }
         }
+
         return chooserIntent
     }
 

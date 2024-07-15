@@ -2,6 +2,8 @@ package org.lyaaz.fuckshare.utils
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -10,6 +12,10 @@ import androidx.core.content.FileProvider
 import androidx.exifinterface.media.ExifInterface
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
+import com.google.zxing.BinaryBitmap
+import com.google.zxing.MultiFormatReader
+import com.google.zxing.RGBLuminanceSource
+import com.google.zxing.common.HybridBinarizer
 import org.lyaaz.fuckshare.R
 import org.lyaaz.fuckshare.Settings
 import org.lyaaz.fuckshare.exifhelper.ExifHelper
@@ -358,5 +364,37 @@ object FileUtils {
         val retriever = MediaMetadataRetriever()
         retriever.setDataSource(videoPath)
         return retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
+    }
+
+    /**
+     * Image to bitmap
+     */
+    fun imageToBitmap(context: Context, uri: Uri): Bitmap? {
+        return try {
+            context.contentResolver.openInputStream(uri)!!.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream)
+            }
+        } catch (e: Exception) {
+            Timber.e(e)
+            null
+        }
+    }
+
+    /**
+     * Decode QR code in Bitmap
+     */
+    fun decodeQRCode(bitmap: Bitmap): String? {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        return try {
+            val binaryBitmap =
+                BinaryBitmap(HybridBinarizer(RGBLuminanceSource(width, height, pixels)))
+            MultiFormatReader().decode(binaryBitmap).text.takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            Timber.e(e)
+            null
+        }
     }
 }

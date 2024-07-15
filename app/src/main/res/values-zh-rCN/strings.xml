@@ -46,4 +46,5 @@
     <string name="title_enable_video_to_gif">启用视频转GIF</string>
     <string name="desc_enable_video_to_gif">仅限无音轨的视频</string>
     <string name="title_video_to_gif_force_with_audio">转换有声音的视频</string>
+    <string name="title_enable_qr_code_to_text_action">选择界面复制二维码文本</string>
 </resources>

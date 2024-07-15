@@ -87,4 +87,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
+    // QR code
+    implementation("com.google.zxing:core:3.5.3")
 }
