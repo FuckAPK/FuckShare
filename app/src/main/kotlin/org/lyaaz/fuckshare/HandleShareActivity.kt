@@ -166,7 +166,7 @@ class HandleShareActivity : Activity() {
         val urlPattern = """https?://[^\s，,“”"()（）【】\[\]]+(?<!\.)""".toRegex()
         val urls = urlPattern.findAll(text).map { it.value }.toList()
         Timber.i("extracted urls: $urls")
-        return urls
+        return urls.distinct()
     }
 
     companion object {
