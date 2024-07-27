@@ -155,10 +155,10 @@ class MainHook : IXposedHookLoadPackage {
             }
 
             return className?.let {
-                extraIntent.setClassName(
-                    BuildConfig.APPLICATION_ID,
-                    it
-                )
+                extraIntent.apply {
+                    setClassName(BuildConfig.APPLICATION_ID, it)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
             }
         }
     }
