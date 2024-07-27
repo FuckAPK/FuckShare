@@ -14,6 +14,7 @@ import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.MultiFormatReader
+import com.google.zxing.NotFoundException
 import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import org.lyaaz.fuckshare.R
@@ -392,6 +393,9 @@ object FileUtils {
             val binaryBitmap =
                 BinaryBitmap(HybridBinarizer(RGBLuminanceSource(width, height, pixels)))
             MultiFormatReader().decode(binaryBitmap).text.takeIf { it.isNotBlank() }
+        } catch (e: NotFoundException) {
+            Timber.i(e)
+            null
         } catch (e: Exception) {
             Timber.e(e)
             null
