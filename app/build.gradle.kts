@@ -18,6 +18,10 @@ android {
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
+    androidResources {
+        @Suppress("UnstableApiUsage")
+        generateLocaleConfig = true
+    }
     signingConfigs {
         create("release") {
             val properties = Properties().apply {
