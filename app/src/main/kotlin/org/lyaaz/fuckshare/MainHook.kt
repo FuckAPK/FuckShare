@@ -52,8 +52,9 @@ class MainHook : IXposedHookLoadPackage {
         override fun beforeHookedMethod(param: MethodHookParam) {
             val key = XposedHelpers.getObjectField(param.args[1], "key")
             val intent = XposedHelpers.getObjectField(key, "requestIntent") as? Intent ?: return
-            val packageName = XposedHelpers.getObjectField(key, "packageName") as? String ?: return
-            process(intent, packageName, param)
+            val callingPackage =
+                XposedHelpers.getObjectField(key, "packageName") as? String ?: return
+            process(intent, callingPackage, param)
         }
     }
 
@@ -76,6 +77,20 @@ class MainHook : IXposedHookLoadPackage {
             BuildConfig.APPLICATION_ID,
             "com.android.providers.media.module"
         )
+        private val actionHookEnableMap = mapOf(
+            Intent.ACTION_SEND to { settings.enableForceForwardHook },
+            Intent.ACTION_SEND_MULTIPLE to { settings.enableForceForwardHook },
+            Intent.ACTION_PICK to { settings.enableForcePickerHook },
+            Intent.ACTION_GET_CONTENT to { settings.enableForceContentHook },
+            Intent.ACTION_OPEN_DOCUMENT to { settings.enableForceDocumentHook }
+        )
+        private val actionClassMap = mapOf(
+            Intent.ACTION_SEND to HandleShareActivity::class.java.name,
+            Intent.ACTION_SEND_MULTIPLE to HandleShareActivity::class.java.name,
+            Intent.ACTION_PICK to ContentProxyActivity::class.java.name,
+            Intent.ACTION_GET_CONTENT to ContentProxyActivity::class.java.name,
+            Intent.ACTION_OPEN_DOCUMENT to ContentProxyActivity::class.java.name
+        )
 
         private fun process(intent: Intent, callingPackage: String, param: MethodHookParam) {
             if (callingPackage in neverHookList || intent.action !in hookedIntents) {
@@ -86,7 +101,22 @@ class MainHook : IXposedHookLoadPackage {
             if (!settings.enableHook) {
                 return
             }
-            val extraIntent = if (intent.action == Intent.ACTION_CHOOSER) {
+            val extraIntent = retrieveExtraIntent(intent) ?: return
+            if (!actionHookEnableMap.getOrDefault(extraIntent.action) { false }.invoke()) {
+                return
+            }
+            val className = actionClassMap[extraIntent.action] ?: return
+
+            extraIntent.apply {
+                setClassName(BuildConfig.APPLICATION_ID, className)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }
+            param.args[3] = extraIntent
+            XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $extraIntent")
+        }
+
+        private fun retrieveExtraIntent(intent: Intent): Intent? {
+            return if (intent.action == Intent.ACTION_CHOOSER) {
                 IntentUtils.getParcelableExtra(
                     intent,
                     Intent.EXTRA_INTENT,
@@ -106,59 +136,14 @@ class MainHook : IXposedHookLoadPackage {
                             Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS
                         )
                     }
-                } ?: return
+                } ?: return null
             } else {
                 intent.component?.let {
                     if (it.packageName != "com.android.documentsui") {
-                        return
+                        return null
                     }
                 }
                 intent
-            }
-            handleExtraIntent(extraIntent)?.let {
-                param.args[3] = it
-                XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $it")
-            }
-        }
-
-        private fun handleExtraIntent(extraIntent: Intent): Intent? {
-            val className = when (extraIntent.action) {
-                Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE ->
-                    if (settings.enableForceForwardHook) {
-                        HandleShareActivity::class.java.name
-                    } else {
-                        null
-                    }
-
-                Intent.ACTION_PICK ->
-                    if (settings.enableForcePickerHook) {
-                        ContentProxyActivity::class.java.name
-                    } else {
-                        null
-                    }
-
-                Intent.ACTION_GET_CONTENT ->
-                    if (settings.enableForceContentHook) {
-                        ContentProxyActivity::class.java.name
-                    } else {
-                        null
-                    }
-
-                Intent.ACTION_OPEN_DOCUMENT ->
-                    if (settings.enableForceDocumentHook) {
-                        ContentProxyActivity::class.java.name
-                    } else {
-                        null
-                    }
-
-                else -> null
-            }
-
-            return className?.let {
-                extraIntent.apply {
-                    setClassName(BuildConfig.APPLICATION_ID, it)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                }
             }
         }
     }
