@@ -3,7 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.10"
 }
 android {
     namespace = "org.lyaaz.fuckshare"
