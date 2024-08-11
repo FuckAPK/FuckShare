@@ -1,3 +1,4 @@
+import java.io.ByteArrayOutputStream
 import java.util.Properties
 
 plugins {
@@ -5,6 +6,17 @@ plugins {
     id("kotlin-android")
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.10"
 }
+
+fun String.execute(currentWorkingDir: File = file("./")): String {
+    val byteOut = ByteArrayOutputStream()
+    project.exec {
+        workingDir = currentWorkingDir
+        commandLine = split("\\s".toRegex())
+        standardOutput = byteOut
+    }
+    return byteOut.toString().trim()
+}
+
 android {
     namespace = "org.lyaaz.fuckshare"
     compileSdk = 34
@@ -12,9 +24,8 @@ android {
         applicationId = "org.lyaaz.fuckshare"
         minSdk = 30
         targetSdk = 34
-        versionCode = 3
-
-        versionName = "1.3"
+        versionCode = "git rev-list HEAD --count".execute().toInt()
+        versionName = "git describe --tag".execute()
         resourceConfigurations += setOf("en", "zh-rCN")
         vectorDrawables.useSupportLibrary = true
     }
