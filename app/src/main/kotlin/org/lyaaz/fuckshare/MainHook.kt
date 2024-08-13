@@ -2,6 +2,8 @@ package org.lyaaz.fuckshare
 
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
+import android.os.IBinder
 import android.service.chooser.ChooserAction
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
@@ -19,42 +21,81 @@ class MainHook : IXposedHookLoadPackage {
             return
         }
 
-        try {
-            val activityTaskManagerServiceClass = XposedHelpers.findClass(
+        val activityTaskManagerServiceClass = runCatching {
+            XposedHelpers.findClass(
                 "com.android.server.wm.ActivityTaskManagerService",
                 lpparam.classLoader
             )
-            XposedBridge.hookAllMethods(
+        }.onFailure {
+            XposedBridge.log(it)
+        }.getOrNull() ?: return
+
+        runCatching {
+            XposedHelpers.findAndHookMethod(
                 activityTaskManagerServiceClass,
                 "startActivityAsUser",
+                "android.app.IApplicationThread",
+                String::class.java,
+                String::class.java,
+                Intent::class.java,
+                String::class.java,
+                IBinder::class.java,
+                String::class.java,
+                Int::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType,
+                "android.app.ProfilerInfo",
+                Bundle::class.java,
+                Int::class.javaPrimitiveType,
+                Boolean::class.javaPrimitiveType,
                 StartActivityAsUserHook
             )
-            XposedBridge.hookAllMethods(
+        }.onFailure { XposedBridge.log(it) }
+
+        runCatching {
+            XposedHelpers.findAndHookMethod(
                 activityTaskManagerServiceClass,
                 "startActivityIntentSender",
+                "android.app.IApplicationThread",
+                "android.content.IIntentSender",
+                IBinder::class.java,
+                Intent::class.java,
+                String::class.java,
+                IBinder::class.java,
+                String::class.java,
+                Int::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType,
+                Int::class.javaPrimitiveType,
+                Bundle::class.java,
                 StartActivityIntentSenderHook
             )
-        } catch (t: Throwable) {
-            XposedBridge.log(t)
+        }.onFailure {
+            XposedBridge.log(it)
         }
     }
 
     private object StartActivityAsUserHook : XC_MethodHook() {
-        @Throws(Throwable::class)
         override fun beforeHookedMethod(param: MethodHookParam) {
-            val callingPackage = param.args[1] as? String ?: return
-            val intent = param.args[3] as? Intent ?: return
-            process(intent, callingPackage, param)
+            runCatching {
+                val callingPackage = param.args[1] as String
+                val intent = param.args[3] as Intent
+                process(intent, callingPackage, param)
+            }.onFailure {
+                XposedBridge.log(it)
+            }
         }
     }
 
     private object StartActivityIntentSenderHook : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-            val key = XposedHelpers.getObjectField(param.args[1], "key")
-            val intent = XposedHelpers.getObjectField(key, "requestIntent") as? Intent ?: return
-            val callingPackage =
-                XposedHelpers.getObjectField(key, "packageName") as? String ?: return
-            process(intent, callingPackage, param)
+            runCatching {
+                val key = XposedHelpers.getObjectField(param.args[1], "key")
+                val intent = XposedHelpers.getObjectField(key, "requestIntent") as Intent
+                val callingPackage =
+                    XposedHelpers.getObjectField(key, "packageName") as String
+                process(intent, callingPackage, param)
+            }.onFailure {
+                XposedBridge.log(it)
+            }
         }
     }
 
