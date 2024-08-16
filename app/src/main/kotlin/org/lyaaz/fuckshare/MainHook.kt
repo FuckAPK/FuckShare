@@ -49,7 +49,11 @@ class MainHook : IXposedHookLoadPackage {
                 Boolean::class.javaPrimitiveType,
                 StartActivityAsUserHook
             )
-        }.onFailure { XposedBridge.log(it) }
+        }.onFailure {
+            XposedBridge.log(it)
+        }.onSuccess {
+            XposedBridge.log("FS: hooked StartActivityAsUser")
+        }
 
         runCatching {
             XposedHelpers.findAndHookMethod(
@@ -70,6 +74,8 @@ class MainHook : IXposedHookLoadPackage {
             )
         }.onFailure {
             XposedBridge.log(it)
+        }.onSuccess {
+            XposedBridge.log("FS: hooked StartActivityIntentSender")
         }
     }
 
