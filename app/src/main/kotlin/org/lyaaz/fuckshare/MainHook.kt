@@ -190,7 +190,7 @@ class MainHook : IXposedHookLoadPackage {
                         return null
                     }
                 }
-                intent
+                Intent(intent)
             }
         }
     }
