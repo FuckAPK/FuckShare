@@ -150,7 +150,7 @@ class MainHook : IXposedHookLoadPackage {
             if (!settings.enableHook) {
                 return
             }
-            val extraIntent = retrieveExtraIntent(intent) ?: return
+            val extraIntent = retrieveExtraIntent(Intent(intent)) ?: return
             if (!actionHookEnableMap.getOrDefault(extraIntent.action) { false }.invoke()) {
                 return
             }
@@ -202,7 +202,7 @@ class MainHook : IXposedHookLoadPackage {
                         return null
                     }
                 }
-                Intent(intent)
+                intent
             }
         }
     }
