@@ -41,13 +41,13 @@ object AppUtils {
     @SuppressLint("WorldReadableFiles")
     fun getPrefs(context: Context): SharedPreferences {
         val prefsName = "${context.packageName}_preferences"
-        return try {
+        return runCatching {
             @Suppress("DEPRECATION")
             context.getSharedPreferences(
                 prefsName,
                 Activity.MODE_WORLD_READABLE
             )
-        } catch (ignore: SecurityException) {
+        }.getOrNull() ?: run {
             context.getSharedPreferences(
                 prefsName,
                 Activity.MODE_PRIVATE

@@ -24,10 +24,8 @@ import org.lyaaz.fuckshare.exifhelper.ImageFormatException
 import org.lyaaz.fuckshare.exifhelper.JpegExifHelper
 import org.lyaaz.fuckshare.exifhelper.PngExifHelper
 import org.lyaaz.fuckshare.exifhelper.WebpExifHelper
-import org.lyaaz.fuckshare.filetype.AudioType
 import org.lyaaz.fuckshare.filetype.FileType
 import org.lyaaz.fuckshare.filetype.ImageType
-import org.lyaaz.fuckshare.filetype.OtherType
 import org.lyaaz.fuckshare.filetype.VideoType
 import timber.log.Timber
 import java.io.File
@@ -51,22 +49,11 @@ object FileUtils {
      * @return The refreshed URI or null if the operation fails.
      */
     fun refreshUri(context: Context, settings: Settings, uri: Uri): Pair<Uri, FileType>? {
-        val originName = getRealFileName(context, uri) ?: AppUtils.randomString
-        var tempFile = File(context.cacheDir, AppUtils.randomString)
-        return try {
-            val magickBytes = ByteArray(16)
-            context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
-                ByteUtils.readNBytes(uin, magickBytes)
-            }
-            var fileType = getFileType(magickBytes)
-            val magickByteStr = magickBytes.joinToString(separator = "") {
-                "%02X".format(it)
-            }
-            if (fileType == OtherType.UNKNOWN) {
-                Timber.w("Unknown file type: $uri, magick bytes: $magickByteStr")
-            } else {
-                Timber.i("File type: $fileType, magick bytes: $magickByteStr")
-            }
+        return runCatching {
+            val originName = getRealFileName(context, uri) ?: AppUtils.randomString
+            val randomDir = File(context.cacheDir, AppUtils.randomString).also { it.mkdirs() }
+            var tempFile = File(randomDir, AppUtils.randomString)
+            var fileType = FileType.fromUri(context, uri)
             if (fileType is ImageType
                 && fileType.supportMetadata
                 && settings.enableRemoveExif
@@ -89,7 +76,7 @@ object FileUtils {
                 }
             }
             // rename
-            createNewName(context, settings, fileType, originName).let {
+            File(randomDir, createNewName(settings, fileType, originName)).let {
                 if (tempFile.renameTo(it)) {
                     tempFile = it
                     Timber.d("Renamed: $tempFile -> $it")
@@ -97,19 +84,16 @@ object FileUtils {
                     Timber.e("Failed to rename: $tempFile -> $it")
                 }
             }
-            (
-                    FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        tempFile
-                    )
-                            to fileType
-                    )
-
-        } catch (e: IOException) {
-            Timber.e(e)
-            null
-        }
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                tempFile
+            ).let {
+                it to fileType
+            }
+        }.onFailure {
+            Timber.e(it)
+        }.getOrNull()
     }
 
     /**
@@ -158,9 +142,9 @@ object FileUtils {
         imageType: ImageType,
         uri: Uri
     ) {
-        try {
+        runCatching {
             processImgMetadata(context, settings, file, imageType, uri)
-        } catch (e: ImageFormatException) {
+        }.onFailure {
             file.delete()
             Timber.e("Format error: $uri Type: $imageType")
             if (settings.enableFallbackToFile) {
@@ -216,11 +200,10 @@ object FileUtils {
     }
 
     private fun createNewName(
-        context: Context,
         settings: Settings,
         fileType: FileType,
         originName: String
-    ): File {
+    ): String {
         val newNameNoExt =
             if (enableRandomName(settings, fileType))
                 AppUtils.randomString
@@ -228,14 +211,8 @@ object FileUtils {
                 getFileNameNoExt(originName)
         val ext = getExt(settings, fileType, originName)
         val newFullName = if (ext == null) newNameNoExt else "${newNameNoExt}.${ext}"
-        var renamed = File(context.cacheDir, newFullName)
-        if (renamed.exists()) {
-            val oneTimeCacheDir = File(context.cacheDir, AppUtils.randomString)
-            oneTimeCacheDir.mkdirs()
-            renamed = File(oneTimeCacheDir, newFullName)
-        }
-        Timber.d("new name: $renamed")
-        return renamed
+        Timber.d("new name: $newFullName")
+        return newFullName
     }
 
     /**
@@ -303,22 +280,6 @@ object FileUtils {
     }
 
     /**
-     * Determines the file type based on the file's byte signature.
-     */
-    private fun getFileType(bytes: ByteArray): FileType {
-        val fileTypes = setOf(
-            *ImageType.entries.toTypedArray(),
-            *VideoType.entries.toTypedArray(),
-            *AudioType.entries.toTypedArray(),
-            *OtherType.entries.toTypedArray()
-        )
-        return fileTypes.parallelStream()
-            .filter { it.signatureMatch(bytes) }
-            .findAny()
-            .orElse(OtherType.UNKNOWN)
-    }
-
-    /**
      * Converts a video to GIF.
      *
      * @param video The video file.
@@ -326,7 +287,7 @@ object FileUtils {
      */
     fun video2gif(video: File, settings: Settings): File? {
         val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
-        try {
+        runCatching {
             val command =
                 when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
                     Settings.VideoToGIFQualityOptions.LOW ->
@@ -351,8 +312,8 @@ object FileUtils {
                 Timber.e("Failed to convert video to gif: $video")
                 gifFile.delete()
             }
-        } catch (e: Exception) {
-            Timber.e(e)
+        }.onFailure {
+            Timber.e(it)
             gifFile.delete()
         }
         return null
@@ -371,14 +332,13 @@ object FileUtils {
      * Image to bitmap
      */
     fun imageToBitmap(context: Context, uri: Uri): Bitmap? {
-        return try {
+        return runCatching {
             context.contentResolver.openInputStream(uri)!!.use { inputStream ->
                 BitmapFactory.decodeStream(inputStream)
             }
-        } catch (e: Exception) {
-            Timber.e(e)
-            null
-        }
+        }.onFailure {
+            Timber.e(it)
+        }.getOrNull()
     }
 
     /**
