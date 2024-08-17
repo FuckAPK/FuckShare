@@ -141,6 +141,10 @@ class MainHook : IXposedHookLoadPackage {
             Intent.ACTION_OPEN_DOCUMENT to ContentProxyActivity::class.java.name
         )
 
+        private fun actionHookEnabled(action: String?): Boolean {
+            return actionHookEnableMap.getOrDefault(action) { false }.invoke()
+        }
+
         private fun process(intent: Intent, callingPackage: String, param: MethodHookParam) {
             if (callingPackage in neverHookList || intent.action !in hookedIntents) {
                 return
@@ -151,7 +155,7 @@ class MainHook : IXposedHookLoadPackage {
                 return
             }
             val extraIntent = retrieveExtraIntent(Intent(intent)) ?: return
-            if (!actionHookEnableMap.getOrDefault(extraIntent.action) { false }.invoke()) {
+            if (!actionHookEnabled(extraIntent.action)) {
                 return
             }
             val className = actionClassMap[extraIntent.action] ?: return
