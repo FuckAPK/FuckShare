@@ -84,7 +84,9 @@ class MainHook : IXposedHookLoadPackage {
             runCatching {
                 val callingPackage = param.args[1] as String
                 val intent = param.args[3] as Intent
-                process(intent, callingPackage, param)
+                process(intent, callingPackage)?.let {
+                    param.args[3] = it
+                }
             }.onFailure {
                 XposedBridge.log(it)
             }
@@ -98,7 +100,9 @@ class MainHook : IXposedHookLoadPackage {
                 val intent = XposedHelpers.getObjectField(key, "requestIntent") as Intent
                 val callingPackage =
                     XposedHelpers.getObjectField(key, "packageName") as String
-                process(intent, callingPackage, param)
+                process(intent, callingPackage)?.let {
+                    param.args[3] = it
+                }
             }.onFailure {
                 XposedBridge.log(it)
             }
@@ -143,27 +147,27 @@ class MainHook : IXposedHookLoadPackage {
             return actionHookEnableMap.getOrDefault(action) { false }.invoke()
         }
 
-        private fun process(intent: Intent, callingPackage: String, param: MethodHookParam) {
+        private fun process(intent: Intent, callingPackage: String): Intent? {
             if (callingPackage in neverHookList || intent.action !in hookedIntents) {
-                return
+                return null
             }
 
             prefs.reload()
             if (!settings.enableHook) {
-                return
+                return null
             }
-            val extraIntent = retrieveExtraIntent(Intent(intent)) ?: return
+            val extraIntent = retrieveExtraIntent(Intent(intent)) ?: return null
             if (!actionHookEnabled(extraIntent.action)) {
-                return
+                return null
             }
-            val className = actionClassMap[extraIntent.action] ?: return
+            val className = actionClassMap[extraIntent.action] ?: return null
 
-            extraIntent.apply {
+            return extraIntent.apply {
                 setClassName(BuildConfig.APPLICATION_ID, className)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            }.also {
+                XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $this")
             }
-            param.args[3] = extraIntent
-            XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $extraIntent")
         }
 
         private fun retrieveExtraIntent(intent: Intent): Intent? {
