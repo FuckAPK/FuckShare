@@ -1,8 +1,6 @@
 package org.lyaaz.fuckshare
 
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -164,18 +162,8 @@ class MainHook : IXposedHookLoadPackage {
                 setClassName(BuildConfig.APPLICATION_ID, className)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             }
-            // check if intent is valid
-            val context = XposedHelpers
-                .getObjectField(param.thisObject, "mContext") as Context
-            val resolveInfo = context
-                .packageManager
-                .resolveActivity(extraIntent, PackageManager.MATCH_DEFAULT_ONLY)
-            resolveInfo?.let {
-                param.args[3] = extraIntent
-                XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $extraIntent")
-            } ?: run {
-                XposedBridge.log("FS: $callingPackage, intent: $intent, is not valid")
-            }
+            param.args[3] = extraIntent
+            XposedBridge.log("FS: hooked from $callingPackage, intent: $intent, to: $extraIntent")
         }
 
         private fun retrieveExtraIntent(intent: Intent): Intent? {
