@@ -1,5 +1,6 @@
 package org.lyaaz.fuckshare
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -7,7 +8,6 @@ import android.os.IBinder
 import android.service.chooser.ChooserAction
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XSharedPreferences
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -17,10 +17,29 @@ import org.lyaaz.fuckshare.utils.IntentUtils
 class MainHook : IXposedHookLoadPackage {
 
     override fun handleLoadPackage(lpparam: LoadPackageParam) {
-        if (lpparam.packageName != "android") {
+        if (!lpparam.isFirstApplication) {
             return
         }
+        when (lpparam.packageName) {
+            BuildConfig.APPLICATION_ID -> {
+                return
+            }
 
+            "android" -> {
+                hookSystem(lpparam)
+            }
+
+            in neverHookList -> {
+                return
+            }
+
+            else -> {
+                hookActivity(lpparam)
+            }
+        }
+    }
+
+    private fun hookSystem(lpparam: LoadPackageParam) {
         val activityTaskManagerServiceClass = runCatching {
             XposedHelpers.findClass(
                 "com.android.server.wm.ActivityTaskManagerService",
@@ -76,6 +95,36 @@ class MainHook : IXposedHookLoadPackage {
             XposedBridge.log(it)
         }.onSuccess {
             XposedBridge.log("FS: hooked StartActivityIntentSender")
+        }
+    }
+
+    private fun hookActivity(lpparam: LoadPackageParam) {
+        runCatching {
+            XposedHelpers.findAndHookMethod(
+                Activity::class.java,
+                "startActivityForResult",
+                Intent::class.java,
+                Int::class.javaPrimitiveType,
+                Bundle::class.java,
+                StartActivityForResultHook
+            )
+        }.onFailure {
+            XposedBridge.log(it)
+        }.onSuccess {
+            XposedBridge.log("FS: hooked ${lpparam.packageName}")
+        }
+    }
+
+    private object StartActivityForResultHook : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+            runCatching {
+                val intent = param.args[0] as Intent
+                process(intent, "")?.let {
+                    param.args[0] = it
+                }
+            }.onFailure {
+                XposedBridge.log(it)
+            }
         }
     }
 
