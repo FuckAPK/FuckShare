@@ -51,7 +51,7 @@ class WebpExifHelper : ExifHelper {
     fun fixHeaderSize(file: RandomAccessFile) {
         ByteBuffer.allocate(4).let {
             it.order(ByteOrder.LITTLE_ENDIAN)
-            it.putShort((file.length() - 8).toShort())
+            it.putInt((file.length() - 8).toInt())
             file.seek(4)
             file.write(it.array())
         }
