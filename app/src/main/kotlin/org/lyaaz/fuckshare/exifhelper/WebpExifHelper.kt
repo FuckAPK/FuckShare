@@ -4,6 +4,7 @@ import org.lyaaz.fuckshare.utils.ByteUtils
 import org.lyaaz.fuckshare.utils.ByteUtils.toUInt
 import org.lyaaz.fuckshare.utils.FileUtils
 import timber.log.Timber
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -48,12 +49,15 @@ class WebpExifHelper : ExifHelper {
         bos.flush()
     }
 
-    fun fixHeaderSize(file: RandomAccessFile) {
-        ByteBuffer.allocate(4).let {
-            it.order(ByteOrder.LITTLE_ENDIAN)
-            it.putInt((file.length() - 8).toInt())
-            file.seek(4)
-            file.write(it.array())
+    override fun postProcess(file: File) {
+        RandomAccessFile(file, "rw").use { f ->
+            ByteBuffer.allocate(4).let {
+                it.order(ByteOrder.LITTLE_ENDIAN)
+                it.putInt((file.length() - 8).toInt())
+                f.seek(4)
+                f.write(it.array())
+            }
+            Timber.d("fixed webp header size: $file")
         }
     }
 

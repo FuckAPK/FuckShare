@@ -32,7 +32,6 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.io.RandomAccessFile
 
 
 /**
@@ -178,12 +177,7 @@ object FileUtils {
                     exifHelper.removeMetadata(input, output)
                 }
             }
-            if (exifHelper is WebpExifHelper) {
-                RandomAccessFile(file, "rw").use {
-                    exifHelper.fixHeaderSize(it)
-                    Timber.d("fixed webp header size: $file")
-                }
-            }
+            exifHelper.postProcess(file)
             if (imageType.supportMetadata) {
                 context.contentResolver.openInputStream(uri)!!.use { input ->
                     ExifHelper.writeBackMetadata(

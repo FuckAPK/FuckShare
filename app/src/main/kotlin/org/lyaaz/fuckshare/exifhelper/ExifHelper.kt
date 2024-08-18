@@ -2,6 +2,7 @@ package org.lyaaz.fuckshare.exifhelper
 
 import androidx.exifinterface.media.ExifInterface
 import timber.log.Timber
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -9,6 +10,10 @@ import java.io.OutputStream
 interface ExifHelper {
     @Throws(IOException::class, ImageFormatException::class)
     fun removeMetadata(inputStream: InputStream, outputStream: OutputStream)
+
+    @Throws(IOException::class)
+    fun postProcess(file: File) {
+    }
 
     companion object {
         @Throws(IOException::class)
