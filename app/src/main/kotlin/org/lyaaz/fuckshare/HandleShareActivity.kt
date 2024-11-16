@@ -75,6 +75,7 @@ class HandleShareActivity : Activity() {
 
         val chooserIntent = setupChooser(ib)
         Timber.d("chooser intent: $chooserIntent")
+        setResult(RESULT_OK)
         startActivity(chooserIntent)
     }
 
