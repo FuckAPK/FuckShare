@@ -433,8 +433,8 @@ fun HookCategory(settings: Settings, prefs: SharedPreferences) {
                         }
                         // filter ascii chars
                         excludePackages = it
-                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
-                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, excludePackages) }
+                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,._" }
+                        prefs.edit { putString(Settings.PREF_EXCLUDE_PACKAGES, excludePackages) }
                     }
                 )
                 SwitchPreferenceItem(
