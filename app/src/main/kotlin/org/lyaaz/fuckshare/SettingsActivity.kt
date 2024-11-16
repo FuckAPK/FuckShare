@@ -159,30 +159,36 @@ fun MetadataCategory(settings: Settings, prefs: SharedPreferences) {
                 prefs.edit { putBoolean(Settings.PREF_ENABLE_REMOVE_EXIF, it) }
             }
         )
-        SwitchPreferenceItem(
-            title = R.string.title_enable_fallback_to_file,
-            summary = R.string.desc_enable_fallback_to_file,
-            checked = enableFallbackToFile,
-            enabled = enableRemoveExif,
-            onCheckedChange = {
-                enableFallbackToFile = it
-                prefs.edit { putBoolean(Settings.PREF_ENABLE_FALLBACK_TO_FILE, it) }
+        AnimatedVisibility(
+            visible = enableRemoveExif
+        ) {
+            Column {
+                SwitchPreferenceItem(
+                    title = R.string.title_enable_fallback_to_file,
+                    summary = R.string.desc_enable_fallback_to_file,
+                    checked = enableFallbackToFile,
+                    enabled = enableRemoveExif,
+                    onCheckedChange = {
+                        enableFallbackToFile = it
+                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FALLBACK_TO_FILE, it) }
+                    }
+                )
+                TextFieldPreference(
+                    title = R.string.title_exif_tags_to_keep,
+                    summary = R.string.desc_exif_tags_to_keep,
+                    value = exifTagsToKeep,
+                    onValueChange = {
+                        if (it.contains('\n')) {
+                            focusManager.clearFocus()
+                        }
+                        // filter ascii chars
+                        exifTagsToKeep = it
+                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
+                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
+                    }
+                )
             }
-        )
-        TextFieldPreference(
-            title = R.string.title_exif_tags_to_keep,
-            summary = R.string.desc_exif_tags_to_keep,
-            value = exifTagsToKeep,
-            onValueChange = {
-                if (it.contains('\n')) {
-                    focusManager.clearFocus()
-                }
-                // filter ascii chars
-                exifTagsToKeep = it
-                    .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
-                prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, exifTagsToKeep) }
-            }
-        )
+        }
     }
 }
 
@@ -294,76 +300,79 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                 prefs.edit { putBoolean(Settings.PREF_ENABLE_VIDEO_TO_GIF, it) }
             }
         )
-        SwitchPreferenceItem(
-            title = R.string.title_video_to_gif_force_with_audio,
-            summary = null,
-            enabled = enableVideoToGIF,
-            checked = videoToGIFForceWithAudio,
-            onCheckedChange = {
-                videoToGIFForceWithAudio = it
-                prefs.edit { putBoolean(Settings.PREF_VIDEO_TO_GIF_FORCE_WITH_AUDIO, it) }
-            }
-        )
-        TextFieldPreference(
-            title = R.string.title_video_to_gif_size_KB,
-            summary = null,
-            enabled = enableVideoToGIF,
-            value = videoToGIFSizeKB,
-            unit = R.string.unit_kB,
-            onValueChange = {
-                val intValue =
-                    it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
-                if (intValue < 0) {
-                    return@TextFieldPreference
-                }
-                videoToGIFSizeKB = intValue.toString()
-                prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
-            },
-            keyboardType = KeyboardType.Number
-        )
-        DropDownPreference(
-            title = R.string.title_video_to_gif_quality,
-            summary = null,
-            enabled = enableVideoToGIF,
-            selected = qualityResMap[videoToGIFQuality] ?: R.string.option_low,
-            content = { onItemSelected ->
-                qualityResMap.forEach { (quality, resId) ->
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = resId)) },
-                        onClick = {
-                            videoToGIFQuality = quality
-                            prefs.edit {
-                                putInt(
-                                    Settings.PREF_VIDEO_TO_GIF_QUALITY,
-                                    quality.value
-                                )
-                            }
-                            onItemSelected()
+        AnimatedVisibility(
+            visible = enableVideoToGIF
+        ) {
+            Column {
+                SwitchPreferenceItem(
+                    title = R.string.title_video_to_gif_force_with_audio,
+                    summary = null,
+                    checked = videoToGIFForceWithAudio,
+                    onCheckedChange = {
+                        videoToGIFForceWithAudio = it
+                        prefs.edit { putBoolean(Settings.PREF_VIDEO_TO_GIF_FORCE_WITH_AUDIO, it) }
+                    }
+                )
+                TextFieldPreference(
+                    title = R.string.title_video_to_gif_size_KB,
+                    summary = null,
+                    value = videoToGIFSizeKB,
+                    unit = R.string.unit_kB,
+                    onValueChange = {
+                        val intValue =
+                            it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
+                        if (intValue < 0) {
+                            return@TextFieldPreference
                         }
-                    )
-                }
+                        videoToGIFSizeKB = intValue.toString()
+                        prefs.edit { putInt(Settings.PREF_VIDEO_TO_GIF_SIZE_KB, intValue) }
+                    },
+                    keyboardType = KeyboardType.Number
+                )
+                DropDownPreference(
+                    title = R.string.title_video_to_gif_quality,
+                    summary = null,
+                    selected = qualityResMap[videoToGIFQuality] ?: R.string.option_low,
+                    content = { onItemSelected ->
+                        qualityResMap.forEach { (quality, resId) ->
+                            DropdownMenuItem(
+                                text = { Text(text = stringResource(id = resId)) },
+                                onClick = {
+                                    videoToGIFQuality = quality
+                                    prefs.edit {
+                                        putInt(
+                                            Settings.PREF_VIDEO_TO_GIF_QUALITY,
+                                            quality.value
+                                        )
+                                    }
+                                    onItemSelected()
+                                }
+                            )
+                        }
+                    }
+                )
+                TextFieldPreference(
+                    title = R.string.title_video_to_gif_custom_option,
+                    summary = R.string.desc_video_to_gif_custom_option,
+                    enabled = videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
+                    value = videoToGIFCustomOption,
+                    onValueChange = {
+                        if (it.contains('\n')) {
+                            focusManager.clearFocus()
+                        }
+                        // filter ascii chars
+                        videoToGIFCustomOption = it
+                            .filter { c -> c != '\n' }
+                        prefs.edit {
+                            putString(
+                                Settings.PREF_VIDEO_TO_GIF_CUSTOM_OPTION,
+                                videoToGIFCustomOption
+                            )
+                        }
+                    }
+                )
             }
-        )
-        TextFieldPreference(
-            title = R.string.title_video_to_gif_custom_option,
-            summary = R.string.desc_video_to_gif_custom_option,
-            enabled = enableVideoToGIF && videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
-            value = videoToGIFCustomOption,
-            onValueChange = {
-                if (it.contains('\n')) {
-                    focusManager.clearFocus()
-                }
-                // filter ascii chars
-                videoToGIFCustomOption = it
-                    .filter { c -> c != '\n' }
-                prefs.edit {
-                    putString(
-                        Settings.PREF_VIDEO_TO_GIF_CUSTOM_OPTION,
-                        videoToGIFCustomOption
-                    )
-                }
-            }
-        )
+        }
     }
 }
 
