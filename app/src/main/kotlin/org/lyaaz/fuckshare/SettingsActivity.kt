@@ -369,9 +369,15 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
 
 @Composable
 fun HookCategory(settings: Settings, prefs: SharedPreferences) {
+    val focusManager = LocalFocusManager.current
     var enableHook by remember {
         mutableStateOf(
             settings.enableHook
+        )
+    }
+    var excludePackages by remember {
+        mutableStateOf(
+            settings.excludePackages.joinToString(", ")
         )
     }
     var enableForceForwardHook by remember {
@@ -408,6 +414,20 @@ fun HookCategory(settings: Settings, prefs: SharedPreferences) {
             visible = enableHook
         ) {
             Column {
+                TextFieldPreference(
+                    title = R.string.title_exclude_packages,
+                    summary = R.string.desc_exclude_packages,
+                    value = excludePackages,
+                    onValueChange = {
+                        if (it.contains('\n')) {
+                            focusManager.clearFocus()
+                        }
+                        // filter ascii chars
+                        excludePackages = it
+                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,-_" }
+                        prefs.edit { putString(Settings.PREF_EXIF_TAGS_TO_KEEP, excludePackages) }
+                    }
+                )
                 SwitchPreferenceItem(
                     title = R.string.title_enable_force_forward_hook,
                     summary = R.string.desc_enable_force_forward_hook,

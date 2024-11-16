@@ -60,5 +60,8 @@
     <string name="title_enable_video_to_gif">Enable video to gif</string>
     <string name="desc_enable_video_to_gif">only video without audio track will be conveted</string>
     <string name="title_video_to_gif_force_with_audio">Convert video with audio</string>
-    <string name="title_enable_qr_code_to_text_action">Enable decode QR code action</string>>
+    <string name="title_enable_qr_code_to_text_action">Enable decode QR code action</string>
+    <string name="title_exclude_packages">Exclude packages</string>
+    <string name="desc_exclude_packages">intent from these packages will never be hooked (separate by comma or space, blank to disable)</string>
+    >
 </resources>

@@ -29,10 +29,6 @@ class MainHook : IXposedHookLoadPackage {
                 hookSystem(lpparam)
             }
 
-            in neverHookList -> {
-                return
-            }
-
             else -> {
                 hookActivity(lpparam)
             }
@@ -173,10 +169,6 @@ class MainHook : IXposedHookLoadPackage {
             Intent.ACTION_GET_CONTENT,
             Intent.ACTION_OPEN_DOCUMENT
         )
-        private val neverHookList = setOf(
-            BuildConfig.APPLICATION_ID,
-            "com.android.providers.media.module"
-        )
         private val actionHookEnableMap = mapOf(
             Intent.ACTION_SEND to { settings.enableForceForwardHook },
             Intent.ACTION_SEND_MULTIPLE to { settings.enableForceForwardHook },
@@ -197,12 +189,12 @@ class MainHook : IXposedHookLoadPackage {
         }
 
         private fun process(intent: Intent, callingPackage: String): Intent? {
-            if (callingPackage in neverHookList || intent.action !in hookedIntents) {
+            if (callingPackage == BuildConfig.APPLICATION_ID || intent.action !in hookedIntents) {
                 return null
             }
 
             prefs.reload()
-            if (!settings.enableHook) {
+            if (!settings.enableHook || callingPackage in settings.excludePackages) {
                 return null
             }
             val extraIntent = retrieveExtraIntent(Intent(intent)) ?: return null

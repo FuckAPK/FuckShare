@@ -4,6 +4,15 @@ import android.content.SharedPreferences
 
 class Settings private constructor(private val prefs: SharedPreferences) {
 
+    private fun String.toSet(): Set<String> {
+        return this.takeIf { it.isNotBlank() }
+            ?.split("[,\\s]+".toRegex())
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            ?.toSet()
+            ?: setOf()
+    }
+
     val enableRemoveExif: Boolean
         get() {
             return prefs.getBoolean(PREF_ENABLE_REMOVE_EXIF, DEFAULT_ENABLE_REMOVE_EXIF)
@@ -14,14 +23,8 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         }
     val exifTagsToKeep: Set<String>
         get() {
-            return prefs.getString(PREF_EXIF_TAGS_TO_KEEP, null)?.let { pref ->
-                pref.takeIf { it.isNotBlank() }
-                    ?.split("[,\\s]+".toRegex())
-                    ?.map { it.trim() }
-                    ?.filter { it.isNotBlank() }
-                    ?.toSet()
-                    ?: setOf()
-            } ?: DEFAULT_EXIF_TAGS_TO_KEEP
+            return prefs.getString(PREF_EXIF_TAGS_TO_KEEP, null)?.toSet()
+                ?: DEFAULT_EXIF_TAGS_TO_KEEP
         }
 
     val enableFileTypeSniff: Boolean
@@ -72,6 +75,10 @@ class Settings private constructor(private val prefs: SharedPreferences) {
     val enableHook: Boolean
         get() {
             return prefs.getBoolean(PREF_ENABLE_HOOK, DEFAULT_ENABLE_HOOK)
+        }
+    val excludePackages: Set<String>
+        get() {
+            return prefs.getString(PREF_EXCLUDE_PACKAGES, null)?.toSet() ?: DEFAULT_EXCLUDE_PACKAGES
         }
     val enableForceForwardHook: Boolean
         get() {
@@ -147,6 +154,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_VIDEO_TO_GIF_CUSTOM_OPTION = "video_to_gif_custom_option"
 
         const val PREF_ENABLE_HOOK = "enable_hook"
+        const val PREF_EXCLUDE_PACKAGES = "exclude_packages"
         const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
         const val PREF_ENABLE_FORCE_CONTENT_HOOK = "enable_force_content_hook"
         const val PREF_ENABLE_FORCE_DOCUMENT_HOOK = "enable_force_document_hook"
@@ -179,6 +187,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION = "-i \$input \$output"
 
         const val DEFAULT_ENABLE_HOOK = false
+        val DEFAULT_EXCLUDE_PACKAGES = setOf(
+            "com.android.providers.media.module"
+        )
         const val DEFAULT_ENABLE_FORCE_FORWARD_HOOK = false
         const val DEFAULT_ENABLE_FORCE_CONTENT_HOOK = false
         const val DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK = false
