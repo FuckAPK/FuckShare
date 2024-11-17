@@ -26,8 +26,6 @@
     <string name="desc_toast_time">设为 0 关闭</string>
     <string name="title_enable_video_rename">视频重命名</string>
     <string name="title_video_to_gif_size_KB">视频最大文件大小</string>
-    <string name="title_convert_gif_delay_MS">转为 GIF 时的帧间隔</string>
-    <string name="desc_convert_gif_delay_MS">至少为 1</string>
     <string name="title_reset_settings">重置设置</string>
     <string name="toast_settings_reset">已重置！</string>
     <string name="compose_shortcut_reset_settings">重置设置</string>
