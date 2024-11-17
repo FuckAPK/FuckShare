@@ -487,6 +487,7 @@ fun HookCategory(settings: Settings, prefs: SharedPreferences) {
 fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
     val context = LocalContext.current
     val launcherActivityName = "${context.packageName}.LauncherActivity"
+    val viewerActivityName = "${context.packageName}.ViewerActivity"
     val permissionRequestLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -512,6 +513,11 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
     var enableTextToLinkAction by remember {
         mutableStateOf(
             settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(context)
+        )
+    }
+    var enableViewer by remember {
+        mutableStateOf(
+            AppUtils.getActivityStatus(context, viewerActivityName)
         )
     }
     var enableLauncherIcon by remember {
@@ -579,6 +585,16 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
                 }
             )
         }
+        SwitchPreferenceItem(
+            title = R.string.title_enable_viewer,
+            summary = R.string.desc_enable_viewer,
+            checked = enableViewer,
+            onCheckedChange = {
+                AppUtils.setActivityStatus(context, viewerActivityName, it)
+                enableViewer =
+                    AppUtils.getActivityStatus(context, viewerActivityName)
+            }
+        )
         SwitchPreferenceItem(
             title = R.string.title_keep_launcher_icon,
             summary = null,
