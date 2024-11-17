@@ -22,10 +22,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -33,7 +39,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,9 +60,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import org.lyaaz.fuckshare.utils.AppUtils
 import timber.log.Timber
 import org.lyaaz.fuckshare.ui.AppTheme as Theme
@@ -69,11 +71,6 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         AppUtils.timberPlantTree(this)
         enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { view, insets ->
-            val bottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-            view.updatePadding(bottom = bottom)
-            insets
-        }
         currentUiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         setContent {
             Theme {
@@ -115,25 +112,33 @@ fun SettingsScreen() {
         }
     }
 
-    Scaffold { innerPadding ->
-        LazyColumn(
-            contentPadding = innerPadding
-        ) {
-            item {
-                MetadataCategory(settings, prefs)
-            }
-            item {
-                RenameCategory(settings, prefs)
-            }
-            item {
-                VideoToGIFCategory(settings, prefs)
-            }
-            item {
-                HookCategory(settings, prefs)
-            }
-            item {
-                MiscellaneousCategory(settings, prefs)
-            }
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .imePadding()
+    ) {
+        item {
+            MetadataCategory(settings, prefs)
+        }
+        item {
+            RenameCategory(settings, prefs)
+        }
+        item {
+            VideoToGIFCategory(settings, prefs)
+        }
+        item {
+            HookCategory(settings, prefs)
+        }
+        item {
+            MiscellaneousCategory(settings, prefs)
+        }
+        item {
+            Spacer(
+                modifier = Modifier.windowInsetsBottomHeight(
+                    WindowInsets.systemBars
+                )
+            )
         }
     }
 }
