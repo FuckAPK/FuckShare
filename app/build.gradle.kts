@@ -78,9 +78,6 @@ android {
         buildConfig = true
     }
 }
-composeCompiler {
-    enableStrongSkippingMode = true
-}
 dependencies {
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("androidx.preference:preference-ktx:1.2.1")
