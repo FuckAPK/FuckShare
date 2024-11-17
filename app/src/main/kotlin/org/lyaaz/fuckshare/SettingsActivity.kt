@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
@@ -32,6 +33,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,6 +68,7 @@ class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppUtils.timberPlantTree(this)
+        enableEdgeToEdge()
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { view, insets ->
             val bottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             view.updatePadding(bottom = bottom)
@@ -112,21 +115,25 @@ fun SettingsScreen() {
         }
     }
 
-    LazyColumn {
-        item {
-            MetadataCategory(settings, prefs)
-        }
-        item {
-            RenameCategory(settings, prefs)
-        }
-        item {
-            VideoToGIFCategory(settings, prefs)
-        }
-        item {
-            HookCategory(settings, prefs)
-        }
-        item {
-            MiscellaneousCategory(settings, prefs)
+    Scaffold { innerPadding ->
+        LazyColumn(
+            contentPadding = innerPadding
+        ) {
+            item {
+                MetadataCategory(settings, prefs)
+            }
+            item {
+                RenameCategory(settings, prefs)
+            }
+            item {
+                VideoToGIFCategory(settings, prefs)
+            }
+            item {
+                HookCategory(settings, prefs)
+            }
+            item {
+                MiscellaneousCategory(settings, prefs)
+            }
         }
     }
 }
