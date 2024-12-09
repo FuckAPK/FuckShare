@@ -46,5 +46,5 @@
     <string name="title_video_to_gif_force_with_audio">转换有声音的视频</string>
     <string name="title_enable_qr_code_to_text_action">选择界面复制二维码文本</string>
     <string name="title_exclude_packages">排除包名</string>
-    <string name="desc_exclude_packages">来自这些软件包的intent永远不会被hook（用逗号或空格分隔，留空禁用）</string>
+    <string name="desc_exclude_packages">来自这些软件包的intent永远不会被hook（用逗号或空格分隔，留空禁用，例如：com.app, com.app:image/*, *:image/png）</string>
 </resources>

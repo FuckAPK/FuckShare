@@ -13,6 +13,7 @@ import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import org.lyaaz.fuckshare.utils.IntentUtils
+import kotlin.text.split
 
 class MainHook : IXposedHookLoadPackage {
 
@@ -188,6 +189,27 @@ class MainHook : IXposedHookLoadPackage {
             return actionHookEnableMap.getOrDefault(action) { false }.invoke()
         }
 
+        private fun excludeRuleMatch(
+            rules: Set<String>,
+            packageName: String,
+            mimeType: String?
+        ): Boolean {
+            val mimeTypeMatch = { pattern: String, type: String? ->
+                pattern in setOf("*", "*/*", type)
+                        || (pattern.endsWith("/*") && type?.startsWith(pattern.removeSuffix("*")) == true)
+            }
+            return rules.map {
+                it.split(':').let {
+                    val first = if (it[0].isBlank()) "*" else it[0]
+                    val second = if (it.size == 1 || it[1].isBlank()) "*" else it[1].lowercase()
+                    first to second
+                }
+            }.any {
+                it.first in setOf("*", packageName)
+                        && mimeTypeMatch(it.second.lowercase(), mimeType?.lowercase())
+            }
+        }
+
         private fun process(intent: Intent, callingPackage: String): Intent? {
             if (callingPackage == BuildConfig.APPLICATION_ID || intent.action !in hookedIntents) {
                 return null
@@ -198,6 +220,9 @@ class MainHook : IXposedHookLoadPackage {
                 return null
             }
             val extraIntent = retrieveExtraIntent(Intent(intent)) ?: return null
+            if (excludeRuleMatch(settings.excludePackages, callingPackage, extraIntent.type)) {
+                return null
+            }
             if (!actionHookEnabled(extraIntent.action)) {
                 return null
             }

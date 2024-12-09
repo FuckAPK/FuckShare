@@ -445,7 +445,7 @@ fun HookCategory(settings: Settings, prefs: SharedPreferences) {
                         }
                         // filter ascii chars
                         excludePackages = it
-                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,._" }
+                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,._:/*" }
                         prefs.edit { putString(Settings.PREF_EXCLUDE_PACKAGES, excludePackages) }
                     }
                 )
