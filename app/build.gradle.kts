@@ -79,7 +79,7 @@ android {
     }
 }
 dependencies {
-    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    implementation("androidx.exifinterface:exifinterface:1.4.0")
     implementation("androidx.preference:preference-ktx:1.2.1")
     implementation("androidx.work:work-runtime-ktx:2.10.0")
     implementation("com.jakewharton.timber:timber:5.0.1")
