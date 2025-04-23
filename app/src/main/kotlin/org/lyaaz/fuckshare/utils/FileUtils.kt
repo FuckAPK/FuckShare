@@ -9,6 +9,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
 import com.arthenica.ffmpegkit.FFmpegKit
 import com.arthenica.ffmpegkit.ReturnCode
@@ -19,11 +20,7 @@ import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
 import org.lyaaz.fuckshare.R
 import org.lyaaz.fuckshare.Settings
-import org.lyaaz.fuckshare.exifhelper.ExifHelper
-import org.lyaaz.fuckshare.exifhelper.ImageFormatException
-import org.lyaaz.fuckshare.exifhelper.JpegExifHelper
-import org.lyaaz.fuckshare.exifhelper.PngExifHelper
-import org.lyaaz.fuckshare.exifhelper.WebpExifHelper
+import org.lyaaz.fuckshare.exifhelper.*
 import org.lyaaz.fuckshare.filetype.FileType
 import org.lyaaz.fuckshare.filetype.ImageType
 import org.lyaaz.fuckshare.filetype.VideoType
@@ -339,10 +336,11 @@ object FileUtils {
      * Decode QR code in Bitmap
      */
     fun decodeQRCode(bitmap: Bitmap): String? {
-        val width = bitmap.width
-        val height = bitmap.height
+        val compressedBitmap = compressBitmap(bitmap, 800, 800)
+        val width = compressedBitmap.width
+        val height = compressedBitmap.height
         val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        compressedBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
         return try {
             val binaryBitmap =
                 BinaryBitmap(HybridBinarizer(RGBLuminanceSource(width, height, pixels)))
@@ -353,6 +351,24 @@ object FileUtils {
         } catch (e: Exception) {
             Timber.e(e)
             null
+        }
+    }
+
+    /**
+     * Compress bitmap to specifical max width and height
+     */
+    fun compressBitmap(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+        val ratio = minOf(
+            maxWidth.toFloat() / bitmap.width,
+            maxHeight.toFloat() / bitmap.height,
+            1f
+        )
+        val newWidth = (bitmap.width * ratio).toInt()
+        val newHeight = (bitmap.height * ratio).toInt()
+        return if (ratio < 1f) {
+            bitmap.scale(newWidth, newHeight)
+        } else {
+            bitmap
         }
     }
 }
