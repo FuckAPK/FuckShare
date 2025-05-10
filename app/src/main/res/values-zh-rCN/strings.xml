@@ -16,8 +16,6 @@
     <string name="clear_cache_failed">缓存清理失败！</string>
     <string name="compose_shortcut_short_clear">清除缓存</string>
     <string name="title_miscellaneous">其它</string>
-    <string name="desc_enable_hook">需要 xposed</string>
-    <string name="title_enable_hook">开启 Hook</string>
     <string name="title_toast_time">气泡提示时间</string>
     <string name="desc_enable_viewer">在打开方式中显示</string>
     <string name="title_enable_viewer">开启查看器</string>
@@ -45,6 +43,4 @@
     <string name="desc_enable_video_to_gif">仅限无音轨的视频</string>
     <string name="title_video_to_gif_force_with_audio">转换有声音的视频</string>
     <string name="title_enable_qr_code_to_text_action">选择界面复制二维码文本</string>
-    <string name="title_exclude_packages">排除包名</string>
-    <string name="desc_exclude_packages">来自这些软件包的intent永远不会被hook（用逗号或空格分隔，留空禁用，例如：com.app, com.app:image/*, *:image/png）</string>
 </resources>

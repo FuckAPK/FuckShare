@@ -1,4 +1,4 @@
-import java.util.Properties
+import java.util.*
 
 plugins {
     id("com.android.application")
@@ -82,7 +82,6 @@ dependencies {
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("com.google.android.material:material:1.12.0")
     implementation("com.arthenica:ffmpeg-kit-min:6.0.LTS")
-    compileOnly("de.robv.android.xposed:api:82")
 
     // compose
     val composeBom = platform("androidx.compose:compose-bom:2025.04.00")

@@ -20,5 +20,4 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class org.lyaaz.fuckshare.MainHook
 -dontobfuscate

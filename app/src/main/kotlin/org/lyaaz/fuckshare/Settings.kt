@@ -72,40 +72,6 @@ class Settings private constructor(private val prefs: SharedPreferences) {
                 ?: DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION
         }
 
-    val enableHook: Boolean
-        get() {
-            return prefs.getBoolean(PREF_ENABLE_HOOK, DEFAULT_ENABLE_HOOK)
-        }
-    val excludePackages: Set<String>
-        get() {
-            return prefs.getString(PREF_EXCLUDE_PACKAGES, null)?.toSet() ?: DEFAULT_EXCLUDE_PACKAGES
-        }
-    val enableForceForwardHook: Boolean
-        get() {
-            return prefs.getBoolean(
-                PREF_ENABLE_FORCE_FORWARD_HOOK,
-                DEFAULT_ENABLE_FORCE_FORWARD_HOOK
-            )
-        }
-    val enableForceContentHook: Boolean
-        get() {
-            return prefs.getBoolean(
-                PREF_ENABLE_FORCE_CONTENT_HOOK,
-                DEFAULT_ENABLE_FORCE_CONTENT_HOOK
-            )
-        }
-    val enableForceDocumentHook: Boolean
-        get() {
-            return prefs.getBoolean(
-                PREF_ENABLE_FORCE_DOCUMENT_HOOK,
-                DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK
-            )
-        }
-    val enableForcePickerHook: Boolean
-        get() {
-            return prefs.getBoolean(PREF_ENABLE_FORCE_PICKER_HOOK, DEFAULT_ENABLE_FORCE_PICKER_HOOK)
-        }
-
     val toastTimeMS: Int
         get() {
             return prefs.getInt(PREF_TOAST_TIME_MS, DEFAULT_TOAST_TIME_MS)
@@ -153,13 +119,6 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_VIDEO_TO_GIF_QUALITY = "video_to_gif_quality"
         const val PREF_VIDEO_TO_GIF_CUSTOM_OPTION = "video_to_gif_custom_option"
 
-        const val PREF_ENABLE_HOOK = "enable_hook"
-        const val PREF_EXCLUDE_PACKAGES = "exclude_packages"
-        const val PREF_ENABLE_FORCE_FORWARD_HOOK = "enable_force_forward_hook"
-        const val PREF_ENABLE_FORCE_CONTENT_HOOK = "enable_force_content_hook"
-        const val PREF_ENABLE_FORCE_DOCUMENT_HOOK = "enable_force_document_hook"
-        const val PREF_ENABLE_FORCE_PICKER_HOOK = "enable_force_picker_hook"
-
         const val PREF_TOAST_TIME_MS = "toast_time"
         const val PREF_ENABLE_QR_CODE_TO_TEXT_ACTION = "enable_qrcode_to_image_action"
         const val PREF_ENABLE_TEXT_TO_LINK_ACTION = "enable_text_to_link_action"
@@ -185,15 +144,6 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
         val DEFAULT_VIDEO_TO_GIF_QUALITY = VideoToGIFQualityOptions.LOW
         const val DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION = "-i \$input \$output"
-
-        const val DEFAULT_ENABLE_HOOK = false
-        val DEFAULT_EXCLUDE_PACKAGES = setOf(
-            "com.android.providers.media.module"
-        )
-        const val DEFAULT_ENABLE_FORCE_FORWARD_HOOK = false
-        const val DEFAULT_ENABLE_FORCE_CONTENT_HOOK = false
-        const val DEFAULT_ENABLE_FORCE_DOCUMENT_HOOK = false
-        const val DEFAULT_ENABLE_FORCE_PICKER_HOOK = false
 
         const val DEFAULT_TOAST_TIME_MS = 500
         const val DEFAULT_ENABLE_QR_CODE_TO_TEXT_ACTION = true

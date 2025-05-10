@@ -17,38 +17,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -126,9 +100,6 @@ fun SettingsScreen() {
         }
         item {
             VideoToGIFCategory(settings, prefs)
-        }
-        item {
-            HookCategory(settings, prefs)
         }
         item {
             MiscellaneousCategory(settings, prefs)
@@ -385,113 +356,6 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                 )
             }
         }
-    }
-}
-
-@Composable
-fun HookCategory(settings: Settings, prefs: SharedPreferences) {
-    val focusManager = LocalFocusManager.current
-    var enableHook by remember {
-        mutableStateOf(
-            settings.enableHook
-        )
-    }
-    var excludePackages by remember {
-        mutableStateOf(
-            settings.excludePackages.joinToString(", ")
-        )
-    }
-    var enableForceForwardHook by remember {
-        mutableStateOf(
-            settings.enableForceForwardHook
-        )
-    }
-    var enableForcePickerHook by remember {
-        mutableStateOf(
-            settings.enableForcePickerHook
-        )
-    }
-    var enableForceContentHook by remember {
-        mutableStateOf(
-            settings.enableForceContentHook
-        )
-    }
-    var enableForceDocumentHook by remember {
-        mutableStateOf(
-            settings.enableForceDocumentHook
-        )
-    }
-    PreferenceCategory(title = R.string.title_hook) {
-        SwitchPreferenceItem(
-            title = R.string.title_enable_hook,
-            summary = R.string.desc_enable_hook,
-            checked = enableHook,
-            onCheckedChange = {
-                enableHook = it
-                prefs.edit { putBoolean(Settings.PREF_ENABLE_HOOK, it) }
-            }
-        )
-        AnimatedVisibility(
-            visible = enableHook
-        ) {
-            Column {
-                TextFieldPreference(
-                    title = R.string.title_exclude_packages,
-                    summary = R.string.desc_exclude_packages,
-                    value = excludePackages,
-                    onValueChange = {
-                        if (it.contains('\n')) {
-                            focusManager.clearFocus()
-                        }
-                        // filter ascii chars
-                        excludePackages = it
-                            .filter { c -> c in ('a'..'z') + ('A'..'Z') + ('0'..'9') || c in " ,._:/*" }
-                        prefs.edit { putString(Settings.PREF_EXCLUDE_PACKAGES, excludePackages) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_force_forward_hook,
-                    summary = R.string.desc_enable_force_forward_hook,
-                    checked = enableForceForwardHook,
-                    enabled = enableHook,
-                    onCheckedChange = {
-                        enableForceForwardHook = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_FORWARD_HOOK, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_force_picker_hook,
-                    summary = R.string.desc_enable_force_picker_hook,
-                    checked = enableForcePickerHook,
-                    enabled = enableHook,
-                    onCheckedChange = {
-                        enableForcePickerHook = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_PICKER_HOOK, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_force_content_hook,
-                    summary = R.string.desc_enable_force_content_hook,
-                    checked = enableForceContentHook,
-                    enabled = enableHook,
-                    onCheckedChange = {
-                        enableForceContentHook = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_CONTENT_HOOK, it) }
-                    }
-                )
-                SwitchPreferenceItem(
-                    title = R.string.title_enable_force_document_hook,
-                    summary = R.string.desc_enable_force_document_hook,
-                    checked = enableForceDocumentHook,
-                    enabled = enableHook,
-                    onCheckedChange = {
-                        enableForceDocumentHook = it
-                        prefs.edit { putBoolean(Settings.PREF_ENABLE_FORCE_DOCUMENT_HOOK, it) }
-                    }
-                )
-            }
-        }
-
     }
 }
 
