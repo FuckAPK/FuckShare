@@ -35,8 +35,7 @@
     <string name="toast_permission_granted">Permission granted!</string>
     <string name="title_enable_text_to_link_action">Enable text to link chooser action</string>
     <string name="desc_enable_text_to_link_action">need display over other app permission</string>
-    <string name="title_video_to_gif_custom_option">Video to GIF ffmpeg custom option</string>
-    <string name="desc_video_to_gif_custom_option">$input and $output are used as input and output path</string>
+    <string name="title_video_to_gif_custom_option">Video to GIF custom option</string>
     <string name="video_to_gif_failed">Failed to convert video to GIF！</string>
     <string name="toast_permission_denied">Failed to grant permission!</string>
     <string name="option_low">Low</string>
@@ -48,5 +47,7 @@
     <string name="desc_enable_video_to_gif">only video without audio track will be conveted</string>
     <string name="title_video_to_gif_force_with_audio">Convert video with audio</string>
     <string name="title_enable_qr_code_to_text_action">Enable decode QR code action</string>
+    <string name="desc_video_to_gif_custom_option">1 to 100; the lower the value, the higher the image quality</string>
+    <string name="option_medium">MEDIUM</string>
     >
 </resources>

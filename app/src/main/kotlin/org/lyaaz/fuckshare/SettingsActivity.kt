@@ -242,6 +242,7 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
     val focusManager = LocalFocusManager.current
     val qualityResMap = mapOf(
         Settings.VideoToGIFQualityOptions.LOW to R.string.option_low,
+        Settings.VideoToGIFQualityOptions.MEDIUM to R.string.option_medium,
         Settings.VideoToGIFQualityOptions.HIGH to R.string.option_high,
         Settings.VideoToGIFQualityOptions.CUSTOM to R.string.option_custom
     )

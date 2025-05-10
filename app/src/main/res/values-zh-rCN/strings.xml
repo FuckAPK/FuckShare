@@ -30,8 +30,8 @@
     <string name="toast_permission_granted">权限已获取！</string>
     <string name="title_enable_text_to_link_action">选择界面显示打开链接</string>
     <string name="desc_enable_text_to_link_action">需要在其他应用上显示权限</string>
-    <string name="title_video_to_gif_custom_option">视频转GIF ffmpeg自定义选项</string>
-    <string name="desc_video_to_gif_custom_option">使用 $input $output 作为输入输出路径</string>
+    <string name="title_video_to_gif_custom_option">视频转GIF 自定义选项</string>
+    <string name="desc_video_to_gif_custom_option">1–100, 越小图像质量越高</string>
     <string name="video_to_gif_failed">视频转换GIF失败！</string>
     <string name="toast_permission_denied">权限获取失败！</string>
     <string name="option_low">低</string>
@@ -43,4 +43,5 @@
     <string name="desc_enable_video_to_gif">仅限无音轨的视频</string>
     <string name="title_video_to_gif_force_with_audio">转换有声音的视频</string>
     <string name="title_enable_qr_code_to_text_action">选择界面复制二维码文本</string>
+    <string name="option_medium">中</string>
 </resources>

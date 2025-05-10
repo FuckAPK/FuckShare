@@ -11,8 +11,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.graphics.scale
 import androidx.exifinterface.media.ExifInterface
-import com.arthenica.ffmpegkit.FFmpegKit
-import com.arthenica.ffmpegkit.ReturnCode
+import com.bumptech.glide.gifencoder.AnimatedGifEncoder
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.MultiFormatReader
 import com.google.zxing.NotFoundException
@@ -279,30 +278,31 @@ object FileUtils {
     fun video2gif(video: File, settings: Settings): File? {
         val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
         runCatching {
-            val command =
-                when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
-                    Settings.VideoToGIFQualityOptions.LOW ->
-                        "-i ${video.path} ${gifFile.path}"
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(video.path)
+            val frameCount =
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toInt() ?: 1
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1000L
+            val frameRate = duration.toFloat().div(frameCount)
 
-                    Settings.VideoToGIFQualityOptions.HIGH ->
-                        """-i ${video.path} -lavfi "split[a][b];[a]palettegen[p];[b][p]paletteuse=dither=floyd_steinberg" ${gifFile.path}"""
+            val frames = retriever.getFramesAtIndex(0, frameCount)
+            retriever.close()
 
-                    Settings.VideoToGIFQualityOptions.CUSTOM ->
-                        settings.videoToGIFCustomOption
-                            .replace("\$input", video.path)
-                            .replace("\$output", gifFile.path)
-                            .trim()
-                }
-            Timber.d("ffmpeg command: $command")
-            val session = FFmpegKit
-                .execute(command)
-            if (ReturnCode.isSuccess(session.returnCode)) {
-                Timber.i("ffmpeg convert success")
-                return gifFile
-            } else {
-                Timber.e("Failed to convert video to gif: $video")
-                gifFile.delete()
+            val gifEncoder = AnimatedGifEncoder()
+            gifEncoder.start(gifFile.outputStream().buffered())
+            gifEncoder.setFrameRate(frameRate)
+            gifEncoder.setRepeat(0)
+            val quality = when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
+                Settings.VideoToGIFQualityOptions.LOW -> 100
+                Settings.VideoToGIFQualityOptions.MEDIUM -> 30
+                Settings.VideoToGIFQualityOptions.HIGH -> 10
+                Settings.VideoToGIFQualityOptions.CUSTOM -> settings.videoToGIFCustomOption.toInt()
             }
+            gifEncoder.setQuality(quality)
+
+            frames.forEach { gifEncoder.addFrame(it) }
+            gifEncoder.finish()
+            return gifFile
         }.onFailure {
             Timber.e(it)
             gifFile.delete()

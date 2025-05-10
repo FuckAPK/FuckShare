@@ -93,8 +93,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
 
     enum class VideoToGIFQualityOptions(val value: Int) {
         LOW(0),
-        HIGH(1),
-        CUSTOM(2);
+        MEDIUM(1),
+        HIGH(2),
+        CUSTOM(3);
 
         companion object {
             private val map = entries.associateBy { it.value }
@@ -142,8 +143,8 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_VIDEO_TO_GIF = false
         const val DEFAULT_VIDEO_TO_GIF_FORCE_WITH_AUDIO = false
         const val DEFAULT_VIDEO_TO_GIF_SIZE_KB = 1024 * 10
-        val DEFAULT_VIDEO_TO_GIF_QUALITY = VideoToGIFQualityOptions.LOW
-        const val DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION = "-i \$input \$output"
+        val DEFAULT_VIDEO_TO_GIF_QUALITY = VideoToGIFQualityOptions.MEDIUM
+        const val DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION = "20"
 
         const val DEFAULT_TOAST_TIME_MS = 500
         const val DEFAULT_ENABLE_QR_CODE_TO_TEXT_ACTION = true
