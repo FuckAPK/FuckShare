@@ -19,3 +19,4 @@ dependencyResolutionManagement {
 rootProject.name = "Fuck Share"
 
 include(":app")
+include(":ui")

@@ -3,40 +3,32 @@ package org.lyaaz.fuckshare
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
-import android.graphics.Rect
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import org.lyaaz.fuckshare.utils.AppUtils
+import org.lyaaz.ui.*
 import timber.log.Timber
-import org.lyaaz.fuckshare.ui.AppTheme as Theme
+import org.lyaaz.ui.theme.AppTheme as Theme
 
 class SettingsActivity : ComponentActivity() {
 
@@ -446,7 +438,7 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
                             permissionRequestLauncher.launch(
                                 Intent(
                                     android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                    Uri.parse("package:${context.packageName}")
+                                    "package:${context.packageName}".toUri()
                                 )
                             )
                         }
@@ -494,202 +486,5 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
                 (context as ComponentActivity).recreate()
             }
         )
-    }
-}
-
-@Composable
-fun keyboardAsState(): State<Boolean> {
-    val keyboardState = remember { mutableStateOf(false) }
-    val view = LocalView.current
-    DisposableEffect(view) {
-        val onGlobalListener = ViewTreeObserver.OnGlobalLayoutListener {
-            val rect = Rect()
-            view.getWindowVisibleDisplayFrame(rect)
-            val screenHeight = view.rootView.height
-            val keypadHeight = screenHeight - rect.bottom
-            keyboardState.value = if (keypadHeight > screenHeight * 0.15) {
-                true
-            } else {
-                false
-            }
-        }
-        view.viewTreeObserver.addOnGlobalLayoutListener(onGlobalListener)
-
-        onDispose {
-            view.viewTreeObserver.removeOnGlobalLayoutListener(onGlobalListener)
-        }
-    }
-    return keyboardState
-}
-
-@Composable
-fun PreferenceCategory(
-    @StringRes title: Int,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-    ) {
-        Text(
-            text = stringResource(id = title),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = 4.dp, horizontal = 16.dp),
-            color = MaterialTheme.colorScheme.primary
-        )
-        content()
-    }
-}
-
-@Composable
-fun SwitchPreferenceItem(
-    @StringRes title: Int,
-    @StringRes summary: Int? = null,
-    checked: Boolean,
-    enabled: Boolean = true,
-    onCheckedChange: (Boolean) -> Unit,
-    noSwitch: Boolean = false
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(id = title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
-                )
-                if (summary != null) {
-                    Text(
-                        text = stringResource(id = summary),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
-                    )
-                }
-            }
-            if (!noSwitch) {
-                Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
-            }
-        }
-    }
-}
-
-@Composable
-fun TextFieldPreference(
-    @StringRes title: Int,
-    @StringRes summary: Int? = null,
-    @StringRes unit: Int? = null,
-    enabled: Boolean = true,
-    value: String,
-    onValueChange: (String) -> Unit,
-    keyboardType: KeyboardType = KeyboardType.Text,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-    ) {
-        Text(
-            text = stringResource(id = title),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
-        )
-        if (summary != null) {
-            Text(
-                text = stringResource(id = summary),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 0.6f else 0.4f)
-            )
-        }
-        val focusManager = LocalFocusManager.current
-        OutlinedTextField(
-            enabled = enabled,
-            value = value,
-            onValueChange = onValueChange,
-            singleLine = false,
-            maxLines = 3,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = keyboardType,
-                imeAction = ImeAction.Done
-            ),
-            suffix = unit?.let {
-                @Composable {
-                    Text(
-                        text = stringResource(id = it),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary.copy(if (enabled) 1.0f else 0.6f)
-                    )
-                }
-            },
-            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            textStyle = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-@Composable
-fun DropDownPreference(
-    @StringRes title: Int,
-    @StringRes summary: Int? = null,
-    enabled: Boolean = true,
-    @StringRes selected: Int,
-    content: @Composable ColumnScope.(onItemSelected: () -> Unit) -> Unit
-) {
-    var expended by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier
-            .padding(vertical = 8.dp, horizontal = 16.dp)
-            .height(50.dp)
-            .clickable { expended = true }) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(
-                    text = stringResource(id = title),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
-                )
-                if (summary != null) {
-                    Text(
-                        text = stringResource(id = summary),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(if (enabled) 1.0f else 0.6f)
-                    )
-                }
-            }
-            Box(
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Text(
-                    text = stringResource(selected),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary.copy(if (enabled) 1.0f else 0.6f)
-                )
-                DropdownMenu(
-                    expanded = expended,
-                    onDismissRequest = { expended = false },
-                ) {
-                    if (enabled) {
-                        content { expended = false }
-                    }
-                }
-            }
-        }
     }
 }

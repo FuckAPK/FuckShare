@@ -3,7 +3,6 @@ package org.lyaaz.fuckshare
 import android.content.ClipData
 import android.content.ComponentName
 import android.content.Intent
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,10 +23,6 @@ class ContentProxyActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         AppUtils.timberPlantTree(this)
-
-        (window.decorView.background as? ColorDrawable)?.let {
-            window.statusBarColor = it.color
-        }
 
         val prefs = AppUtils.getPrefs(this)
         settings = Settings.getInstance(prefs)
