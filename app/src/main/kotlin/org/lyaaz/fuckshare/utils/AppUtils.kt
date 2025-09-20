@@ -1,7 +1,5 @@
 package org.lyaaz.fuckshare.utils
 
-import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.ComponentName
@@ -38,21 +36,9 @@ object AppUtils {
      * @param context The context used to access shared preferences.
      * @return Shared preferences instance.
      */
-    @SuppressLint("WorldReadableFiles")
     fun getPrefs(context: Context): SharedPreferences {
         val prefsName = "${context.packageName}_preferences"
-        return runCatching {
-            @Suppress("DEPRECATION")
-            context.getSharedPreferences(
-                prefsName,
-                Activity.MODE_WORLD_READABLE
-            )
-        }.getOrNull() ?: run {
-            context.getSharedPreferences(
-                prefsName,
-                Activity.MODE_PRIVATE
-            )
-        }
+        return context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
     }
 
     /**
@@ -107,11 +93,11 @@ object AppUtils {
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
         Timber.d("Clearing cache with time duration: $timeDurationMillis")
         val timeBefore = System.currentTimeMillis() - timeDurationMillis
-        return context.cacheDir.listFiles()?.asSequence()
-            ?.filter { it.lastModified() < timeBefore }
-            ?.map { it.deleteRecursively() }
-            ?.findLast { !it }
-            ?: true
+        val cacheFiles = context.cacheDir.listFiles() ?: return true
+        
+        return cacheFiles.asSequence()
+            .filter { it.lastModified() < timeBefore }
+            .all { it.deleteRecursively() }
     }
 
     /**
@@ -187,22 +173,19 @@ object AppUtils {
      */
     fun timberPlantTree(context: Context) {
         if (Timber.treeCount == 0) {
+            val isDebug = isDebugMode(context)
             Timber.plant(
-                if (isDebugMode(context)) {
-                    object : Timber.DebugTree() {
-                        override fun createStackElementTag(element: StackTraceElement): String {
-                            return "${element.className}:${element.lineNumber}#${element.methodName}"
+                object : Timber.DebugTree() {
+                    override fun createStackElementTag(element: StackTraceElement): String {
+                        return if (isDebug) {
+                            "${element.className}:${element.lineNumber}#${element.methodName}"
+                        } else {
+                            "${element.className}#${element.methodName}"
                         }
                     }
-                } else {
-                    object : Timber.DebugTree() {
-                        override fun createStackElementTag(element: StackTraceElement): String {
-                            return "${element.className}#${element.methodName}"
-                        }
 
-                        override fun isLoggable(tag: String?, priority: Int): Boolean {
-                            return priority >= Log.WARN
-                        }
+                    override fun isLoggable(tag: String?, priority: Int): Boolean {
+                        return if (isDebug) true else priority >= Log.WARN
                     }
                 }
             )

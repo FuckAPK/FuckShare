@@ -12,13 +12,13 @@ class ClearCacheWorker(
 ) : Worker(context, params) {
     override fun doWork(): Result {
         AppUtils.timberPlantTree(context)
-        val timeDurationMillis = 1000L * 60L * 30L // 30 mins
-        val result = AppUtils.clearCache(context, timeDurationMillis)
+        val result = AppUtils.clearCache(context, CACHE_DURATION_MILLIS)
         Timber.i("Cache cleared with result: $result")
         return if (result) Result.success() else Result.failure()
     }
 
     companion object {
         const val id = "clearCache"
+        private const val CACHE_DURATION_MILLIS = 30L * 60L * 1000L // 30 minutes
     }
 }

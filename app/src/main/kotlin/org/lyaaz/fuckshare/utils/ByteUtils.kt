@@ -18,9 +18,7 @@ object ByteUtils {
      * @return The converted unsigned integer value.
      */
     fun ByteArray.toUInt(order: ByteOrder): UInt {
-        return ByteBuffer.wrap(this).apply {
-            order(order)
-        }.int.toUInt()
+        return ByteBuffer.wrap(this, 0, 4).order(order).int.toUInt()
     }
 
     /**
@@ -30,9 +28,7 @@ object ByteUtils {
      * @return The converted unsigned short value.
      */
     fun ByteArray.toUShort(order: ByteOrder): UShort {
-        return ByteBuffer.wrap(this).apply {
-            order(order)
-        }.short.toUShort()
+        return ByteBuffer.wrap(this, 0, 2).order(order).short.toUShort()
     }
 
     /**
@@ -83,18 +79,14 @@ object ByteUtils {
         var n = len
         while (n > 0L) {
             val ns: Long = inputStream.skip(n)
-            if (ns in 1L..n) {
-                n -= ns
-                continue
-            }
-            if (ns == 0L) {
-                if (inputStream.read() == -1) {
-                    break
+            when {
+                ns in 1L..n -> n -= ns
+                ns == 0L -> {
+                    if (inputStream.read() == -1) break
+                    --n
                 }
-                --n
-                continue
+                else -> throw IOException("Unable to skip exactly")
             }
-            throw IOException("Unable to skip exactly")
         }
         return len - n
     }

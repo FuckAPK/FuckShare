@@ -102,19 +102,19 @@ object FileUtils {
      */
     @Throws(IOException::class)
     fun copy(inputStream: InputStream, outputStream: OutputStream, len: Long): Long {
-        val buffer = ByteArray(8192) // Set the buffer size as per your requirement
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE) // Use larger buffer for better performance
         var bytesRemaining = len
         while (bytesRemaining > 0) {
-            val bytesRead =
-                inputStream.read(buffer, 0, minOf(buffer.size.toLong(), bytesRemaining).toInt())
-            if (bytesRead == -1) {
-                break
-            }
+            val bytesToRead = minOf(buffer.size.toLong(), bytesRemaining).toInt()
+            val bytesRead = inputStream.read(buffer, 0, bytesToRead)
+            if (bytesRead == -1) break
             outputStream.write(buffer, 0, bytesRead)
             bytesRemaining -= bytesRead
         }
         return len - bytesRemaining
     }
+
+    private const val DEFAULT_BUFFER_SIZE = 64 * 1024 // 64KB buffer
 
     /**
      * Copies the content of the input stream to the specified file.
@@ -122,11 +122,13 @@ object FileUtils {
     @Throws(IOException::class)
     private fun copyFileFromUri(context: Context, uri: Uri, file: File) {
         Timber.d("copyFileFromUri: $uri -> $file")
-        context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
-            file.outputStream().buffered().use { fout ->
-                uin.copyTo(fout)
+        context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            inputStream.buffered().use { uin ->
+                file.outputStream().buffered().use { fout ->
+                    uin.copyTo(fout)
+                }
             }
-        }
+        } ?: throw IOException("Failed to open input stream for URI: $uri")
     }
 
     @Throws(IOException::class)
@@ -168,21 +170,24 @@ object FileUtils {
         }
 
         eh?.let { exifHelper ->
-            context.contentResolver.openInputStream(uri)!!.buffered().use { input ->
-                file.outputStream().buffered().use { output ->
-                    exifHelper.removeMetadata(input, output)
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                inputStream.buffered().use { input ->
+                    file.outputStream().buffered().use { output ->
+                        exifHelper.removeMetadata(input, output)
+                    }
                 }
-            }
+            } ?: throw IOException("Failed to open input stream for URI: $uri")
+            
             exifHelper.postProcess(file)
             if (imageType.supportMetadata) {
-                context.contentResolver.openInputStream(uri)!!.use { input ->
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     ExifHelper.writeBackMetadata(
-                        ExifInterface(input),
+                        ExifInterface(inputStream),
                         ExifInterface(file),
                         settings.exifTagsToKeep
                     )
                     Timber.d("rewrite metadata: $file, tags: ${settings.exifTagsToKeep}")
-                }
+                } ?: throw IOException("Failed to open input stream for metadata rewrite: $uri")
             }
         } ?: run {
             Timber.e("unsupported image type: $imageType")
@@ -277,37 +282,41 @@ object FileUtils {
      */
     fun video2gif(video: File, settings: Settings): File? {
         val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
-        runCatching {
-            val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(video.path)
-            val frameCount =
-                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toInt() ?: 1
-            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1000L
-            val frameRate = duration.toFloat().div(frameCount)
+        return runCatching {
+            val retriever = MediaMetadataRetriever().apply {
+                setDataSource(video.path)
+            }
+            
+            val frameCount = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toIntOrNull() ?: 1
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 1000L
+            val frameRate = if (frameCount > 0) duration.toFloat() / frameCount else 1000f / frameCount
 
             val frames = retriever.getFramesAtIndex(0, frameCount)
             retriever.close()
 
-            val gifEncoder = AnimatedGifEncoder()
-            gifEncoder.start(gifFile.outputStream().buffered())
-            gifEncoder.setFrameRate(frameRate)
-            gifEncoder.setRepeat(0)
-            val quality = when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
-                Settings.VideoToGIFQualityOptions.LOW -> 100
-                Settings.VideoToGIFQualityOptions.MEDIUM -> 30
-                Settings.VideoToGIFQualityOptions.HIGH -> 10
-                Settings.VideoToGIFQualityOptions.CUSTOM -> settings.videoToGIFCustomOption.toInt()
+            val gifEncoder = AnimatedGifEncoder().apply {
+                start(gifFile.outputStream().buffered())
+                setFrameRate(frameRate)
+                setRepeat(0)
+                setQuality(getGifQuality(settings))
             }
-            gifEncoder.setQuality(quality)
 
-            frames.forEach { gifEncoder.addFrame(it) }
+            frames.forEach(gifEncoder::addFrame)
             gifEncoder.finish()
-            return gifFile
+            gifFile
         }.onFailure {
             Timber.e(it)
             gifFile.delete()
+        }.getOrNull()
+    }
+    
+    private fun getGifQuality(settings: Settings): Int {
+        return when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
+            Settings.VideoToGIFQualityOptions.LOW -> 100
+            Settings.VideoToGIFQualityOptions.MEDIUM -> 30
+            Settings.VideoToGIFQualityOptions.HIGH -> 10
+            Settings.VideoToGIFQualityOptions.CUSTOM -> settings.videoToGIFCustomOption.toInt()
         }
-        return null
     }
 
     /**
@@ -324,7 +333,7 @@ object FileUtils {
      */
     fun imageToBitmap(context: Context, uri: Uri): Bitmap? {
         return runCatching {
-            context.contentResolver.openInputStream(uri)!!.use { inputStream ->
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
                 BitmapFactory.decodeStream(inputStream)
             }
         }.onFailure {
