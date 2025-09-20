@@ -24,18 +24,16 @@ import java.util.concurrent.TimeUnit
  * Utility class containing various methods for common tasks in the application.
  */
 object AppUtils {
-    
     /**
      * Generates a random string using UUID.
      *
      * @return A randomly generated string.
      */
-    inline val randomString: String
+    val randomString: String
         get() = UUID.randomUUID().toString()
 
     /**
      * Retrieves shared preferences considering security measures.
-     * Uses caching to avoid repeated preference name computation.
      *
      * @param context The context used to access shared preferences.
      * @return Shared preferences instance.
@@ -49,7 +47,7 @@ object AppUtils {
                 prefsName,
                 Activity.MODE_WORLD_READABLE
             )
-        }.getOrElse {
+        }.getOrNull() ?: run {
             context.getSharedPreferences(
                 prefsName,
                 Activity.MODE_PRIVATE
@@ -78,7 +76,6 @@ object AppUtils {
 
     /**
      * Displays a toast message with a countdown timer.
-     * Optimized to reduce object allocations.
      *
      * @param context The context used to display the toast.
      * @param message The message to be displayed.
@@ -86,27 +83,22 @@ object AppUtils {
      */
     fun showToast(context: Context, message: String, length: Int) {
         val toast = Toast.makeText(context, message, Toast.LENGTH_LONG)
-        if (length <= 0) {
-            toast.show()
-            return
-        }
-        
-        val toastCountDown = object : CountDownTimer(length.toLong(), 1000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                toast.show()
-            }
+        val toastCountDown: CountDownTimer =
+            object : CountDownTimer(length.toLong(), 1000L) {
+                override fun onTick(millisUntilFinished: Long) {
+                    toast?.show()
+                }
 
-            override fun onFinish() {
-                toast.cancel()
+                override fun onFinish() {
+                    toast?.cancel()
+                }
             }
-        }
         toast.show()
         toastCountDown.start()
     }
 
     /**
      * Clears cache files older than a specified time duration.
-     * Optimized for better performance and memory usage.
      *
      * @param context The context used to access the cache directory.
      * @param timeDurationMillis The time duration in milliseconds.
@@ -115,17 +107,15 @@ object AppUtils {
     fun clearCache(context: Context, timeDurationMillis: Long): Boolean {
         Timber.d("Clearing cache with time duration: $timeDurationMillis")
         val timeBefore = System.currentTimeMillis() - timeDurationMillis
-        val cacheFiles = context.cacheDir.listFiles() ?: return true
-        
-        return cacheFiles.asSequence()
-            .filter { it.lastModified() < timeBefore }
-            .map { it.deleteRecursively() }
-            .all { it }
+        return context.cacheDir.listFiles()?.asSequence()
+            ?.filter { it.lastModified() < timeBefore }
+            ?.map { it.deleteRecursively() }
+            ?.findLast { !it }
+            ?: true
     }
 
     /**
      * Gets the status of a specified activity.
-     * Optimized to reduce redundant operations.
      *
      * @param context The context used to access the package manager.
      * @param activityName The name of the activity.
@@ -138,16 +128,15 @@ object AppUtils {
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED -> false
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
             else -> {
-                runCatching {
-                    val packageInfo = pm.getPackageInfo(
-                        context.packageName,
-                        PackageManager.GET_ACTIVITIES or PackageManager.MATCH_DISABLED_COMPONENTS
-                    )
-                    packageInfo.activities
-                        ?.firstOrNull { it.name == activityName }
-                        ?.enabled
-                        ?: false
-                }.getOrElse { false }
+                val packageInfo = pm.getPackageInfo(
+                    context.packageName,
+                    PackageManager.GET_ACTIVITIES
+                            or PackageManager.MATCH_DISABLED_COMPONENTS
+                )
+                packageInfo.activities?.asSequence()
+                    ?.find { it.name == activityName }
+                    ?.enabled
+                    ?: false
             }
         }
         Timber.d("Activity status: $activityName: $status")
@@ -183,46 +172,40 @@ object AppUtils {
 
     /**
      * Checks if the app is in debug mode.
-     * Optimized with inline for better performance.
      *
      * @param context The context used to access the application info.
      * @return `true` if the app is in debug mode, otherwise `false`.
      */
-    inline fun isDebugMode(context: Context): Boolean {
+    fun isDebugMode(context: Context): Boolean {
         return context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-    }
-
-    // Cached debug tree instances to avoid repeated object creation
-    private val debugTree by lazy {
-        object : Timber.DebugTree() {
-            override fun createStackElementTag(element: StackTraceElement): String {
-                return "${element.className}:${element.lineNumber}#${element.methodName}"
-            }
-        }
-    }
-    
-    private val releaseTree by lazy {
-        object : Timber.DebugTree() {
-            override fun createStackElementTag(element: StackTraceElement): String {
-                return "${element.className}#${element.methodName}"
-            }
-
-            override fun isLoggable(tag: String?, priority: Int): Boolean {
-                return priority >= Log.WARN
-            }
-        }
     }
 
     /**
      * Plants a [Timber.DebugTree] if the app is in debug mode.
-     * Optimized to reuse tree instances and avoid repeated creation.
      *
      * @param context The context used to access the application info.
      */
     fun timberPlantTree(context: Context) {
         if (Timber.treeCount == 0) {
-            val tree = if (isDebugMode(context)) debugTree else releaseTree
-            Timber.plant(tree)
+            Timber.plant(
+                if (isDebugMode(context)) {
+                    object : Timber.DebugTree() {
+                        override fun createStackElementTag(element: StackTraceElement): String {
+                            return "${element.className}:${element.lineNumber}#${element.methodName}"
+                        }
+                    }
+                } else {
+                    object : Timber.DebugTree() {
+                        override fun createStackElementTag(element: StackTraceElement): String {
+                            return "${element.className}#${element.methodName}"
+                        }
+
+                        override fun isLoggable(tag: String?, priority: Int): Boolean {
+                            return priority >= Log.WARN
+                        }
+                    }
+                }
+            )
         }
     }
 

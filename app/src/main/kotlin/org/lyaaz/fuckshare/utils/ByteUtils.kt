@@ -8,23 +8,16 @@ import java.util.Objects
 
 /**
  * Utility class for working with byte arrays and InputStreams.
- * Optimized for better performance and memory usage.
  */
 object ByteUtils {
 
     /**
-     * Default buffer size for stream operations.
-     */
-    private const val DEFAULT_BUFFER_SIZE = 8192
-
-    /**
      * Converts 4 or more bytes to an unsigned integer.
-     * Optimized with inline for better performance.
      *
      * @param order The byte order of the input bytes.
      * @return The converted unsigned integer value.
      */
-    inline fun ByteArray.toUInt(order: ByteOrder): UInt {
+    fun ByteArray.toUInt(order: ByteOrder): UInt {
         return ByteBuffer.wrap(this).apply {
             order(order)
         }.int.toUInt()
@@ -32,12 +25,11 @@ object ByteUtils {
 
     /**
      * Converts 2 or more bytes to an unsigned short.
-     * Optimized with inline for better performance.
      *
      * @param order The byte order of the input bytes.
      * @return The converted unsigned short value.
      */
-    inline fun ByteArray.toUShort(order: ByteOrder): UShort {
+    fun ByteArray.toUShort(order: ByteOrder): UShort {
         return ByteBuffer.wrap(this).apply {
             order(order)
         }.short.toUShort()
@@ -45,7 +37,6 @@ object ByteUtils {
 
     /**
      * Reads exactly [bytes.size] bytes from the input stream and stores them in the provided byte array.
-     * Optimized for better performance.
      *
      * @param inputStream The input stream to read from.
      * @param bytes The byte array to store the read bytes.
@@ -53,7 +44,7 @@ object ByteUtils {
      * @throws IOException If an I/O error occurs.
      */
     @Throws(IOException::class)
-    inline fun readNBytes(inputStream: InputStream, bytes: ByteArray): Int {
+    fun readNBytes(inputStream: InputStream, bytes: ByteArray): Int {
         return readNBytes(inputStream, bytes, 0, bytes.size)
     }
 
@@ -82,7 +73,6 @@ object ByteUtils {
 
     /**
      * Skips exactly [len] bytes in the input stream.
-     * Optimized to reduce single-byte reading operations.
      *
      * @param inputStream The input stream to skip bytes from.
      * @param len The number of bytes to skip.
@@ -90,24 +80,22 @@ object ByteUtils {
      * @throws IOException If an I/O error occurs.
      */
     fun skipNBytes(inputStream: InputStream, len: Long): Long {
-        var remaining = len
-        val buffer = ByteArray(minOf(DEFAULT_BUFFER_SIZE.toLong(), remaining).toInt())
-        
-        while (remaining > 0L) {
-            val skipped = inputStream.skip(remaining)
-            if (skipped > 0L) {
-                remaining -= skipped
+        var n = len
+        while (n > 0L) {
+            val ns: Long = inputStream.skip(n)
+            if (ns in 1L..n) {
+                n -= ns
                 continue
             }
-            
-            // If skip() returns 0, try reading into buffer instead of single bytes
-            val toRead = minOf(buffer.size.toLong(), remaining).toInt()
-            val bytesRead = inputStream.read(buffer, 0, toRead)
-            if (bytesRead == -1) {
-                break
+            if (ns == 0L) {
+                if (inputStream.read() == -1) {
+                    break
+                }
+                --n
+                continue
             }
-            remaining -= bytesRead
+            throw IOException("Unable to skip exactly")
         }
-        return len - remaining
+        return len - n
     }
 }

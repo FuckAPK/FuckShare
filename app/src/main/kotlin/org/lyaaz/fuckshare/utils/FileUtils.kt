@@ -32,14 +32,8 @@ import java.io.OutputStream
 
 /**
  * Utility class for handling file-related operations, such as copying, renaming, and processing image metadata.
- * Optimized for better performance and resource management.
  */
 object FileUtils {
-
-    /**
-     * Optimized buffer size for file operations based on available memory.
-     */
-    private const val OPTIMAL_BUFFER_SIZE = 64 * 1024 // 64KB
 
     /**
      * Refreshes the provided URI by copying the file content to a new file with potential metadata processing and renaming.
@@ -99,7 +93,6 @@ object FileUtils {
 
     /**
      * Copies a specified number of bytes from the input stream to the output stream.
-     * Optimized with better buffer management and error handling.
      *
      * @param inputStream The input stream to copy from.
      * @param outputStream The output stream to copy to.
@@ -109,13 +102,11 @@ object FileUtils {
      */
     @Throws(IOException::class)
     fun copy(inputStream: InputStream, outputStream: OutputStream, len: Long): Long {
-        val bufferSize = minOf(OPTIMAL_BUFFER_SIZE.toLong(), len).toInt()
-        val buffer = ByteArray(bufferSize)
+        val buffer = ByteArray(8192) // Set the buffer size as per your requirement
         var bytesRemaining = len
-        
         while (bytesRemaining > 0) {
-            val toRead = minOf(buffer.size.toLong(), bytesRemaining).toInt()
-            val bytesRead = inputStream.read(buffer, 0, toRead)
+            val bytesRead =
+                inputStream.read(buffer, 0, minOf(buffer.size.toLong(), bytesRemaining).toInt())
             if (bytesRead == -1) {
                 break
             }
@@ -127,16 +118,15 @@ object FileUtils {
 
     /**
      * Copies the content of the input stream to the specified file.
-     * Optimized with proper resource management.
      */
     @Throws(IOException::class)
     private fun copyFileFromUri(context: Context, uri: Uri, file: File) {
         Timber.d("copyFileFromUri: $uri -> $file")
-        context.contentResolver.openInputStream(uri)?.use { inputStream ->
-            file.outputStream().buffered(OPTIMAL_BUFFER_SIZE).use { outputStream ->
-                inputStream.copyTo(outputStream, OPTIMAL_BUFFER_SIZE)
+        context.contentResolver.openInputStream(uri)!!.buffered().use { uin ->
+            file.outputStream().buffered().use { fout ->
+                uin.copyTo(fout)
             }
-        } ?: throw IOException("Failed to open input stream for URI: $uri")
+        }
     }
 
     @Throws(IOException::class)
@@ -281,73 +271,60 @@ object FileUtils {
 
     /**
      * Converts a video to GIF.
-     * Optimized with proper resource management to prevent memory leaks.
      *
      * @param video The video file.
      * @return The GIF file or null if the operation fails.
      */
     fun video2gif(video: File, settings: Settings): File? {
         val gifFile = File(video.parent, "${video.nameWithoutExtension}.gif")
-        return runCatching {
+        runCatching {
             val retriever = MediaMetadataRetriever()
-            try {
-                retriever.setDataSource(video.path)
-                val frameCount =
-                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toInt() ?: 1
-                val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1000L
-                val frameRate = duration.toFloat().div(frameCount)
+            retriever.setDataSource(video.path)
+            val frameCount =
+                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toInt() ?: 1
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1000L
+            val frameRate = duration.toFloat().div(frameCount)
 
-                val frames = retriever.getFramesAtIndex(0, frameCount)
+            val frames = retriever.getFramesAtIndex(0, frameCount)
+            retriever.close()
 
-                val gifEncoder = AnimatedGifEncoder()
-                gifFile.outputStream().buffered(OPTIMAL_BUFFER_SIZE).use { outputStream ->
-                    gifEncoder.start(outputStream)
-                    gifEncoder.setFrameRate(frameRate)
-                    gifEncoder.setRepeat(0)
-                    val quality = when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
-                        Settings.VideoToGIFQualityOptions.LOW -> 100
-                        Settings.VideoToGIFQualityOptions.MEDIUM -> 30
-                        Settings.VideoToGIFQualityOptions.HIGH -> 10
-                        Settings.VideoToGIFQualityOptions.CUSTOM -> settings.videoToGIFCustomOption.toInt()
-                    }
-                    gifEncoder.setQuality(quality)
-
-                    frames.forEach { gifEncoder.addFrame(it) }
-                    gifEncoder.finish()
-                }
-                gifFile
-            } finally {
-                runCatching { retriever.release() }
+            val gifEncoder = AnimatedGifEncoder()
+            gifEncoder.start(gifFile.outputStream().buffered())
+            gifEncoder.setFrameRate(frameRate)
+            gifEncoder.setRepeat(0)
+            val quality = when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
+                Settings.VideoToGIFQualityOptions.LOW -> 100
+                Settings.VideoToGIFQualityOptions.MEDIUM -> 30
+                Settings.VideoToGIFQualityOptions.HIGH -> 10
+                Settings.VideoToGIFQualityOptions.CUSTOM -> settings.videoToGIFCustomOption.toInt()
             }
+            gifEncoder.setQuality(quality)
+
+            frames.forEach { gifEncoder.addFrame(it) }
+            gifEncoder.finish()
+            return gifFile
         }.onFailure {
             Timber.e(it)
-            runCatching { gifFile.delete() }
-        }.getOrNull()
+            gifFile.delete()
+        }
+        return null
     }
 
     /**
      * Checks if the video has audio.
-     * Optimized with proper resource management.
      */
     fun videoHasAudio(videoPath: String): Boolean {
-        return runCatching {
-            val retriever = MediaMetadataRetriever()
-            try {
-                retriever.setDataSource(videoPath)
-                retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
-            } finally {
-                runCatching { retriever.release() }
-            }
-        }.getOrElse { false }
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(videoPath)
+        return retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO) == "yes"
     }
 
     /**
      * Image to bitmap
-     * Optimized with better error handling and resource management.
      */
     fun imageToBitmap(context: Context, uri: Uri): Bitmap? {
         return runCatching {
-            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            context.contentResolver.openInputStream(uri)!!.use { inputStream ->
                 BitmapFactory.decodeStream(inputStream)
             }
         }.onFailure {
@@ -379,7 +356,6 @@ object FileUtils {
 
     /**
      * Compress bitmap to specifical max width and height
-     * Optimized to avoid unnecessary bitmap creation.
      */
     fun compressBitmap(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
         val ratio = minOf(
@@ -387,10 +363,9 @@ object FileUtils {
             maxHeight.toFloat() / bitmap.height,
             1f
         )
-        
+        val newWidth = (bitmap.width * ratio).toInt()
+        val newHeight = (bitmap.height * ratio).toInt()
         return if (ratio < 1f) {
-            val newWidth = (bitmap.width * ratio).toInt()
-            val newHeight = (bitmap.height * ratio).toInt()
             bitmap.scale(newWidth, newHeight)
         } else {
             bitmap

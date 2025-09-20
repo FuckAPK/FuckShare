@@ -15,7 +15,6 @@ import org.lyaaz.fuckshare.R
 
 /**
  * Utility class for working with Intents and extracting URIs from them.
- * Optimized for better API compatibility and performance.
  */
 object IntentUtils {
 
@@ -53,14 +52,13 @@ object IntentUtils {
 
     /**
      * Gets a Parcelable extra from the Intent.
-     * Optimized for API compatibility with inline conditional.
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
      * @param clazz The class type of the Parcelable.
      * @return The Parcelable extra or null if not found.
      */
-    inline fun <reified T : Parcelable?> getParcelableExtra(
+    fun <T : Parcelable?> getParcelableExtra(
         intent: Intent,
         name: String?,
         clazz: Class<T>
@@ -75,7 +73,6 @@ object IntentUtils {
 
     /**
      * Gets a Parcelable ArrayList extra from the Intent.
-     * Optimized for API compatibility and performance.
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
@@ -95,7 +92,6 @@ object IntentUtils {
 
     /**
      * Gets a Parcelable Array extra from the Intent.
-     * Optimized for API compatibility and safer type casting.
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
@@ -110,7 +106,7 @@ object IntentUtils {
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableArrayExtra(name)
-        }?.filterIsInstance<T>()?.toTypedArray()
+        }?.map { it as T }?.toTypedArray()
     }
 
     /**
