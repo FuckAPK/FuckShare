@@ -42,7 +42,7 @@ class WebpExifHelper : ExifHelper {
                 realChunkDataLength -= FileUtils.copy(bis, bos, realChunkDataLength)
             }
             if (realChunkDataLength != 0L) {
-                throw ImageFormatException("Incomplete chunk data: $chunkName")
+                throw ImageFormatException()
             }
         }
         bos.flush()
