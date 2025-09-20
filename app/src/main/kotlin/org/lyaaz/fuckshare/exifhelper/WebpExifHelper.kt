@@ -3,6 +3,9 @@ package org.lyaaz.fuckshare.exifhelper
 import org.lyaaz.fuckshare.utils.ByteUtils
 import org.lyaaz.fuckshare.utils.ByteUtils.toUInt
 import org.lyaaz.fuckshare.utils.FileUtils
+import org.lyaaz.fuckshare.exifhelper.ExifHelper.Companion.CHUNK_LENGTH_SIZE
+import org.lyaaz.fuckshare.exifhelper.ExifHelper.Companion.CHUNK_NAME_SIZE
+import org.lyaaz.fuckshare.exifhelper.ExifHelper.Companion.WEBP_HEADER_SIZE
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -18,12 +21,12 @@ class WebpExifHelper : ExifHelper {
         val bis = inputStream.buffered()
         val bos = outputStream.buffered()
 
-        val chunkNameBytes = ByteArray(4)
-        val chunkDataLenBytes = ByteArray(4)
+        val chunkNameBytes = ByteArray(CHUNK_NAME_SIZE)
+        val chunkDataLenBytes = ByteArray(CHUNK_LENGTH_SIZE)
         var realChunkDataLength: Long
 
         // copy header
-        FileUtils.copy(bis, bos, 12)
+        FileUtils.copy(bis, bos, WEBP_HEADER_SIZE)
         while (bis.available() > 0) {
             ByteUtils.readNBytes(bis, chunkNameBytes)
             ByteUtils.readNBytes(bis, chunkDataLenBytes)
@@ -35,7 +38,7 @@ class WebpExifHelper : ExifHelper {
 
             if (webpSkippableChunks.contains(chunkName)) {
                 realChunkDataLength -= ByteUtils.skipNBytes(bis, realChunkDataLength)
-                Timber.d("Discord chunk: $chunkName size: $realChunkDataLength")
+                Timber.d("Discard chunk: $chunkName size: $realChunkDataLength")
             } else {
                 bos.write(chunkNameBytes)
                 bos.write(chunkDataLenBytes)

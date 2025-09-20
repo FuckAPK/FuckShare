@@ -3,6 +3,7 @@ package org.lyaaz.fuckshare.exifhelper
 import org.lyaaz.fuckshare.utils.ByteUtils
 import org.lyaaz.fuckshare.utils.ByteUtils.toUShort
 import org.lyaaz.fuckshare.utils.FileUtils
+import org.lyaaz.fuckshare.exifhelper.ExifHelper.Companion.JPEG_MARKER_SIZE
 import timber.log.Timber
 import java.io.IOException
 import java.io.InputStream
@@ -15,8 +16,8 @@ class JpegExifHelper : ExifHelper {
         val bis = inputStream.buffered()
         val bos = outputStream.buffered()
 
-        val maker = ByteArray(2)
-        val lenBytes = ByteArray(2)
+        val maker = ByteArray(JPEG_MARKER_SIZE)
+        val lenBytes = ByteArray(JPEG_MARKER_SIZE)
         var chunkDataLength = 0L
 
         while (bis.available() > 0) {
@@ -31,13 +32,13 @@ class JpegExifHelper : ExifHelper {
             when (maker[1]) {
                 0xD8.toByte() -> {
                     bos.write(maker)
-                    Timber.d("Copy chunk: $makerName size: 2")
+                    Timber.d("Copy chunk: $makerName size: $JPEG_MARKER_SIZE")
 
                 }
 
                 0xD9.toByte() -> {   // EOI
                     bos.write(maker)
-                    Timber.d("Copy chunk: $makerName size: 2")
+                    Timber.d("Copy chunk: $makerName size: $JPEG_MARKER_SIZE")
                     break
                 }
 
@@ -45,23 +46,23 @@ class JpegExifHelper : ExifHelper {
                     bos.write(maker)
                     // write all data
                     chunkDataLength = bis.available().toLong()
-                    Timber.d("Copy DA and following chunks size: ${chunkDataLength + 2}")
+                    Timber.d("Copy DA and following chunks size: ${chunkDataLength + JPEG_MARKER_SIZE}")
                     chunkDataLength -= bis.copyTo(bos)
                 }
 
                 in jpegSkippableChunks -> {
                     ByteUtils.readNBytes(bis, lenBytes)
-                    chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
-                    Timber.d("Discord chunk: $makerName size: ${chunkDataLength + 4}")
+                    chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - JPEG_MARKER_SIZE
+                    Timber.d("Discard chunk: $makerName size: ${chunkDataLength + JPEG_MARKER_SIZE * 2}")
                     chunkDataLength -= ByteUtils.skipNBytes(bis, chunkDataLength)
                 }
 
                 else -> {
                     ByteUtils.readNBytes(bis, lenBytes)
-                    chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
+                    chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - JPEG_MARKER_SIZE
                     bos.write(maker)
                     bos.write(lenBytes)
-                    Timber.d("Copy chunk: $makerName size: ${chunkDataLength + 4}")
+                    Timber.d("Copy chunk: $makerName size: ${chunkDataLength + JPEG_MARKER_SIZE * 2}")
                     chunkDataLength -= FileUtils.copy(bis, bos, chunkDataLength)
                 }
             }

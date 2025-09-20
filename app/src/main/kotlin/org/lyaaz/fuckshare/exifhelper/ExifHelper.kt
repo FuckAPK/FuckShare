@@ -13,9 +13,18 @@ interface ExifHelper {
 
     @Throws(IOException::class)
     fun postProcess(file: File) {
+        // Default implementation does nothing
     }
 
     companion object {
+        // Common constants
+        const val WEBP_HEADER_SIZE = 12L
+        const val CHUNK_LENGTH_SIZE = 4
+        const val CHUNK_NAME_SIZE = 4
+        const val JPEG_MARKER_SIZE = 2
+        const val PNG_HEADER_SIZE = 8L
+        const val CRC_SIZE = 4
+
         @Throws(IOException::class)
         fun writeBackMetadata(exifFrom: ExifInterface, exifTo: ExifInterface, tags: Set<String?>) {
             val tagsValue = tags.asSequence()
