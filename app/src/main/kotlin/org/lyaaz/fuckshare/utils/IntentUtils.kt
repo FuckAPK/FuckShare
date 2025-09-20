@@ -15,8 +15,14 @@ import org.lyaaz.fuckshare.R
 
 /**
  * Utility class for working with Intents and extracting URIs from them.
+ * Optimized for better API compatibility and performance.
  */
 object IntentUtils {
+
+    /**
+     * API level for Android 13 (Tiramisu) - used for compatibility checks.
+     */
+    private const val API_LEVEL_TIRAMISU = Build.VERSION_CODES.TIRAMISU
 
     /**
      * Extracts URIs from the provided Intent based on the action.
@@ -52,18 +58,19 @@ object IntentUtils {
 
     /**
      * Gets a Parcelable extra from the Intent.
+     * Optimized for API compatibility with inline conditional.
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
      * @param clazz The class type of the Parcelable.
      * @return The Parcelable extra or null if not found.
      */
-    fun <T : Parcelable?> getParcelableExtra(
+    inline fun <reified T : Parcelable?> getParcelableExtra(
         intent: Intent,
         name: String?,
         clazz: Class<T>
     ): T? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= API_LEVEL_TIRAMISU) {
             intent.getParcelableExtra(name, clazz)
         } else {
             @Suppress("DEPRECATION")
@@ -73,6 +80,7 @@ object IntentUtils {
 
     /**
      * Gets a Parcelable ArrayList extra from the Intent.
+     * Optimized for API compatibility and performance.
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
@@ -82,7 +90,7 @@ object IntentUtils {
         intent: Intent,
         name: String?
     ): ArrayList<T>? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= API_LEVEL_TIRAMISU) {
             intent.getParcelableArrayListExtra(name, T::class.java)
         } else {
             @Suppress("DEPRECATION")
@@ -92,6 +100,7 @@ object IntentUtils {
 
     /**
      * Gets a Parcelable Array extra from the Intent.
+     * Optimized for API compatibility and safer type casting.
      *
      * @param intent The Intent to retrieve the extra from.
      * @param name The name of the extra.
@@ -101,12 +110,12 @@ object IntentUtils {
         intent: Intent,
         name: String?
     ): Array<T>? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= API_LEVEL_TIRAMISU) {
             intent.getParcelableArrayExtra(name, Parcelable::class.java)
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableArrayExtra(name)
-        }?.map { it as T }?.toTypedArray()
+        }?.filterIsInstance<T>()?.toTypedArray()
     }
 
     /**
