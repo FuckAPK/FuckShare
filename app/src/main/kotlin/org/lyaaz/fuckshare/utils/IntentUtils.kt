@@ -20,11 +20,6 @@ import org.lyaaz.fuckshare.R
 object IntentUtils {
 
     /**
-     * API level for Android 13 (Tiramisu) - used for compatibility checks.
-     */
-    private const val API_LEVEL_TIRAMISU = Build.VERSION_CODES.TIRAMISU
-
-    /**
      * Extracts URIs from the provided Intent based on the action.
      *
      * @param intent The Intent to extract URIs from.
@@ -70,7 +65,7 @@ object IntentUtils {
         name: String?,
         clazz: Class<T>
     ): T? {
-        return if (Build.VERSION.SDK_INT >= API_LEVEL_TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(name, clazz)
         } else {
             @Suppress("DEPRECATION")
@@ -90,7 +85,7 @@ object IntentUtils {
         intent: Intent,
         name: String?
     ): ArrayList<T>? {
-        return if (Build.VERSION.SDK_INT >= API_LEVEL_TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableArrayListExtra(name, T::class.java)
         } else {
             @Suppress("DEPRECATION")
@@ -110,7 +105,7 @@ object IntentUtils {
         intent: Intent,
         name: String?
     ): Array<T>? {
-        return if (Build.VERSION.SDK_INT >= API_LEVEL_TIRAMISU) {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableArrayExtra(name, Parcelable::class.java)
         } else {
             @Suppress("DEPRECATION")
