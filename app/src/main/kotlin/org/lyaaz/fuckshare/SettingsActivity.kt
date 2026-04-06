@@ -12,11 +12,23 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -26,7 +38,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import org.lyaaz.fuckshare.utils.AppUtils
-import org.lyaaz.ui.*
+import org.lyaaz.ui.DropDownPreference
+import org.lyaaz.ui.PreferenceCategory
+import org.lyaaz.ui.SwitchPreferenceItem
+import org.lyaaz.ui.TextFieldPreference
+import org.lyaaz.ui.keyboardAsState
 import timber.log.Timber
 import org.lyaaz.ui.theme.AppTheme as Theme
 
@@ -394,7 +410,23 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             AppUtils.getActivityStatus(context, launcherActivityName)
         )
     }
+    var enableManageTargets by remember {
+        mutableStateOf(settings.enableManageTargets)
+    }
+
     PreferenceCategory(title = R.string.title_miscellaneous) {
+        SwitchPreferenceItem(
+            title = R.string.title_manage_share_targets,
+            summary = null,
+            checked = enableManageTargets,
+            onCheckedChange = {
+                enableManageTargets = it
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_MANAGE_TARGETS, it) }
+            },
+            onClick = {
+                context.startActivity(Intent(context, ManageTargetsActivity::class.java))
+            }
+        )
         TextFieldPreference(
             title = R.string.title_toast_time,
             summary = R.string.desc_toast_time,

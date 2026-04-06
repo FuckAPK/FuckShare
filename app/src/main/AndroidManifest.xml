@@ -132,6 +132,10 @@
                 <data android:mimeType="text/*" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".ManageTargetsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Material3.DynamicColors.DayNight.NoActionBar" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -98,9 +98,18 @@ class HandleShareActivity : Activity() {
 
     fun setupChooser(ib: IntentBuilder): Intent {
         val chooserIntent = ib.setChooserTitle(R.string.app_name).createChooserIntent()
+        val excludedComponents = mutableListOf<ComponentName>()
+        excludedComponents.add(ComponentName(this, this::class.java))
+        if (settings.enableManageTargets) {
+            settings.excludedTargets.forEach {
+                ComponentName.unflattenFromString(it)?.let { componentName ->
+                    excludedComponents.add(componentName)
+                }
+            }
+        }
         chooserIntent.putExtra(
             Intent.EXTRA_EXCLUDE_COMPONENTS,
-            listOf(ComponentName(this, this::class.java)).toTypedArray()
+            excludedComponents.toTypedArray()
         )
         setOf(Intent.EXTRA_INITIAL_INTENTS, Intent.EXTRA_ALTERNATE_INTENTS).forEach {
             IntentUtils.restoreArrayExtras<Intent>(

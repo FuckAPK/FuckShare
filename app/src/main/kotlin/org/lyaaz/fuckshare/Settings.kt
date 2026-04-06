@@ -91,6 +91,16 @@ class Settings private constructor(private val prefs: SharedPreferences) {
             )
         }
 
+    val excludedTargets: Set<String>
+        get() {
+            return prefs.getStringSet(PREF_EXCLUDED_TARGETS, emptySet()) ?: emptySet()
+        }
+
+    val enableManageTargets: Boolean
+        get() {
+            return prefs.getBoolean(PREF_ENABLE_MANAGE_TARGETS, DEFAULT_ENABLE_MANAGE_TARGETS)
+        }
+
     enum class VideoToGIFQualityOptions(val value: Int) {
         LOW(0),
         MEDIUM(1),
@@ -124,6 +134,9 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val PREF_ENABLE_QR_CODE_TO_TEXT_ACTION = "enable_qrcode_to_image_action"
         const val PREF_ENABLE_TEXT_TO_LINK_ACTION = "enable_text_to_link_action"
 
+        const val PREF_EXCLUDED_TARGETS = "excluded_targets"
+        const val PREF_ENABLE_MANAGE_TARGETS = "enable_manage_targets"
+
         // Defaults
         const val DEFAULT_ENABLE_REMOVE_EXIF = true
         const val DEFAULT_ENABLE_FALLBACK_TO_FILE = true
@@ -149,6 +162,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_TOAST_TIME_MS = 500
         const val DEFAULT_ENABLE_QR_CODE_TO_TEXT_ACTION = true
         const val DEFAULT_ENABLE_TEXT_TO_LINK_ACTION = false
+        const val DEFAULT_ENABLE_MANAGE_TARGETS = false
 
         @Volatile
         private var INSTANCE: Settings? = null
