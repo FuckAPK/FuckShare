@@ -1,5 +1,6 @@
 package org.lyaaz.fuckshare
 
+import android.content.ComponentName
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.res.Configuration
@@ -414,7 +415,30 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
         mutableStateOf(settings.enableManageTargets)
     }
 
+    val extSettingsComponent = remember {
+        val cn = ComponentName("org.lyaaz.fuckshare.ext", "org.lyaaz.fuckshare.SettingsActivity")
+        try {
+            context.packageManager.getActivityInfo(cn, 0)
+            cn
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     PreferenceCategory(title = R.string.title_miscellaneous) {
+        extSettingsComponent?.let { component ->
+            SwitchPreferenceItem(
+                title = R.string.title_module_setting,
+                summary = null,
+                checked = true,
+                noSwitch = true,
+                onClick = {
+                    context.startActivity(
+                        Intent().setComponent(component)
+                    )
+                }
+            )
+        }
         SwitchPreferenceItem(
             title = R.string.title_manage_share_targets,
             summary = null,

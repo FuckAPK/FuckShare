@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
+    <queries>
+        <package android:name="org.lyaaz.fuckshare.ext" />
+    </queries>
     <application
         android:allowBackup="true"
         android:enableOnBackInvokedCallback="true"

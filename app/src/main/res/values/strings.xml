@@ -50,4 +50,5 @@
     <string name="desc_video_to_gif_custom_option">1 to 100; the lower the value, the higher the image quality</string>
     <string name="option_medium">MEDIUM</string>
     <string name="title_manage_share_targets">Manage share targets</string>
+    <string name="title_module_setting">Module Setting</string>
 </resources>

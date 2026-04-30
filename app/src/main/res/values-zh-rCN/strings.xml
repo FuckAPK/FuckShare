@@ -45,4 +45,5 @@
     <string name="title_enable_qr_code_to_text_action">选择界面复制二维码文本</string>
     <string name="option_medium">中</string>
     <string name="title_manage_share_targets">管理分享目标</string>
+    <string name="title_module_setting">模块设置</string>
 </resources>
