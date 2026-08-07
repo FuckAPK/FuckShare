@@ -70,7 +70,7 @@ android {
 dependencies {
     implementation(project(":ui"))
 
-    implementation("androidx.exifinterface:exifinterface:1.4.1")
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
     implementation("androidx.work:work-runtime-ktx:2.10.4")
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("com.google.android.material:material:1.13.0")
