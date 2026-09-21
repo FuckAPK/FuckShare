@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -69,11 +71,13 @@ object FileUtils {
                     tempFile = it
                     fileType = ImageType.GIF
                 } ?: run {
-                    Toast.makeText(
-                        context,
-                        R.string.video_to_gif_failed,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            R.string.video_to_gif_failed,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
             // rename
@@ -178,14 +182,16 @@ object FileUtils {
         }
 
         eh?.let { exifHelper ->
-            context.contentResolver.openInputStream(uri)!!.buffered().use { input ->
+            val inputStream = context.contentResolver.openInputStream(uri)
+                ?: throw IOException("Failed to open input stream for URI: $uri")
+            inputStream.buffered().use { input ->
                 file.outputStream().buffered().use { output ->
                     exifHelper.removeMetadata(input, output)
                 }
             }
             exifHelper.postProcess(file)
             if (imageType.supportMetadata) {
-                context.contentResolver.openInputStream(uri)!!.use { input ->
+                context.contentResolver.openInputStream(uri)?.use { input ->
                     ExifHelper.writeBackMetadata(
                         ExifInterface(input),
                         ExifInterface(file),

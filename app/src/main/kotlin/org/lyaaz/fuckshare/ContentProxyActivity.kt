@@ -70,10 +70,10 @@ class ContentProxyActivity : ComponentActivity() {
                 .also {
                     val failedCount = it.count { p -> p == null }
                     if (failedCount > 0) {
-                        Timber.e("Failed to process $it of ${uris.count()}")
+                        Timber.e("Failed to process $failedCount of ${uris.count()}")
                         AppUtils.showToast(
                             this,
-                            resources.getString(R.string.fail_to_process).format(it, uris.count()),
+                            resources.getString(R.string.fail_to_process).format(failedCount, uris.count()),
                             settings.toastTimeMS
                         )
                     }

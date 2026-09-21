@@ -40,21 +40,9 @@ object AppUtils {
      * @param context The context used to access shared preferences.
      * @return Shared preferences instance.
      */
-    @SuppressLint("WorldReadableFiles")
     fun getPrefs(context: Context): SharedPreferences {
         val prefsName = "${context.packageName}_preferences"
-        return runCatching {
-            @Suppress("DEPRECATION")
-            context.getSharedPreferences(
-                prefsName,
-                Activity.MODE_WORLD_READABLE
-            )
-        }.getOrElse {
-            context.getSharedPreferences(
-                prefsName,
-                Activity.MODE_PRIVATE
-            )
-        }
+        return context.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
     }
 
     /**
