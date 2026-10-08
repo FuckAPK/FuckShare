@@ -318,25 +318,67 @@ object FileUtils {
                 val frameCount =
                     retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT)?.toInt() ?: 1
                 val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1000L
-                val frameRate = duration.toFloat().div(frameCount)
-
-                val frames = retriever.getFramesAtIndex(0, frameCount)
+                require(frameCount > 0 && duration > 0) { "Invalid video duration or frame count" }
+                val width = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                    ?.toIntOrNull()?.takeIf { it > 0 }
+                val height = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                    ?.toIntOrNull()?.takeIf { it > 0 }
+                // Estimate ARGB batches within 16 MiB or one eighth of the heap, with 1 to 16 frames.
+                // Unknown dimensions use one frame so the estimate cannot understate its size.
+                val batchBudget = minOf(16L * 1024 * 1024, Runtime.getRuntime().maxMemory() / 8)
+                val batchSize = if (width != null && height != null) {
+                    (batchBudget / 4 / width / height).coerceIn(1L, 16L).toInt()
+                } else {
+                    1
+                }
+                // GIF delays use centiseconds. Distribute rounding across frames instead of
+                // rounding the same average delay on every frame and accumulating drift.
+                val durationCs = duration / 10 + if (duration % 10 >= 5) 1 else 0
+                val baseDelayCs = durationCs / frameCount
+                val extraDelayCs = durationCs % frameCount
+                require(baseDelayCs + (if (extraDelayCs > 0) 1 else 0) <= 0xFFFF) {
+                    "Video frame delay exceeds the GIF format limit"
+                }
+                var delayRemainder = frameCount.toLong() / 2
 
                 val gifEncoder = AnimatedGifEncoder()
                 gifFile.outputStream().buffered(OPTIMAL_BUFFER_SIZE).use { outputStream ->
-                    gifEncoder.start(outputStream)
-                    gifEncoder.setFrameRate(frameRate)
+                    check(gifEncoder.start(outputStream)) { "Failed to start GIF encoder" }
                     gifEncoder.setRepeat(0)
                     val quality = when (Settings.VideoToGIFQualityOptions.fromValue(settings.videoToGIFQuality)) {
                         Settings.VideoToGIFQualityOptions.LOW -> 100
                         Settings.VideoToGIFQualityOptions.MEDIUM -> 30
                         Settings.VideoToGIFQualityOptions.HIGH -> 10
-                        Settings.VideoToGIFQualityOptions.CUSTOM -> settings.videoToGIFCustomOption.toInt()
+                        Settings.VideoToGIFQualityOptions.CUSTOM ->
+                            settings.videoToGIFCustomOption.toIntOrNull()?.takeIf { it > 0 }
+                                ?: Settings.DEFAULT_VIDEO_TO_GIF_CUSTOM_OPTION.toInt()
                     }
                     gifEncoder.setQuality(quality)
 
-                    frames.forEach { gifEncoder.addFrame(it) }
-                    gifEncoder.finish()
+                    var index = 0
+                    while (index < frameCount) {
+                        val count = minOf(batchSize, frameCount - index)
+                        val frames = retriever.getFramesAtIndex(index, count)
+                        try {
+                            check(frames.size == count) { "Failed to decode video frames at $index" }
+                            for (frame in frames) {
+                                delayRemainder += extraDelayCs
+                                val delayCs = baseDelayCs + delayRemainder / frameCount
+                                delayRemainder %= frameCount
+                                gifEncoder.setDelay((delayCs * 10).toInt())
+                                try {
+                                    check(gifEncoder.addFrame(frame)) { "Failed to encode GIF frame $index" }
+                                } finally {
+                                    frame.recycle()
+                                }
+                                index++
+                            }
+                        } finally {
+                            // A short batch or an encoder failure must also release unprocessed frames.
+                            frames.forEach { if (!it.isRecycled) it.recycle() }
+                        }
+                    }
+                    check(gifEncoder.finish()) { "Failed to finish GIF encoder" }
                 }
                 gifFile
             } finally {
@@ -412,8 +454,8 @@ object FileUtils {
         )
         
         return if (ratio < 1f) {
-            val newWidth = (bitmap.width * ratio).toInt()
-            val newHeight = (bitmap.height * ratio).toInt()
+            val newWidth = (bitmap.width * ratio).toInt().coerceAtLeast(1)
+            val newHeight = (bitmap.height * ratio).toInt().coerceAtLeast(1)
             bitmap.scale(newWidth, newHeight)
         } else {
             bitmap

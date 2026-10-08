@@ -5,6 +5,8 @@ import os
 import subprocess
 import tempfile
 import sys
+import re
+import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = Path(os.environ.get('GRADLE_USER_HOME', Path.home() / '.gradle')) / 'caches/modules-2/files-2.1'
@@ -37,7 +39,7 @@ share = 'app/src/main/kotlin/org/lyaaz/fuckshare/'
 
 with tempfile.TemporaryDirectory(prefix='fuckapk-regressions-') as temp:
     work = Path(temp)
-    def run(name, originals, generated):
+    def run(name, originals, generated, dependencies=()):
         folder = work / name
         folder.mkdir()
         paths = [ROOT / p for p in originals]
@@ -45,7 +47,7 @@ with tempfile.TemporaryDirectory(prefix='fuckapk-regressions-') as temp:
             path = folder / filename
             path.write_text(text)
             paths.append(path)
-        args = ['-no-stdlib', '-no-reflect', '-jvm-target', '21', '-classpath', str(compiler[1]),
+        args = ['-no-stdlib', '-no-reflect', '-jvm-target', '21', '-classpath', os.pathsep.join(map(str, [compiler[1], *dependencies])),
                 '-d', str(folder / 'classes'), *map(str, paths)]
         command = ['java', '-cp', os.pathsep.join(map(str, compiler)),
                    'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler', *args]
@@ -54,7 +56,7 @@ with tempfile.TemporaryDirectory(prefix='fuckapk-regressions-') as temp:
             print(compile_result.stdout + compile_result.stderr, file=sys.stderr)
             raise SystemExit(compile_result.returncode)
         subprocess.run(['java', '-Djava.awt.headless=true', '-cp',
-                        os.pathsep.join([str(folder / 'classes'), str(compiler[1])]),
+                        os.pathsep.join(map(str, [folder / 'classes', compiler[1], *dependencies])),
                         'RegressionKt'], check=True)
         print(f'{name}: PASS', flush=True)
 
@@ -76,3 +78,32 @@ with tempfile.TemporaryDirectory(prefix='fuckapk-regressions-') as temp:
         'Logging.kt': logging,
         'Regression.kt': (ROOT / 'verification/FileFallbackRegression.kt').read_text(),
     })
+
+    run('gif', [], {
+        'FileUtils.kt': 'package org.lyaaz.fuckshare.utils\nimport java.io.*\nimport android.media.MediaMetadataRetriever\nimport com.bumptech.glide.gifencoder.AnimatedGifEncoder\nimport org.lyaaz.fuckshare.Settings\nimport timber.log.Timber\nobject FileUtils { private const val OPTIMAL_BUFFER_SIZE = 65536\n' + method(fileutils, '    fun video2gif(') + '\n}',
+        'Logging.kt': logging,
+        'Bitmap.kt': (ROOT / 'verification/Bitmap.kt').read_text(),
+        'Media.kt': (ROOT / 'verification/Media.kt').read_text(),
+        'GifEncoder.kt': (ROOT / 'verification/GifEncoder.kt').read_text(),
+        'Settings.kt': (ROOT / 'verification/MediaSettings.kt').read_text(),
+        'Regression.kt': (ROOT / 'verification/MediaRegression.kt').read_text(),
+    })
+
+    # Use the declared encoder binary, not an encoder substitute, to verify GIF bytes.
+    catalog = source('build-logic/gradle/libs.versions.toml')
+    encoder_version = re.search(r'glideGifencoder = "([^"\n]+)"', catalog).group(1)
+    encoder_aar = list((CACHE / 'com.github.bumptech.glide' / 'gifencoder-integration' / encoder_version).rglob('*.aar'))
+    if not encoder_aar:
+        raise SystemExit(f'Missing cached GIF encoder: {encoder_version}')
+    encoder_jar = work / 'encoder.jar'
+    with zipfile.ZipFile(encoder_aar[0]) as archive:
+        encoder_jar.write_bytes(archive.read('classes.jar'))
+    run('gif-encoding', [], {
+        'FileUtils.kt': 'package org.lyaaz.fuckshare.utils\nimport java.io.*\nimport android.media.MediaMetadataRetriever\nimport com.bumptech.glide.gifencoder.AnimatedGifEncoder\nimport org.lyaaz.fuckshare.Settings\nimport timber.log.Timber\nobject FileUtils { private const val OPTIMAL_BUFFER_SIZE = 65536\n' + method(fileutils, '    fun video2gif(') + '\n}',
+        'Logging.kt': logging,
+        'Bitmap.kt': (ROOT / 'verification/Bitmap.kt').read_text(),
+        'Media.kt': (ROOT / 'verification/Media.kt').read_text(),
+        'AndroidLog.kt': (ROOT / 'verification/AndroidLog.kt').read_text(),
+        'Settings.kt': (ROOT / 'verification/MediaSettings.kt').read_text(),
+        'Regression.kt': (ROOT / 'verification/RealGifRegression.kt').read_text(),
+    }, [encoder_jar])
