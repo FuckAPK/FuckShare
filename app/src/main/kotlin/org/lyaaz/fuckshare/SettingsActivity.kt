@@ -231,7 +231,7 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             checked = enableVideoRename,
             onCheckedChange = {
                 enableVideoRename = it
-                prefs.edit { putBoolean(Settings.PREF_ENABLE_FILE_RENAME, it) }
+                prefs.edit { putBoolean(Settings.PREF_ENABLE_VIDEO_RENAME, it) }
             }
         )
         SwitchPreferenceItem(
