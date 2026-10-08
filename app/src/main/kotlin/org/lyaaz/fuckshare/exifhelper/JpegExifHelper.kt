@@ -18,10 +18,14 @@ class JpegExifHelper : ExifHelper {
         val maker = ByteArray(2)
         val lenBytes = ByteArray(2)
         var chunkDataLength = 0L
+        ByteUtils.readFully(bis, maker)
+        if (!maker.contentEquals(byteArrayOf(0xFF.toByte(), 0xD8.toByte()))) {
+            throw ImageFormatException()
+        }
+        bos.write(maker)
 
-        while (bis.available() > 0) {
-
-            ByteUtils.readNBytes(bis, maker)
+        while (true) {
+            ByteUtils.readFully(bis, maker)
 
             if (maker[0] != 0xFF.toByte()) {
                 throw ImageFormatException()
@@ -43,22 +47,30 @@ class JpegExifHelper : ExifHelper {
 
                 0xDA.toByte() -> {   // SOS
                     bos.write(maker)
-                    // write all data
-                    chunkDataLength = bis.available().toLong()
-                    Timber.d("Copy DA and following chunks size: ${chunkDataLength + 2}")
-                    chunkDataLength -= bis.copyTo(bos)
+                    // The entropy-coded payload may contain marker-like bytes. Copy it unchanged.
+                    ByteUtils.readFully(bis, lenBytes)
+                    chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
+                    if (chunkDataLength < 0) throw ImageFormatException()
+                    bos.write(lenBytes)
+                    if (FileUtils.copy(bis, bos, chunkDataLength) != chunkDataLength) {
+                        throw ImageFormatException()
+                    }
+                    bis.copyTo(bos)
+                    break
                 }
 
                 in jpegSkippableChunks -> {
-                    ByteUtils.readNBytes(bis, lenBytes)
+                    ByteUtils.readFully(bis, lenBytes)
                     chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
+                    if (chunkDataLength < 0) throw ImageFormatException()
                     Timber.d("Discord chunk: $makerName size: ${chunkDataLength + 4}")
                     chunkDataLength -= ByteUtils.skipNBytes(bis, chunkDataLength)
                 }
 
                 else -> {
-                    ByteUtils.readNBytes(bis, lenBytes)
+                    ByteUtils.readFully(bis, lenBytes)
                     chunkDataLength = lenBytes.toUShort(ByteOrder.BIG_ENDIAN).toLong() - 2
+                    if (chunkDataLength < 0) throw ImageFormatException()
                     bos.write(maker)
                     bos.write(lenBytes)
                     Timber.d("Copy chunk: $makerName size: ${chunkDataLength + 4}")

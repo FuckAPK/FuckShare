@@ -15,18 +15,22 @@ class PngExifHelper : ExifHelper {
         val bis = inputStream.buffered()
         val bos = outputStream.buffered()
 
-        FileUtils.copy(bis, bos, 8)
+        val signature = ByteArray(8)
+        ByteUtils.readFully(bis, signature)
+        if (!signature.contentEquals(PNG_SIGNATURE)) throw ImageFormatException()
+        bos.write(signature)
 
         val chunkLengthBytes = ByteArray(4)
         val chunkNameBytes = ByteArray(4)
         var chunkDataCRCLength: Long
 
-        while (bis.available() > 0) {
-            ByteUtils.readNBytes(bis, chunkLengthBytes)
-            ByteUtils.readNBytes(bis, chunkNameBytes)
+        while (true) {
+            ByteUtils.readFully(bis, chunkLengthBytes)
+            ByteUtils.readFully(bis, chunkNameBytes)
             // 4 bytes of crc
             chunkDataCRCLength = chunkLengthBytes.toUInt(ByteOrder.BIG_ENDIAN).toLong() + 4
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
+            if (chunkName == "IEND" && chunkDataCRCLength != 4L) throw ImageFormatException()
             chunkDataCRCLength -= if (pngCriticalChunks.contains(chunkName)) {
                 bos.write(chunkLengthBytes)
                 bos.write(chunkNameBytes)
@@ -48,6 +52,9 @@ class PngExifHelper : ExifHelper {
     }
 
     companion object {
+        private val PNG_SIGNATURE = byteArrayOf(
+            0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
+        )
         private val pngCriticalChunks = setOf(
             "acTL",  //   animation control
             "bKGD",  //   background color

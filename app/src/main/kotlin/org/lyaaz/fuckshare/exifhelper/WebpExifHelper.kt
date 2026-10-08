@@ -21,16 +21,25 @@ class WebpExifHelper : ExifHelper {
         val chunkNameBytes = ByteArray(4)
         val chunkDataLenBytes = ByteArray(4)
 
-        // copy header
-        FileUtils.copy(bis, bos, 12)
-        while (bis.available() > 0) {
-            ByteUtils.readNBytes(bis, chunkNameBytes)
-            ByteUtils.readNBytes(bis, chunkDataLenBytes)
+        val header = ByteArray(12)
+        ByteUtils.readFully(bis, header)
+        if (header.copyOfRange(0, 4).toString(Charsets.US_ASCII) != "RIFF" ||
+            header.copyOfRange(8, 12).toString(Charsets.US_ASCII) != "WEBP"
+        ) throw ImageFormatException()
+        var remaining = header.copyOfRange(4, 8).toUInt(ByteOrder.LITTLE_ENDIAN).toLong() - 4
+        if (remaining < 0) throw ImageFormatException()
+        bos.write(header)
+        while (remaining > 0) {
+            if (remaining < 8) throw ImageFormatException()
+            ByteUtils.readFully(bis, chunkNameBytes)
+            ByteUtils.readFully(bis, chunkDataLenBytes)
 
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
             var realChunkDataLength = chunkDataLenBytes.toUInt(ByteOrder.LITTLE_ENDIAN).toLong()
             // standard of tiff: fill in end with 0x00 if chunk size if odd
             realChunkDataLength += realChunkDataLength % 2
+            if (realChunkDataLength > remaining - 8) throw ImageFormatException()
+            remaining -= 8 + realChunkDataLength
 
             if (webpSkippableChunks.contains(chunkName)) {
                 realChunkDataLength -= ByteUtils.skipNBytes(bis, realChunkDataLength)
@@ -49,19 +58,15 @@ class WebpExifHelper : ExifHelper {
     }
 
     override fun postProcess(file: File) {
-        runCatching {
-            RandomAccessFile(file, "rw").use { f ->
-                val buffer = ByteBuffer.allocate(4).apply {
-                    order(ByteOrder.LITTLE_ENDIAN)
-                    putInt((file.length() - 8).toInt())
-                }
-                f.seek(4)
-                f.write(buffer.array())
+        RandomAccessFile(file, "rw").use { f ->
+            val buffer = ByteBuffer.allocate(4).apply {
+                order(ByteOrder.LITTLE_ENDIAN)
+                putInt((file.length() - 8).toInt())
             }
-            Timber.d("Fixed webp header size: $file")
-        }.onFailure {
-            Timber.e(it, "Failed to fix webp header for file: $file")
+            f.seek(4)
+            f.write(buffer.array())
         }
+        Timber.d("Fixed webp header size: $file")
     }
 
     companion object {

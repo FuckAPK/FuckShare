@@ -52,9 +52,13 @@ object FileUtils {
      * @return The refreshed URI or null if the operation fails.
      */
     fun refreshUri(context: Context, settings: Settings, uri: Uri): Pair<Uri, FileType>? {
+        var createdDir: File? = null
         return runCatching {
             val originName = getRealFileName(context, uri) ?: AppUtils.randomString
-            val randomDir = File(context.cacheDir, AppUtils.randomString).also { it.mkdirs() }
+            val randomDir = File(context.cacheDir, AppUtils.randomString).also {
+                if (!it.mkdirs()) throw IOException("Failed to create cache directory: $it")
+                createdDir = it
+            }
             var tempFile = File(randomDir, AppUtils.randomString)
             var fileType = FileType.fromUri(context, uri)
             if (fileType is ImageType
@@ -97,6 +101,7 @@ object FileUtils {
                 it to fileType
             }
         }.onFailure {
+            createdDir?.deleteRecursively()
             Timber.e(it)
         }.getOrNull()
     }
@@ -113,6 +118,7 @@ object FileUtils {
      */
     @Throws(IOException::class)
     fun copy(inputStream: InputStream, outputStream: OutputStream, len: Long): Long {
+        require(len >= 0) { "Negative copy length: $len" }
         val bufferSize = minOf(OPTIMAL_BUFFER_SIZE.toLong(), len).toInt()
         val buffer = ByteArray(bufferSize)
         var bytesRemaining = len
@@ -123,8 +129,15 @@ object FileUtils {
             if (bytesRead == -1) {
                 break
             }
-            outputStream.write(buffer, 0, bytesRead)
-            bytesRemaining -= bytesRead
+            if (bytesRead == 0) {
+                val byte = inputStream.read()
+                if (byte == -1) break
+                outputStream.write(byte)
+                bytesRemaining--
+            } else {
+                outputStream.write(buffer, 0, bytesRead)
+                bytesRemaining -= bytesRead
+            }
         }
         return len - bytesRemaining
     }
@@ -155,10 +168,12 @@ object FileUtils {
             processImgMetadata(context, settings, file, imageType, uri)
         }.onFailure {
             file.delete()
-            Timber.e("Format error: $uri Type: $imageType")
+            Timber.e(it, "Format error: $uri Type: $imageType")
             if (settings.enableFallbackToFile) {
                 Timber.d("fallback to file: $uri")
                 copyFileFromUri(context, uri, file)
+            } else {
+                throw it
             }
         }
     }
@@ -201,7 +216,7 @@ object FileUtils {
                 }
             }
         } ?: run {
-            Timber.e("unsupported image type: $imageType")
+            throw IOException("Unsupported metadata image type: $imageType")
         }
     }
 
@@ -263,18 +278,20 @@ object FileUtils {
      * Retrieves the real file name from the provided URI, considering different URI schemes.
      */
     private fun getRealFileName(context: Context, uri: Uri): String? {
-        if (ContentResolver.SCHEME_FILE == uri.scheme) {
-            val file = uri.path?.let { File(it) } ?: return null
-            return file.name
-        } else if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
-            context.contentResolver.query(uri, null, null, null, null).use { cursor ->
-                cursor!!.moveToFirst()
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                return cursor.getString(nameIndex)
-            }
-        } else {
-            Timber.e("Unknown scheme: ${uri.scheme}")
-            return null
+        val name = when (uri.scheme) {
+            ContentResolver.SCHEME_FILE -> uri.path?.let { File(it).name }
+            ContentResolver.SCHEME_CONTENT -> runCatching {
+                context.contentResolver.query(
+                    uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null
+                )?.use { cursor ->
+                    val column = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (column >= 0 && cursor.moveToFirst()) cursor.getString(column) else null
+                }
+            }.onFailure { Timber.w(it, "Failed to query file name: $uri") }.getOrNull()
+            else -> null
+        }
+        return name?.takeIf {
+            it.isNotBlank() && it != "." && it != ".." && '/' !in it && '\\' !in it && '\u0000' !in it
         }
     }
 

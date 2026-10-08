@@ -1,5 +1,6 @@
 package org.lyaaz.fuckshare.utils
 
+import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -75,9 +76,20 @@ object ByteUtils {
         while (n < len) {
             count = inputStream.read(b, off + n, len - n)
             if (count < 0) break
-            n += count
+            if (count == 0) {
+                val byte = inputStream.read()
+                if (byte == -1) break
+                b[off + n++] = byte.toByte()
+            } else {
+                n += count
+            }
         }
         return n
+    }
+
+    /** Reads a complete fixed-size field or rejects a truncated stream. */
+    fun readFully(inputStream: InputStream, bytes: ByteArray) {
+        if (readNBytes(inputStream, bytes) != bytes.size) throw EOFException("Truncated image field")
     }
 
     /**
@@ -90,6 +102,7 @@ object ByteUtils {
      * @throws IOException If an I/O error occurs.
      */
     fun skipNBytes(inputStream: InputStream, len: Long): Long {
+        require(len >= 0) { "Negative skip length: $len" }
         var remaining = len
         val buffer = ByteArray(minOf(DEFAULT_BUFFER_SIZE.toLong(), remaining).toInt())
         
@@ -106,7 +119,12 @@ object ByteUtils {
             if (bytesRead == -1) {
                 break
             }
-            remaining -= bytesRead
+            if (bytesRead == 0) {
+                if (inputStream.read() == -1) break
+                remaining--
+            } else {
+                remaining -= bytesRead
+            }
         }
         return len - remaining
     }
