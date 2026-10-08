@@ -105,10 +105,11 @@ object AppUtils {
         val timeBefore = System.currentTimeMillis() - timeDurationMillis
         val cacheFiles = context.cacheDir.listFiles() ?: return true
         
-        return cacheFiles.asSequence()
-            .filter { it.lastModified() < timeBefore }
-            .map { it.deleteRecursively() }
-            .all { it }
+        var success = true
+        for (file in cacheFiles) {
+            if (file.lastModified() < timeBefore && !file.deleteRecursively()) success = false
+        }
+        return success
     }
 
     /**
