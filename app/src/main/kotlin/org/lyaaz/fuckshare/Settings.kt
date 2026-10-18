@@ -136,6 +136,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
 
         const val PREF_EXCLUDED_TARGETS = "excluded_targets"
         const val PREF_ENABLE_MANAGE_TARGETS = "enable_manage_targets"
+        const val PREF_SHOW_DISABLED_APPS = "show_disabled_apps"
 
         // Defaults
         const val DEFAULT_ENABLE_REMOVE_EXIF = true
@@ -163,6 +164,7 @@ class Settings private constructor(private val prefs: SharedPreferences) {
         const val DEFAULT_ENABLE_QR_CODE_TO_TEXT_ACTION = true
         const val DEFAULT_ENABLE_TEXT_TO_LINK_ACTION = false
         const val DEFAULT_ENABLE_MANAGE_TARGETS = false
+        const val DEFAULT_SHOW_DISABLED_APPS = false
 
         @Volatile
         private var INSTANCE: Settings? = null

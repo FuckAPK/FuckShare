@@ -53,8 +53,10 @@
     <string name="expand_all_targets">Expand all targets</string>
     <string name="collapse_all_targets">Collapse all targets</string>
     <string name="share_target_actions">More target actions</string>
+    <string name="show_disabled_apps">Show disabled apps</string>
+    <string name="share_target_disabled">Disabled</string>
     <string name="clear_inactive_targets">Remove inactive exclusions (%1$d)</string>
-    <string name="clear_inactive_targets_description">Only targets no longer found. Active exclusions are kept.</string>
+    <string name="clear_inactive_targets_description">Only targets no longer found. Disabled apps and components are kept.</string>
     <string name="expand_app_targets">Expand targets for %1$s</string>
     <string name="collapse_app_targets">Collapse targets for %1$s</string>
     <string name="share_targets_none_excluded">None excluded · %1$d/%2$d</string>

@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -69,6 +70,7 @@ data class ShareTargetActivityInfo(
     val activityName: String,
     val className: String,
     val icon: android.graphics.drawable.Drawable,
+    val isEnabled: Boolean,
     val acceptedTypes: Set<String>
 )
 
@@ -76,6 +78,7 @@ data class ShareTargetAppInfo(
     val packageName: String,
     val appName: String,
     val icon: android.graphics.drawable.Drawable,
+    val isEnabled: Boolean,
     val activities: List<ShareTargetActivityInfo>
 )
 
@@ -99,12 +102,24 @@ fun ManageTargetsScreen() {
     var excludedTargets by remember {
         mutableStateOf(prefs.getStringSet(Settings.PREF_EXCLUDED_TARGETS, emptySet()) ?: emptySet())
     }
+    var showDisabledApps by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_SHOW_DISABLED_APPS,
+                Settings.DEFAULT_SHOW_DISABLED_APPS
+            )
+        )
+    }
 
     var appTargets by remember { mutableStateOf<List<ShareTargetAppInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    val visibleAppTargets = remember(appTargets, showDisabledApps) {
+        if (showDisabledApps) appTargets else appTargets.filter { it.isEnabled }
+    }
 
     val expandedStates = remember { mutableStateMapOf<String, Boolean>() }
     var actionsExpanded by remember { mutableStateOf(false) }
+    // Rule validity always uses the full scan, never the display-filtered list.
     val activeComponents = remember(appTargets) {
         buildSet {
             appTargets.forEach { app ->
@@ -129,7 +144,10 @@ fun ManageTargetsScreen() {
             for (action in actions) {
                 for (type in types) {
                     val intent = Intent(action).apply { setType(type) }
-                    val resolveInfos = pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+                    val resolveInfos = pm.queryIntentActivities(
+                        intent,
+                        PackageManager.MATCH_ALL or PackageManager.MATCH_DISABLED_COMPONENTS
+                    )
                     for (ri in resolveInfos) {
                         val packageName = ri.activityInfo.packageName
                         if (packageName == context.packageName) continue // exclude ourselves
@@ -143,6 +161,8 @@ fun ManageTargetsScreen() {
                                 activityName = ri.loadLabel(pm).toString(),
                                 className = ri.activityInfo.name,
                                 icon = ri.loadIcon(pm),
+                                isEnabled = ri.activityInfo.enabled &&
+                                    ri.activityInfo.applicationInfo.enabled,
                                 acceptedTypes = mutableSetOf()
                             )
                         }
@@ -153,6 +173,7 @@ fun ManageTargetsScreen() {
                                 packageName = packageName,
                                 appName = ri.activityInfo.applicationInfo.loadLabel(pm).toString(),
                                 icon = ri.activityInfo.applicationInfo.loadIcon(pm),
+                                isEnabled = ri.activityInfo.applicationInfo.enabled,
                                 activities = mutableListOf()
                             )
                         }
@@ -188,10 +209,9 @@ fun ManageTargetsScreen() {
         title = stringResource(R.string.title_manage_share_targets),
         actions = {
             if (!isLoading) {
-                val allExpanded =
-                    appTargets.isNotEmpty() && expandedStates.size == appTargets.size &&
-                        expandedStates.values.all { it }
-                val anyExpanded = expandedStates.values.any { it }
+                val allExpanded = visibleAppTargets.isNotEmpty() &&
+                    visibleAppTargets.all { expandedStates[it.packageName] == true }
+                val anyExpanded = visibleAppTargets.any { expandedStates[it.packageName] == true }
                 Box {
                     IconButton(onClick = { actionsExpanded = true }) {
                         Icon(
@@ -205,11 +225,25 @@ fun ManageTargetsScreen() {
                         modifier = Modifier.widthIn(max = 320.dp)
                     ) {
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.expand_all_targets)) },
-                            enabled = appTargets.isNotEmpty() && !allExpanded,
+                            text = { Text(stringResource(R.string.show_disabled_apps)) },
+                            trailingIcon = {
+                                Checkbox(checked = showDisabledApps, onCheckedChange = null)
+                            },
                             onClick = {
                                 actionsExpanded = false
-                                appTargets.forEach { expandedStates[it.packageName] = true }
+                                showDisabledApps = !showDisabledApps
+                                prefs.edit {
+                                    putBoolean(Settings.PREF_SHOW_DISABLED_APPS, showDisabledApps)
+                                }
+                            }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.expand_all_targets)) },
+                            enabled = visibleAppTargets.isNotEmpty() && !allExpanded,
+                            onClick = {
+                                actionsExpanded = false
+                                visibleAppTargets.forEach { expandedStates[it.packageName] = true }
                             }
                         )
                         DropdownMenuItem(
@@ -217,7 +251,7 @@ fun ManageTargetsScreen() {
                             enabled = anyExpanded,
                             onClick = {
                                 actionsExpanded = false
-                                expandedStates.clear()
+                                visibleAppTargets.forEach { expandedStates.remove(it.packageName) }
                             }
                         )
                         HorizontalDivider()
@@ -251,7 +285,7 @@ fun ManageTargetsScreen() {
             }
         } else {
             SettingsList {
-                items(appTargets, key = { it.packageName }) { app ->
+                items(visibleAppTargets, key = { it.packageName }) { app ->
                     AppTargetItem(
                         app = app,
                         expanded = expandedStates[app.packageName] == true,
@@ -350,6 +384,13 @@ fun AppTargetItem(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    if (!app.isEnabled) {
+                        Text(
+                            text = stringResource(R.string.share_target_disabled),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Text(
                         text = exclusionSummary,
                         style = MaterialTheme.typography.bodyMedium,
@@ -397,7 +438,15 @@ fun AppTargetItem(
                         val isExcluded = excludedTargets.contains(act.componentName.flattenToString())
                         SwitchPreferenceItem(
                             title = act.activityName,
-                            summary = act.className + "\n" + act.acceptedTypes.joinToString(", "),
+                            summary = buildString {
+                                if (!act.isEnabled) {
+                                    append(stringResource(R.string.share_target_disabled))
+                                    append('\n')
+                                }
+                                append(act.className)
+                                append('\n')
+                                append(act.acceptedTypes.joinToString(", "))
+                            },
                             checked = isExcluded,
                             onCheckedChange = { excluded ->
                                 onActivitiesStateChanged(listOf(act.componentName), excluded)
