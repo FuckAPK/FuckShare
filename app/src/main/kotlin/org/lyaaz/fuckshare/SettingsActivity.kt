@@ -14,14 +14,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +22,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -39,8 +30,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import org.lyaaz.fuckshare.utils.AppUtils
+import org.lyaaz.ui.ActionPreferenceItem
 import org.lyaaz.ui.DropDownPreference
 import org.lyaaz.ui.PreferenceCategory
+import org.lyaaz.ui.SettingsList
+import org.lyaaz.ui.SettingsScaffold
 import org.lyaaz.ui.SwitchPreferenceItem
 import org.lyaaz.ui.TextFieldPreference
 import org.lyaaz.ui.keyboardAsState
@@ -57,7 +51,11 @@ class SettingsActivity : ComponentActivity() {
         currentUiMode = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         setContent {
             Theme {
-                SettingsScreen()
+                SettingsScaffold(
+                    title = stringResource(R.string.app_name)
+                ) {
+                    SettingsScreen()
+                }
             }
         }
     }
@@ -76,7 +74,9 @@ class SettingsActivity : ComponentActivity() {
 @Composable
 fun SettingsScreenPreview() {
     Theme {
-        SettingsScreen()
+        SettingsScaffold(title = stringResource(R.string.app_name)) {
+            SettingsScreen()
+        }
     }
 }
 
@@ -95,12 +95,7 @@ fun SettingsScreen() {
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .imePadding()
-    ) {
+    SettingsList {
         item {
             MetadataCategory(settings, prefs)
         }
@@ -112,13 +107,6 @@ fun SettingsScreen() {
         }
         item {
             MiscellaneousCategory(settings, prefs)
-        }
-        item {
-            Spacer(
-                modifier = Modifier.windowInsetsBottomHeight(
-                    WindowInsets.systemBars
-                )
-            )
         }
     }
 }
@@ -141,10 +129,10 @@ fun MetadataCategory(settings: Settings, prefs: SharedPreferences) {
             settings.exifTagsToKeep.joinToString(", ")
         )
     }
-    return PreferenceCategory(title = R.string.title_metadata) {
+    return PreferenceCategory(title = stringResource(R.string.title_metadata)) {
         SwitchPreferenceItem(
-            title = R.string.title_enable_remove_exif,
-            summary = R.string.desc_enable_remove_exif,
+            title = stringResource(R.string.title_enable_remove_exif),
+            summary = stringResource(R.string.desc_enable_remove_exif),
             checked = enableRemoveExif,
             onCheckedChange = {
                 enableRemoveExif = it
@@ -156,8 +144,8 @@ fun MetadataCategory(settings: Settings, prefs: SharedPreferences) {
         ) {
             Column {
                 SwitchPreferenceItem(
-                    title = R.string.title_enable_fallback_to_file,
-                    summary = R.string.desc_enable_fallback_to_file,
+                    title = stringResource(R.string.title_enable_fallback_to_file),
+                    summary = stringResource(R.string.desc_enable_fallback_to_file),
                     checked = enableFallbackToFile,
                     enabled = enableRemoveExif,
                     onCheckedChange = {
@@ -166,8 +154,8 @@ fun MetadataCategory(settings: Settings, prefs: SharedPreferences) {
                     }
                 )
                 TextFieldPreference(
-                    title = R.string.title_exif_tags_to_keep,
-                    summary = R.string.desc_exif_tags_to_keep,
+                    title = stringResource(R.string.title_exif_tags_to_keep),
+                    summary = stringResource(R.string.desc_exif_tags_to_keep),
                     value = exifTagsToKeep,
                     onValueChange = {
                         if (it.contains('\n')) {
@@ -206,10 +194,10 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             settings.enableFileRename
         )
     }
-    PreferenceCategory(title = R.string.title_rename) {
+    PreferenceCategory(title = stringResource(R.string.title_rename)) {
         SwitchPreferenceItem(
-            title = R.string.title_enable_file_type_sniff,
-            summary = R.string.desc_enable_file_type_sniff,
+            title = stringResource(R.string.title_enable_file_type_sniff),
+            summary = stringResource(R.string.desc_enable_file_type_sniff),
             checked = enableFileTypeSniff,
             onCheckedChange = {
                 enableFileTypeSniff = it
@@ -217,7 +205,7 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         SwitchPreferenceItem(
-            title = R.string.title_enable_image_rename,
+            title = stringResource(R.string.title_enable_image_rename),
             summary = null,
             checked = enableImageRename,
             onCheckedChange = {
@@ -226,7 +214,7 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         SwitchPreferenceItem(
-            title = R.string.title_enable_video_rename,
+            title = stringResource(R.string.title_enable_video_rename),
             summary = null,
             checked = enableVideoRename,
             onCheckedChange = {
@@ -235,7 +223,7 @@ fun RenameCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         SwitchPreferenceItem(
-            title = R.string.title_enable_others_rename,
+            title = stringResource(R.string.title_enable_others_rename),
             summary = null,
             checked = enableFileRename,
             onCheckedChange = {
@@ -283,10 +271,10 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
             settings.videoToGIFCustomOption
         )
     }
-    PreferenceCategory(title = R.string.title_video_to_gif) {
+    PreferenceCategory(title = stringResource(R.string.title_video_to_gif)) {
         SwitchPreferenceItem(
-            title = R.string.title_enable_video_to_gif,
-            summary = R.string.desc_enable_video_to_gif,
+            title = stringResource(R.string.title_enable_video_to_gif),
+            summary = stringResource(R.string.desc_enable_video_to_gif),
             checked = enableVideoToGIF,
             onCheckedChange = {
                 enableVideoToGIF = it
@@ -298,7 +286,7 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
         ) {
             Column {
                 SwitchPreferenceItem(
-                    title = R.string.title_video_to_gif_force_with_audio,
+                    title = stringResource(R.string.title_video_to_gif_force_with_audio),
                     summary = null,
                     checked = videoToGIFForceWithAudio,
                     onCheckedChange = {
@@ -307,10 +295,10 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                     }
                 )
                 TextFieldPreference(
-                    title = R.string.title_video_to_gif_size_KB,
+                    title = stringResource(R.string.title_video_to_gif_size_KB),
                     summary = null,
                     value = videoToGIFSizeKB,
-                    unit = R.string.unit_kB,
+                    unit = stringResource(R.string.unit_kB),
                     onValueChange = {
                         val intValue =
                             it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
@@ -323,9 +311,9 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                     keyboardType = KeyboardType.Number
                 )
                 DropDownPreference(
-                    title = R.string.title_video_to_gif_quality,
+                    title = stringResource(R.string.title_video_to_gif_quality),
                     summary = null,
-                    selected = qualityResMap[videoToGIFQuality] ?: R.string.option_low,
+                    selected = stringResource(qualityResMap[videoToGIFQuality] ?: R.string.option_low),
                     content = { onItemSelected ->
                         qualityResMap.forEach { (quality, resId) ->
                             DropdownMenuItem(
@@ -345,8 +333,8 @@ fun VideoToGIFCategory(settings: Settings, prefs: SharedPreferences) {
                     }
                 )
                 TextFieldPreference(
-                    title = R.string.title_video_to_gif_custom_option,
-                    summary = R.string.desc_video_to_gif_custom_option,
+                    title = stringResource(R.string.title_video_to_gif_custom_option),
+                    summary = stringResource(R.string.desc_video_to_gif_custom_option),
                     enabled = videoToGIFQuality == Settings.VideoToGIFQualityOptions.CUSTOM,
                     value = videoToGIFCustomOption,
                     onValueChange = {
@@ -425,13 +413,11 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
         }
     }
 
-    PreferenceCategory(title = R.string.title_miscellaneous) {
+    PreferenceCategory(title = stringResource(R.string.title_miscellaneous)) {
         extSettingsComponent?.let { component ->
-            SwitchPreferenceItem(
-                title = R.string.title_module_setting,
+            ActionPreferenceItem(
+                title = stringResource(R.string.title_module_setting),
                 summary = null,
-                checked = true,
-                noSwitch = true,
                 onClick = {
                     context.startActivity(
                         Intent().setComponent(component)
@@ -440,7 +426,7 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             )
         }
         SwitchPreferenceItem(
-            title = R.string.title_manage_share_targets,
+            title = stringResource(R.string.title_manage_share_targets),
             summary = null,
             checked = enableManageTargets,
             onCheckedChange = {
@@ -452,10 +438,10 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         TextFieldPreference(
-            title = R.string.title_toast_time,
-            summary = R.string.desc_toast_time,
+            title = stringResource(R.string.title_toast_time),
+            summary = stringResource(R.string.desc_toast_time),
             value = toastTimeMS,
-            unit = R.string.unit_ms,
+            unit = stringResource(R.string.unit_ms),
             onValueChange = {
                 val intValue =
                     it.ifBlank { "0" }.toIntOrNull() ?: return@TextFieldPreference
@@ -469,7 +455,7 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             SwitchPreferenceItem(
-                title = R.string.title_enable_qr_code_to_text_action,
+                title = stringResource(R.string.title_enable_qr_code_to_text_action),
                 checked = enableQRCodeToTextAction,
                 onCheckedChange = {
                     enableQRCodeToTextAction = it
@@ -477,8 +463,8 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
                 }
             )
             SwitchPreferenceItem(
-                title = R.string.title_enable_text_to_link_action,
-                summary = R.string.desc_enable_text_to_link_action,
+                title = stringResource(R.string.title_enable_text_to_link_action),
+                summary = stringResource(R.string.desc_enable_text_to_link_action),
                 checked = enableTextToLinkAction,
                 onCheckedChange = {
                     if (it) {
@@ -511,8 +497,8 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             )
         }
         SwitchPreferenceItem(
-            title = R.string.title_enable_viewer,
-            summary = R.string.desc_enable_viewer,
+            title = stringResource(R.string.title_enable_viewer),
+            summary = stringResource(R.string.desc_enable_viewer),
             checked = enableViewer,
             onCheckedChange = {
                 AppUtils.setActivityStatus(context, viewerActivityName, it)
@@ -521,7 +507,7 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
             }
         )
         SwitchPreferenceItem(
-            title = R.string.title_keep_launcher_icon,
+            title = stringResource(R.string.title_keep_launcher_icon),
             summary = null,
             checked = enableLauncherIcon,
             onCheckedChange = {
@@ -530,12 +516,10 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
                     AppUtils.getActivityStatus(context, launcherActivityName)
             }
         )
-        SwitchPreferenceItem(
-            title = R.string.title_reset_settings,
+        ActionPreferenceItem(
+            title = stringResource(R.string.title_reset_settings),
             summary = null,
-            checked = true,
-            noSwitch = true,
-            onCheckedChange = {
+            onClick = {
                 prefs.edit { clear() }
                 Toast.makeText(context, R.string.toast_settings_reset, Toast.LENGTH_SHORT)
                     .show()

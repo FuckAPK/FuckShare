@@ -50,5 +50,15 @@
     <string name="desc_video_to_gif_custom_option">1 to 100; the lower the value, the higher the image quality</string>
     <string name="option_medium">MEDIUM</string>
     <string name="title_manage_share_targets">Manage share targets</string>
+    <string name="expand_all_targets">Expand all targets</string>
+    <string name="collapse_all_targets">Collapse all targets</string>
+    <string name="share_target_actions">More target actions</string>
+    <string name="clear_inactive_targets">Remove inactive exclusions (%1$d)</string>
+    <string name="clear_inactive_targets_description">Only targets no longer found. Active exclusions are kept.</string>
+    <string name="expand_app_targets">Expand targets for %1$s</string>
+    <string name="collapse_app_targets">Collapse targets for %1$s</string>
+    <string name="share_targets_none_excluded">None excluded · %1$d/%2$d</string>
+    <string name="share_targets_all_excluded">All excluded · %1$d/%2$d</string>
+    <string name="share_targets_partially_excluded">Partially excluded · %1$d/%2$d</string>
     <string name="title_module_setting">Module Setting</string>
 </resources>

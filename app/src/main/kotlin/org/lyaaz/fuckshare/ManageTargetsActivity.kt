@@ -9,39 +9,30 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Checkbox
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,13 +43,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.edit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.lyaaz.fuckshare.utils.AppUtils
+import org.lyaaz.ui.PreferenceGroup
+import org.lyaaz.ui.SettingsList
+import org.lyaaz.ui.SettingsScaffold
+import org.lyaaz.ui.SwitchPreferenceItem
 import org.lyaaz.ui.theme.AppTheme
 
 data class ShareTargetActivityInfo(
@@ -89,7 +92,6 @@ class ManageTargetsActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManageTargetsScreen() {
     val context = LocalContext.current
@@ -102,9 +104,20 @@ fun ManageTargetsScreen() {
     var isLoading by remember { mutableStateOf(true) }
 
     val expandedStates = remember { mutableStateMapOf<String, Boolean>() }
+    var actionsExpanded by remember { mutableStateOf(false) }
+    val activeComponents = remember(appTargets) {
+        buildSet {
+            appTargets.forEach { app ->
+                app.activities.forEach { add(it.componentName.flattenToString()) }
+            }
+        }
+    }
+    val inactiveCount = remember(excludedTargets, activeComponents) {
+        excludedTargets.count { it !in activeComponents }
+    }
 
     LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
+        val loadedTargets = withContext(Dispatchers.IO) {
             val pm = context.packageManager
             val types =
                 listOf("*/*", "text/plain", "image/*", "video/*", "audio/*", "application/*")
@@ -157,13 +170,12 @@ fun ManageTargetsScreen() {
 
             val currentExcluded =
                 prefs.getStringSet(Settings.PREF_EXCLUDED_TARGETS, emptySet()) ?: emptySet()
-            appTargets =
-                appMap.values.toList().sortedWith(compareByDescending<ShareTargetAppInfo> { app ->
-                    app.activities.any { currentExcluded.contains(it.componentName.flattenToString()) }
-                }.thenBy { it.appName })
-
-            isLoading = false
+            appMap.values.toList().sortedWith(compareByDescending<ShareTargetAppInfo> { app ->
+                app.activities.any { currentExcluded.contains(it.componentName.flattenToString()) }
+            }.thenBy { it.appName })
         }
+        appTargets = loadedTargets
+        isLoading = false
     }
 
     LaunchedEffect(excludedTargets) {
@@ -172,78 +184,91 @@ fun ManageTargetsScreen() {
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(context.getString(R.string.title_manage_share_targets)) },
-                actions = {
-                    if (!isLoading) {
-                        val allExpanded =
-                            appTargets.isNotEmpty() && expandedStates.size == appTargets.size && expandedStates.values.all { it }
-                        IconButton(onClick = {
-                            if (allExpanded) {
-                                expandedStates.clear()
-                            } else {
+    SettingsScaffold(
+        title = stringResource(R.string.title_manage_share_targets),
+        actions = {
+            if (!isLoading) {
+                val allExpanded =
+                    appTargets.isNotEmpty() && expandedStates.size == appTargets.size &&
+                        expandedStates.values.all { it }
+                val anyExpanded = expandedStates.values.any { it }
+                Box {
+                    IconButton(onClick = { actionsExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.share_target_actions)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = actionsExpanded,
+                        onDismissRequest = { actionsExpanded = false },
+                        modifier = Modifier.widthIn(max = 320.dp)
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.expand_all_targets)) },
+                            enabled = appTargets.isNotEmpty() && !allExpanded,
+                            onClick = {
+                                actionsExpanded = false
                                 appTargets.forEach { expandedStates[it.packageName] = true }
                             }
-                        }) {
-                            Icon(
-                                imageVector = if (allExpanded) androidx.compose.material.icons.Icons.Default.KeyboardArrowUp else androidx.compose.material.icons.Icons.Default.KeyboardArrowDown,
-                                contentDescription = if (allExpanded) "Collapse All" else "Expand All"
-                            )
-                        }
-                        IconButton(onClick = {
-                            val activeComponents = appTargets.flatMap { it.activities }
-                                .map { it.componentName.flattenToString() }.toSet()
-                            val validExcluded =
-                                excludedTargets.filter { activeComponents.contains(it) }.toSet()
-                            if (validExcluded.size != excludedTargets.size) {
-                                excludedTargets = validExcluded
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.collapse_all_targets)) },
+                            enabled = anyExpanded,
+                            onClick = {
+                                actionsExpanded = false
+                                expandedStates.clear()
                             }
-                        }) {
-                            Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Default.Clear,
-                                contentDescription = "Clear Inactive"
-                            )
-                        }
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        Surface(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)) {
-            if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(appTargets, key = { it.packageName }) { app ->
-                        AppTargetItem(
-                            app = app,
-                            expanded = expandedStates[app.packageName] == true,
-                            onExpandedChange = { expanded ->
-                                expandedStates[app.packageName] = expanded
-                            },
-                            excludedTargets = excludedTargets,
-                            onActivitiesStateChanged = { actComponents, isExcluded ->
-                                val newSet = excludedTargets.toMutableSet()
-                                if (isExcluded) {
-                                    actComponents.forEach { newSet.add(it.flattenToString()) }
-                                } else {
-                                    actComponents.forEach { newSet.remove(it.flattenToString()) }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(stringResource(R.string.clear_inactive_targets, inactiveCount))
+                                    Text(
+                                        text = stringResource(R.string.clear_inactive_targets_description),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
-                                excludedTargets = newSet
+                            },
+                            enabled = inactiveCount > 0,
+                            onClick = {
+                                actionsExpanded = false
+                                excludedTargets = excludedTargets.filterTo(mutableSetOf()) {
+                                    it in activeComponents
+                                }
                             }
                         )
                     }
-                    item {
-                        Spacer(modifier = Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
-                    }
+                }
+            }
+        }
+    ) {
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            SettingsList {
+                items(appTargets, key = { it.packageName }) { app ->
+                    AppTargetItem(
+                        app = app,
+                        expanded = expandedStates[app.packageName] == true,
+                        onExpandedChange = { expanded ->
+                            expandedStates[app.packageName] = expanded
+                        },
+                        excludedTargets = excludedTargets,
+                        onActivitiesStateChanged = { actComponents, isExcluded ->
+                            val newSet = excludedTargets.toMutableSet()
+                            if (isExcluded) {
+                                actComponents.forEach { newSet.add(it.flattenToString()) }
+                            } else {
+                                actComponents.forEach { newSet.remove(it.flattenToString()) }
+                            }
+                            excludedTargets = newSet
+                        }
+                    )
                 }
             }
         }
@@ -262,114 +287,127 @@ fun AppTargetItem(
         app.activities.count { excludedTargets.contains(it.componentName.flattenToString()) }
     val totalCount = app.activities.size
 
-    val checkState = when {
-        excludedCount == totalCount -> androidx.compose.ui.state.ToggleableState.On
-        excludedCount == 0 -> androidx.compose.ui.state.ToggleableState.Off
-        else -> androidx.compose.ui.state.ToggleableState.Indeterminate
+    val allExcluded = excludedCount == totalCount
+    val exclusionSummary = stringResource(
+        when {
+            allExcluded -> R.string.share_targets_all_excluded
+            excludedCount == 0 -> R.string.share_targets_none_excluded
+            else -> R.string.share_targets_partially_excluded
+        },
+        excludedCount,
+        totalCount
+    )
+    val selectionState = when {
+        allExcluded -> ToggleableState.On
+        excludedCount == 0 -> ToggleableState.Off
+        else -> ToggleableState.Indeterminate
     }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "Target expansion"
+    )
+    val hierarchyColor = MaterialTheme.colorScheme.outlineVariant
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    PreferenceGroup {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onExpandedChange(!expanded) }
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .clickable(
+                    onClickLabel = stringResource(
+                        if (expanded) R.string.collapse_app_targets
+                        else R.string.expand_app_targets,
+                        app.appName
+                    )
+                ) { onExpandedChange(!expanded) }
+                .padding(start = 12.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            AndroidView(
-                factory = { ctx ->
-                    ImageView(ctx).apply { setImageDrawable(app.icon) }
-                },
-                modifier = Modifier.size(40.dp)
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp).rotate(chevronRotation)
             )
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = app.appName,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Box(
+            Row(
                 modifier = Modifier
-                    .width(1.dp)
-                    .height(24.dp)
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            TriStateCheckbox(
-                state = checkState,
-                onClick = {
-                    val newState = checkState != androidx.compose.ui.state.ToggleableState.On
-                    onActivitiesStateChanged(app.activities.map { it.componentName }, newState)
+                    .weight(1f)
+                    .heightIn(min = 72.dp)
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                AndroidView(
+                    factory = { ctx -> ImageView(ctx) },
+                    update = { it.setImageDrawable(app.icon) },
+                    modifier = Modifier.size(40.dp)
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = app.appName,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = exclusionSummary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (selectionState == ToggleableState.Indeterminate) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
                 }
-            )
+                TriStateCheckbox(
+                    state = selectionState,
+                    onClick = {
+                        onActivitiesStateChanged(
+                            app.activities.map { it.componentName },
+                            !allExcluded
+                        )
+                    },
+                    modifier = Modifier.semantics {
+                        contentDescription = app.appName
+                        stateDescription = exclusionSummary
+                    }
+                )
+            }
         }
 
         AnimatedVisibility(visible = expanded) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 56.dp, end = 16.dp, bottom = 8.dp)
-            ) {
-                app.activities.forEach { act ->
-                    val isExcluded = excludedTargets.contains(act.componentName.flattenToString())
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AndroidView(
-                            factory = { ctx ->
-                                ImageView(ctx).apply { setImageDrawable(act.icon) }
-                            },
-                            modifier = Modifier.size(32.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = act.activityName,
-                                style = MaterialTheme.typography.bodyMedium
+            Column {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .drawBehind {
+                            val inset = 8.dp.toPx()
+                            drawLine(
+                                color = hierarchyColor,
+                                start = Offset(22.dp.toPx(), inset),
+                                end = Offset(22.dp.toPx(), size.height - inset),
+                                strokeWidth = 2.dp.toPx()
                             )
-                            Text(
-                                text = act.className,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            @OptIn(ExperimentalLayoutApi::class)
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                act.acceptedTypes.forEach { type ->
-                                    Surface(
-                                        shape = MaterialTheme.shapes.small,
-                                        color = MaterialTheme.colorScheme.secondaryContainer,
-                                        modifier = Modifier.padding(top = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = type,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                            modifier = Modifier.padding(
-                                                horizontal = 6.dp,
-                                                vertical = 2.dp
-                                            )
-                                        )
-                                    }
-                                }
-                            }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(24.dp)
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Checkbox(
+                        .padding(start = 28.dp, top = 4.dp, bottom = 8.dp)
+                ) {
+                    app.activities.forEach { act ->
+                        val isExcluded = excludedTargets.contains(act.componentName.flattenToString())
+                        SwitchPreferenceItem(
+                            title = act.activityName,
+                            summary = act.className + "\n" + act.acceptedTypes.joinToString(", "),
                             checked = isExcluded,
-                            onCheckedChange = { checked ->
-                                onActivitiesStateChanged(listOf(act.componentName), checked)
+                            onCheckedChange = { excluded ->
+                                onActivitiesStateChanged(listOf(act.componentName), excluded)
+                            },
+                            leadingContent = {
+                                AndroidView(
+                                    factory = { ctx -> ImageView(ctx) },
+                                    update = { it.setImageDrawable(act.icon) },
+                                    modifier = Modifier.size(32.dp)
+                                )
                             }
                         )
                     }
