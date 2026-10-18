@@ -110,11 +110,32 @@ fun ManageTargetsScreen() {
             )
         )
     }
+    var showDisabledComponents by remember {
+        mutableStateOf(
+            prefs.getBoolean(
+                Settings.PREF_SHOW_DISABLED_COMPONENTS,
+                Settings.DEFAULT_SHOW_DISABLED_COMPONENTS
+            )
+        )
+    }
 
     var appTargets by remember { mutableStateOf<List<ShareTargetAppInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
-    val visibleAppTargets = remember(appTargets, showDisabledApps) {
-        if (showDisabledApps) appTargets else appTargets.filter { it.isEnabled }
+    val visibleAppTargets = remember(appTargets, showDisabledApps, showDisabledComponents) {
+        if (showDisabledApps && showDisabledComponents) {
+            appTargets
+        } else {
+            appTargets.mapNotNull { app ->
+                if (!showDisabledApps && !app.isEnabled) {
+                    null
+                } else if (showDisabledComponents || app.activities.all { it.isEnabled }) {
+                    app
+                } else {
+                    val enabledActivities = app.activities.filter { it.isEnabled }
+                    if (enabledActivities.isEmpty()) null else app.copy(activities = enabledActivities)
+                }
+            }
+        }
     }
 
     val expandedStates = remember { mutableStateMapOf<String, Boolean>() }
@@ -161,8 +182,11 @@ fun ManageTargetsScreen() {
                                 activityName = ri.loadLabel(pm).toString(),
                                 className = ri.activityInfo.name,
                                 icon = ri.loadIcon(pm),
-                                isEnabled = ri.activityInfo.enabled &&
-                                    ri.activityInfo.applicationInfo.enabled,
+                                isEnabled = when (pm.getComponentEnabledSetting(componentName)) {
+                                    PackageManager.COMPONENT_ENABLED_STATE_DEFAULT -> ri.activityInfo.enabled
+                                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED -> true
+                                    else -> false
+                                },
                                 acceptedTypes = mutableSetOf()
                             )
                         }
@@ -234,6 +258,19 @@ fun ManageTargetsScreen() {
                                 showDisabledApps = !showDisabledApps
                                 prefs.edit {
                                     putBoolean(Settings.PREF_SHOW_DISABLED_APPS, showDisabledApps)
+                                }
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.show_disabled_components)) },
+                            trailingIcon = {
+                                Checkbox(checked = showDisabledComponents, onCheckedChange = null)
+                            },
+                            onClick = {
+                                actionsExpanded = false
+                                showDisabledComponents = !showDisabledComponents
+                                prefs.edit {
+                                    putBoolean(Settings.PREF_SHOW_DISABLED_COMPONENTS, showDisabledComponents)
                                 }
                             }
                         )
@@ -386,7 +423,7 @@ fun AppTargetItem(
                     )
                     if (!app.isEnabled) {
                         Text(
-                            text = stringResource(R.string.share_target_disabled),
+                            text = stringResource(R.string.share_target_app_disabled),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -440,7 +477,7 @@ fun AppTargetItem(
                             title = act.activityName,
                             summary = buildString {
                                 if (!act.isEnabled) {
-                                    append(stringResource(R.string.share_target_disabled))
+                                    append(stringResource(R.string.share_target_component_disabled))
                                     append('\n')
                                 }
                                 append(act.className)
