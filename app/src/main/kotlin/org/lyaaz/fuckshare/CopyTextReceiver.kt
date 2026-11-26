@@ -10,7 +10,8 @@ class CopyTextReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == ACTION) {
             val text = intent.getStringExtra(EXTRA_TEXT)
-            AppUtils.copyToClipboard(context, text!!)
+            if (text.isNullOrEmpty()) return
+            AppUtils.copyToClipboard(context, text)
         }
     }
 
