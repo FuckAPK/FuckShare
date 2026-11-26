@@ -133,13 +133,17 @@ class HandleShareActivity : Activity() {
             // add qrcode to text action
             if (settings.enableQRCodeToTextAction) {
                 val uris = IntentUtils.getUrisFromIntent(ib.intent)
-                if (ib.intent.type == "image/*" && uris.size == 1) {
-                    FileUtils.imageToBitmap(this@HandleShareActivity, uris[0])?.let {
-                        FileUtils.decodeQRCode(it)?.let { text ->
-                            Timber.i("decoded qrcode: $text")
-                            chooserActions.add(
-                                IntentUtils.createCopyTextAction(this@HandleShareActivity, text)
-                            )
+                if (ib.intent.type?.startsWith("image/") == true && uris.size == 1) {
+                    FileUtils.imageToBitmap(this@HandleShareActivity, uris[0])?.let { bitmap ->
+                        try {
+                            FileUtils.decodeQRCode(bitmap)?.let { text ->
+                                Timber.i("decoded qrcode: $text")
+                                chooserActions.add(
+                                    IntentUtils.createCopyTextAction(this@HandleShareActivity, text)
+                                )
+                            }
+                        } finally {
+                            if (!bitmap.isRecycled) bitmap.recycle()
                         }
                     }
                 }

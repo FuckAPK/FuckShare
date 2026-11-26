@@ -42,7 +42,7 @@ object FileUtils {
      * Optimized buffer size for file operations based on available memory.
      */
     private const val OPTIMAL_BUFFER_SIZE = 64 * 1024 // 64KB
-
+    private const val QR_MAX_DIMENSION = 800
     /**
      * Refreshes the provided URI by copying the file content to a new file with potential metadata processing and renaming.
      *
@@ -410,10 +410,36 @@ object FileUtils {
      * Image to bitmap
      * Optimized with better error handling and resource management.
      */
-    fun imageToBitmap(context: Context, uri: Uri): Bitmap? {
+    fun imageToBitmap(
+        context: Context,
+        uri: Uri,
+        maxWidth: Int = QR_MAX_DIMENSION,
+        maxHeight: Int = QR_MAX_DIMENSION
+    ): Bitmap? {
         return runCatching {
+            val bounds = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
             context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                BitmapFactory.decodeStream(inputStream)
+                BitmapFactory.decodeStream(inputStream, null, bounds)
+            } ?: return null
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
+                return null
+            }
+            var sampleSize = 1
+            if (maxWidth > 0 && maxHeight > 0) {
+                while (sampleSize <= Int.MAX_VALUE / 2 &&
+                    (bounds.outWidth / (sampleSize * 2) >= maxWidth ||
+                        bounds.outHeight / (sampleSize * 2) >= maxHeight)
+                ) {
+                    sampleSize *= 2
+                }
+            }
+            val decodeOptions = BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+            }
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream, null, decodeOptions)
             }
         }.onFailure {
             Timber.e(it)
@@ -424,12 +450,12 @@ object FileUtils {
      * Decode QR code in Bitmap
      */
     fun decodeQRCode(bitmap: Bitmap): String? {
-        val compressedBitmap = compressBitmap(bitmap, 800, 800)
-        val width = compressedBitmap.width
-        val height = compressedBitmap.height
-        val pixels = IntArray(width * height)
-        compressedBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        val compressedBitmap = compressBitmap(bitmap, QR_MAX_DIMENSION, QR_MAX_DIMENSION)
         return try {
+            val width = compressedBitmap.width
+            val height = compressedBitmap.height
+            val pixels = IntArray(width * height)
+            compressedBitmap.getPixels(pixels, 0, width, 0, 0, width, height)
             val binaryBitmap =
                 BinaryBitmap(HybridBinarizer(RGBLuminanceSource(width, height, pixels)))
             MultiFormatReader().decode(binaryBitmap).text.takeIf { it.isNotBlank() }
@@ -439,6 +465,10 @@ object FileUtils {
         } catch (e: Exception) {
             Timber.e(e)
             null
+        } finally {
+            if (compressedBitmap !== bitmap && !compressedBitmap.isRecycled) {
+                compressedBitmap.recycle()
+            }
         }
     }
 
