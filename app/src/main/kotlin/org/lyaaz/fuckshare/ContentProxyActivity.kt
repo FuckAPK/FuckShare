@@ -50,40 +50,47 @@ class ContentProxyActivity : ComponentActivity() {
         }
 
         val resultIntent = Intent()
-        data.data?.let { originUri ->
-            FileUtils.refreshUri(this, settings, originUri)?.let {
-                resultIntent.data = it.first
+        val dataUri = data.data
+        val clipUris = data.clipData?.let { clipData ->
+            (0 until clipData.itemCount)
+                .mapNotNull { clipData.getItemAt(it).uri }
+        }.orEmpty()
+        val uniqueUris = buildList {
+            if (dataUri != null) add(dataUri)
+            addAll(clipUris)
+        }.distinct()
+
+        val refreshedByOrigin = uniqueUris
+            .parallelStream()
+            .map { uri -> uri to FileUtils.refreshUri(this, settings, uri)?.first }
+            .collect(Collectors.toList())
+            .toMap()
+
+        val failedCount = uniqueUris.count { refreshedByOrigin[it] == null }
+        if (failedCount > 0) {
+            Timber.e("Failed to process $failedCount of ${uniqueUris.size}")
+            AppUtils.showToast(
+                this,
+                resources.getString(R.string.fail_to_process).format(failedCount, uniqueUris.size),
+                settings.toastTimeMS
+            )
+        }
+
+        if (dataUri != null) {
+            refreshedByOrigin[dataUri]?.let {
+                resultIntent.data = it
             } ?: run {
-                Timber.e("Failed to process $originUri")
+                Timber.e("Failed to process $dataUri")
             }
-        } ?: run {
+        } else {
             Timber.i("data empty")
         }
+
         data.clipData?.let { clipData ->
-            val uris = (0 until clipData.itemCount)
-                .mapNotNull { clipData.getItemAt(it).uri }
-
-            val resultUris = uris
-                .parallelStream()
-                .map { FileUtils.refreshUri(this, settings, it) }
-                .collect(Collectors.toList())
-                .also {
-                    val failedCount = it.count { p -> p == null }
-                    if (failedCount > 0) {
-                        Timber.e("Failed to process $failedCount of ${uris.count()}")
-                        AppUtils.showToast(
-                            this,
-                            resources.getString(R.string.fail_to_process).format(failedCount, uris.count()),
-                            settings.toastTimeMS
-                        )
-                    }
-                }
-                .filterNotNull()
-                .map { ClipData.Item(it.first) }
-
-            if (resultUris.isNotEmpty()) {
-                val resultClipData = ClipData(clipData.description, resultUris[0])
-                resultUris.drop(1).forEach { resultClipData.addItem(it) }
+            val resultItems = clipUris.mapNotNull { refreshedByOrigin[it]?.let(ClipData::Item) }
+            if (resultItems.isNotEmpty()) {
+                val resultClipData = ClipData(clipData.description, resultItems[0])
+                resultItems.drop(1).forEach { resultClipData.addItem(it) }
                 resultIntent.clipData = resultClipData
             } else {
                 Timber.w("result uris is empty")
