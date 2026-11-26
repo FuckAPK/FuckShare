@@ -41,13 +41,17 @@ class HandleShareActivity : Activity() {
 
     private fun handleIntent() {
         val uris = IntentUtils.getUrisFromIntent(intent)
-        val text = intent.getStringExtra(Intent.EXTRA_TEXT)
+        val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)
+        val subject = intent.getStringExtra(Intent.EXTRA_SUBJECT)
+        val title = intent.getCharSequenceExtra(Intent.EXTRA_TITLE)
+        val htmlText = intent.getStringExtra(Intent.EXTRA_HTML_TEXT)
         val ib = IntentBuilder(this).apply {
             setType(this@HandleShareActivity.intent.type)
             text?.let { setText(it) }
+            subject?.let { setSubject(it) }
+            htmlText?.let { setHtmlText(it) }
         }
-
-        uris.parallelStream()
+        val processedUris = uris.parallelStream()
             .map { FileUtils.refreshUri(this, settings, it) }
             .collect(Collectors.toList())
             .also {
@@ -63,15 +67,21 @@ class HandleShareActivity : Activity() {
                 }
             }
             .filterNotNull()
-            .also {
-                retrieveType(it)?.let { type ->
-                    Timber.i("type retrieved: $type")
-                    ib.setType(type)
-                }
-            }
-            .forEach {
-                ib.addStream(it.first)
-            }
+
+        if (processedUris.isEmpty() && text == null && htmlText == null && subject == null) {
+            Timber.w("Nothing left to share after processing ${uris.size} URIs")
+            setResult(RESULT_CANCELED)
+            return
+        }
+
+        retrieveType(processedUris)?.let { type ->
+            Timber.i("type retrieved: $type")
+            ib.setType(type)
+        }
+        processedUris.forEach {
+            ib.addStream(it.first)
+        }
+        title?.let { ib.intent.putExtra(Intent.EXTRA_TITLE, it) }
 
         val chooserIntent = setupChooser(ib)
         Timber.d("chooser intent: $chooserIntent")
@@ -150,7 +160,7 @@ class HandleShareActivity : Activity() {
             }
             // add text to link action
             if (settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(this)) {
-                intent.getStringExtra(Intent.EXTRA_TEXT)?.let { text ->
+                intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()?.let { text ->
                     extractUrls(text)
                         .takeIf {
                             it.isNotEmpty()
@@ -162,12 +172,14 @@ class HandleShareActivity : Activity() {
                         }
                 }
             }
-            chooserActions.takeIf { it.isNotEmpty() }?.let {
-                chooserIntent.putExtra(
-                    Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
-                    chooserActions.toTypedArray()
-                )
-            }
+            chooserActions.take(MAX_CHOOSER_CUSTOM_ACTIONS)
+                .takeIf { it.isNotEmpty() }
+                ?.let {
+                    chooserIntent.putExtra(
+                        Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS,
+                        it.toTypedArray()
+                    )
+                }
         }
 
         return chooserIntent
@@ -184,6 +196,7 @@ class HandleShareActivity : Activity() {
     }
 
     companion object {
+        private const val MAX_CHOOSER_CUSTOM_ACTIONS = 5
         private lateinit var settings: Settings
     }
 }
