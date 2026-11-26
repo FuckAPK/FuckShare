@@ -362,18 +362,6 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
     val context = LocalContext.current
     val launcherActivityName = "${context.packageName}.LauncherActivity"
     val viewerActivityName = "${context.packageName}.ViewerActivity"
-    val permissionRequestLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (AppUtils.hasOverlayPermission(context)) {
-            prefs.edit { putBoolean(Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION, true) }
-            Toast.makeText(context, R.string.toast_permission_granted, Toast.LENGTH_SHORT).show()
-            Timber.i("Permission granted")
-        }
-        Toast.makeText(context, R.string.toast_permission_denied, Toast.LENGTH_SHORT).show()
-        Timber.w("Permission denied")
-        (context as ComponentActivity).recreate()
-    }
     var toastTimeMS by remember {
         mutableStateOf(
             settings.toastTimeMS.toString()
@@ -388,6 +376,20 @@ fun MiscellaneousCategory(settings: Settings, prefs: SharedPreferences) {
         mutableStateOf(
             settings.enableTextToLinkAction && AppUtils.hasOverlayPermission(context)
         )
+    }
+    val permissionRequestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (AppUtils.hasOverlayPermission(context)) {
+            enableTextToLinkAction = true
+            prefs.edit { putBoolean(Settings.PREF_ENABLE_TEXT_TO_LINK_ACTION, true) }
+            Toast.makeText(context, R.string.toast_permission_granted, Toast.LENGTH_SHORT).show()
+            Timber.i("Permission granted")
+        } else {
+            enableTextToLinkAction = false
+            Toast.makeText(context, R.string.toast_permission_denied, Toast.LENGTH_SHORT).show()
+            Timber.w("Permission denied")
+        }
     }
     var enableViewer by remember {
         mutableStateOf(
