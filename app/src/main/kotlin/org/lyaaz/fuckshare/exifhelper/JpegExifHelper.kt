@@ -4,6 +4,7 @@ import org.lyaaz.fuckshare.utils.ByteUtils
 import org.lyaaz.fuckshare.utils.ByteUtils.toUShort
 import org.lyaaz.fuckshare.utils.FileUtils
 import timber.log.Timber
+import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -25,18 +26,31 @@ class JpegExifHelper : ExifHelper {
         bos.write(maker)
 
         while (true) {
-            ByteUtils.readFully(bis, maker)
-
-            if (maker[0] != 0xFF.toByte()) {
+            val prefix = bis.read()
+            if (prefix == -1) throw EOFException("Truncated image field")
+            if (prefix != 0xFF) {
                 throw ImageFormatException()
             }
 
+            var markerType = bis.read()
+            while (markerType == 0xFF) {
+                markerType = bis.read()
+            }
+            if (markerType == -1) throw EOFException("Truncated image field")
+            if (markerType == 0x00) {
+                throw ImageFormatException()
+            }
+
+            maker[0] = 0xFF.toByte()
+            maker[1] = markerType.toByte()
+
             val makerName = maker[1].toUByte().toString(16).uppercase()
             when (maker[1]) {
-                0xD8.toByte() -> {
+                0xD8.toByte(),
+                0x01.toByte(),
+                in 0xD0.toByte()..0xD7.toByte() -> {
                     bos.write(maker)
                     Timber.d("Copy chunk: $makerName size: 2")
-
                 }
 
                 0xD9.toByte() -> {   // EOI

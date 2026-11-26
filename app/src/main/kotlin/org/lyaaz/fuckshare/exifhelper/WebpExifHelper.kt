@@ -35,15 +35,29 @@ class WebpExifHelper : ExifHelper {
             ByteUtils.readFully(bis, chunkDataLenBytes)
 
             val chunkName = chunkNameBytes.toString(Charsets.US_ASCII)
-            var realChunkDataLength = chunkDataLenBytes.toUInt(ByteOrder.LITTLE_ENDIAN).toLong()
-            // standard of tiff: fill in end with 0x00 if chunk size if odd
-            realChunkDataLength += realChunkDataLength % 2
+            val declaredChunkDataLength = chunkDataLenBytes.toUInt(ByteOrder.LITTLE_ENDIAN).toLong()
+            // standard of riff: fill in end with 0x00 if chunk size is odd
+            var realChunkDataLength = declaredChunkDataLength + declaredChunkDataLength % 2
             if (realChunkDataLength > remaining - 8) throw ImageFormatException()
             remaining -= 8 + realChunkDataLength
 
             if (webpSkippableChunks.contains(chunkName)) {
-                realChunkDataLength -= ByteUtils.skipNBytes(bis, realChunkDataLength)
                 Timber.d("Discard chunk: $chunkName size: $realChunkDataLength")
+                realChunkDataLength -= ByteUtils.skipNBytes(bis, realChunkDataLength)
+            } else if (chunkName == "VP8X") {
+                if (declaredChunkDataLength != VP8X_PAYLOAD_SIZE.toLong()) {
+                    throw ImageFormatException()
+                }
+                val vp8xPayload = ByteArray(VP8X_PAYLOAD_SIZE)
+                ByteUtils.readFully(bis, vp8xPayload)
+                vp8xPayload[0] = (
+                    vp8xPayload[0].toInt() and (VP8X_EXIF_FLAG or VP8X_XMP_FLAG).inv()
+                ).toByte()
+                bos.write(chunkNameBytes)
+                bos.write(chunkDataLenBytes)
+                bos.write(vp8xPayload)
+                Timber.d("Copy chunk: $chunkName size: $realChunkDataLength")
+                realChunkDataLength = 0L
             } else {
                 bos.write(chunkNameBytes)
                 bos.write(chunkDataLenBytes)
@@ -71,7 +85,10 @@ class WebpExifHelper : ExifHelper {
 
     companion object {
         private const val BUFFER_SIZE = 16 * 1024 // 16KB buffer
-        
+        private const val VP8X_PAYLOAD_SIZE = 10
+        private const val VP8X_EXIF_FLAG = 0x08
+        private const val VP8X_XMP_FLAG = 0x04
+
         private val webpSkippableChunks = setOf(
             "EXIF",
             "XMP "

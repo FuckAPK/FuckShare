@@ -52,19 +52,41 @@ fun main() {
     rejects(PngExifHelper(), pngSignature + retained.dropLast(1).toByteArray())
     rejects(PngExifHelper(), ByteArray(20))
     rejects(JpegExifHelper(), byteArrayOf(0xff.toByte(), 0xd8.toByte(), 0xff.toByte(), 0xe1.toByte(), 0, 1))
+    rejects(JpegExifHelper(), byteArrayOf(0xff.toByte(), 0xd8.toByte(), 0xff.toByte(), 0x00, 0xff.toByte(), 0xd9.toByte()))
+    val jpegWithFillAndStandalone = byteArrayOf(
+        0xff.toByte(), 0xd8.toByte(),
+        0xff.toByte(), 0xff.toByte(), 0xe1.toByte(), 0x00, 0x04, 0x11, 0x22,
+        0xff.toByte(), 0xff.toByte(), 0x01,
+        0xff.toByte(), 0xd0.toByte(),
+        0xff.toByte(), 0xd9.toByte()
+    )
+    val expectedJpeg = byteArrayOf(
+        0xff.toByte(), 0xd8.toByte(),
+        0xff.toByte(), 0x01,
+        0xff.toByte(), 0xd0.toByte(),
+        0xff.toByte(), 0xd9.toByte()
+    )
+    check(clean(JpegExifHelper(), jpegWithFillAndStandalone).contentEquals(expectedJpeg))
+    val vp8xFlags = 0x3e.toByte() // ICC | Alpha | EXIF | XMP | Animation
+    val vp8xChunk = riffChunk("VP8X", byteArrayOf(vp8xFlags, 0, 0, 0, 1, 0, 0, 1, 0, 0))
+    val expectedVp8xChunk = riffChunk("VP8X", byteArrayOf(0x32.toByte(), 0, 0, 0, 1, 0, 0, 1, 0, 0))
     val content = riffChunk("VP8 ", byteArrayOf(1, 2, 3, 4)) + riffChunk("ANIM", byteArrayOf(5, 6))
     val privateChunks = riffChunk("EXIF", byteArrayOf(7, 8, 9)) + riffChunk("XMP ", byteArrayOf(10))
     val header = "RIFF".toByteArray() + ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
-        .putInt(4 + content.size + privateChunks.size).array() + "WEBP".toByteArray()
-    val processed = clean(WebpExifHelper(), header + content + privateChunks)
-    check(processed.copyOfRange(12, processed.size).contentEquals(content))
+        .putInt(4 + vp8xChunk.size + content.size + privateChunks.size).array() + "WEBP".toByteArray()
+    val processed = clean(WebpExifHelper(), header + vp8xChunk + content + privateChunks)
+    check(processed.copyOfRange(12, processed.size).contentEquals(expectedVp8xChunk + content))
     val temp = File.createTempFile("webp-regression", ".webp")
     try {
         temp.writeBytes(processed)
         WebpExifHelper().postProcess(temp)
         check(ByteBuffer.wrap(temp.readBytes(), 4, 4).order(ByteOrder.LITTLE_ENDIAN).int == temp.length().toInt() - 8)
     } finally { temp.delete() }
-    rejects(WebpExifHelper(), (header + content + privateChunks).dropLast(1).toByteArray())
+    val badVp8x = riffChunk("VP8X", ByteArray(9))
+    val badVp8xHeader = "RIFF".toByteArray() + ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN)
+        .putInt(4 + badVp8x.size).array() + "WEBP".toByteArray()
+    rejects(WebpExifHelper(), badVp8xHeader + badVp8x)
+    rejects(WebpExifHelper(), (header + vp8xChunk + content + privateChunks).dropLast(1).toByteArray())
     for (helper in listOf(JpegExifHelper(), PngExifHelper(), WebpExifHelper())) rejects(helper, byteArrayOf())
     val zeroReads = object : ByteArrayInputStream(byteArrayOf(1, 2, 3)) {
         override fun read(b: ByteArray, off: Int, len: Int) = 0
